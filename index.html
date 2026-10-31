@@ -3,33 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel do Personal</title>
+    <title>AF Pro - Painel do Personal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen p-4 flex flex-col items-center">
 
     <div class="max-w-md w-full space-y-6">
-        <!-- Cabeçalho -->
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 text-center shadow-lg">
-            <h1 class="font-bold text-xl text-emerald-400">Painel do Personal</h1>
-            <p class="text-xs text-slate-400 mt-1">Gerencie seus alunos e gere os links de acesso exclusivo.</p>
+        <!-- Topo -->
+        <div class="flex justify-between items-center bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg">
+            <div>
+                <h1 class="font-extrabold text-lg text-orange-500 tracking-wide">AF PRO</h1>
+                <p class="text-[11px] text-slate-400">Painel Administrativo</p>
+            </div>
+            <span class="text-[10px] px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800/50">Online</span>
         </div>
 
-        <!-- Cadastrar Novo Aluno -->
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3 shadow-lg">
-            <h2 class="font-bold text-sm text-slate-200">Adicionar Novo Aluno</h2>
+        <!-- Cadastrar Aluno -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-lg">
+            <h2 class="font-bold text-xs uppercase tracking-wider text-slate-300">Cadastrar Novo Aluno</h2>
             <div class="flex gap-2">
-                <input type="text" id="nome-novo-aluno" placeholder="Nome do aluno (ex: João)" class="flex-1 bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none">
-                <button onclick="cadastrarAluno()" class="bg-emerald-500 hover:bg-emerald-400 font-bold px-4 py-2.5 rounded-lg text-slate-950 text-sm transition-all shadow-md">Cadastrar</button>
+                <input type="text" id="nome-novo-aluno" placeholder="Nome do aluno..." class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white focus:border-orange-500 focus:outline-none">
+                <button onclick="cadastrarAluno()" class="bg-orange-500 hover:bg-orange-400 font-bold px-4 py-2.5 rounded-xl text-slate-950 text-xs transition-all shadow-md">Cadastrar</button>
             </div>
         </div>
 
-        <!-- Lista de Alunos e Links -->
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3 shadow-lg">
-            <h2 class="font-bold text-sm text-slate-200">Seus Alunos Cadastrados</h2>
+        <!-- Lista de Alunos Ativos -->
+        <div class="space-y-3">
+            <h2 class="font-bold text-xs uppercase tracking-wider text-slate-400 px-1">Alunos Ativos</h2>
             <div id="lista-alunos" class="space-y-2">
-                <p class="text-xs text-slate-500 text-center py-4">Carregando alunos...</p>
+                <p class="text-xs text-slate-500 text-center py-6">Carregando alunos...</p>
             </div>
         </div>
     </div>
@@ -49,7 +52,7 @@
             }
 
             if (data.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">Nenhum aluno cadastrado ainda.</p>`;
+                container.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">Nenhum aluno cadastrado ainda.</p>`;
                 return;
             }
 
@@ -57,13 +60,22 @@
 
             container.innerHTML = data.map(aluno => {
                 const linkAluno = `${baseURL}aluno.html?token=${aluno.token}`;
+                const iniciais = aluno.nome.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+
                 return `
-                    <div class="bg-slate-950 border border-slate-800 p-3 rounded-lg flex flex-col gap-2">
-                        <div class="flex justify-between items-center">
-                            <span class="font-bold text-sm text-slate-200">${aluno.nome}</span>
-                            <button onclick="copiarLink('${linkAluno}')" class="text-xs bg-slate-800 hover:bg-slate-700 text-emerald-400 px-3 py-1.5 rounded font-medium transition-all">Copiar Link</button>
+                    <div class="bg-slate-900 border border-slate-800 hover:border-slate-700 p-3.5 rounded-2xl flex items-center justify-between transition-all shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-slate-800 text-orange-400 font-bold flex items-center justify-center text-xs border border-slate-700/50">
+                                ${iniciais}
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-sm text-slate-200">${aluno.nome}</h3>
+                                <p class="text-[10px] text-slate-400">Acesso via Link Exclusivo</p>
+                            </div>
                         </div>
-                        <input type="text" readonly value="${linkAluno}" class="bg-slate-900 border border-slate-800/60 rounded p-1.5 text-[10px] text-slate-400 select-all">
+                        <button onclick="copiarLink('${linkAluno}')" class="text-xs bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/30 px-3 py-2 rounded-xl font-medium transition-all">
+                            Copiar Link
+                        </button>
                     </div>
                 `;
             }).join('');
@@ -90,7 +102,7 @@
 
         function copiarLink(link) {
             navigator.clipboard.writeText(link);
-            alert('Link copiado para a área de transferência!');
+            alert('Link exclusivo copiado para a área de transferência!');
         }
 
         window.onload = carregarAlunos;
