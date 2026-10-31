@@ -22,7 +22,7 @@
         </div>
     </header>
 
-    <!-- Barra Flutuante de Descanso (Sem botão de pular, apenas +30s e alarme sonoro) -->
+    <!-- Barra Flutuante de Descanso -->
     <div id="bar-timer-descanso" class="hidden fixed top-16 left-0 right-0 z-30 bg-emerald-950/95 border-b border-emerald-800 backdrop-blur p-3 shadow-2xl">
         <div class="max-w-md mx-auto flex justify-between items-center text-xs">
             <span class="text-emerald-300 font-bold flex items-center gap-1.5">
@@ -77,7 +77,7 @@
         
         <div id="painel-erro" class="hidden bg-red-950/40 border border-red-900/60 p-4 rounded-2xl text-center space-y-2">
             <h2 class="font-bold text-red-400 text-xs">Acesso Restrito</h2>
-            <p class="text-xs text-slate-300">Nenhum token válido encontrado ou link incorreto.</p>
+            <p class="text-xs text-slate-300">Nenhum token válido encontrado na URL. Copie o link correto gerado no painel do personal.</p>
         </div>
 
         <!-- Volume do Dia -->
@@ -104,20 +104,6 @@
         let timerInterval = null;
         let tempoRestante = 0;
 
-        const treinoExemploAluno = [
-            {
-                nome: 'Supino Reto com Halteres',
-                grupo: 'Peitoral',
-                equipamento: 'Halter',
-                series: [
-                    { num: 1, anterior: '24kg × 12 @7', metodo: 'Normal', descanso: 90 },
-                    { num: 2, anterior: '26kg × 10 @8', metodo: 'Normal', descanso: 90 },
-                    { num: 3, anterior: '28kg × 8 @8.5', metodo: 'Normal', descanso: 120 },
-                    { num: 4, anterior: '28kg × 8 @9', metodo: 'Drop Set', detalhe: 2, descanso: 120 }
-                ]
-            }
-        ];
-
         async function inicializarAppAluno() {
             const urlParams = new URLSearchParams(window.location.search);
             const token = urlParams.get('token');
@@ -135,7 +121,23 @@
 
                 alunoAtualId = aluno.id;
                 document.getElementById('nome-aluno').innerText = aluno.nome;
-                renderizarExerciciosAluno(treinoExemploAluno);
+                
+                // Simulação de ficha padrão caso o aluno não tenha exercícios salvos no banco ainda
+                const treinoExemplo = [
+                    {
+                        nome: 'Supino Reto com Halteres',
+                        grupo: 'Peitoral',
+                        equipamento: 'Halter',
+                        series: [
+                            { num: 1, anterior: '24kg × 12 @7', metodo: 'Normal', descanso: 90 },
+                            { num: 2, anterior: '26kg × 10 @8', metodo: 'Normal', descanso: 90 },
+                            { num: 3, anterior: '28kg × 8 @8.5', metodo: 'Normal', descanso: 120 },
+                            { num: 4, anterior: '28kg × 8 @9', metodo: 'Drop Set', detalhe: 2, descanso: 120 }
+                        ]
+                    }
+                ];
+
+                renderizarExerciciosAluno(treinoExemplo);
             } catch (err) {
                 console.error(err);
                 document.getElementById('painel-erro').classList.remove('hidden');
