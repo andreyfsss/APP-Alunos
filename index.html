@@ -162,7 +162,9 @@
                 const { data, error } = await supabaseClient.from('alunos').select('*').order('created_at', { ascending: false });
                 
                 if (error) {
+                    console.error('Erro Supabase:', error);
                     atualizarStatusSync(false);
+                    document.getElementById('container-alunos').innerHTML = `<p class="text-xs text-red-400 text-center py-6">Erro ao carregar: ${error.message}</p>`;
                     return;
                 }
 
@@ -180,7 +182,7 @@
                     const iniciais = (aluno.nome || 'Aluno').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 
                     return `
-                        <div onclick="abrirPainelAluno('${aluno.id}', '${aluno.nome}', '${aluno.token}', '${linkAluno}')" class="bg-slate-950 border border-slate-900 hover:border-emerald-500/50 p-3.5 rounded-2xl flex items-center justify-between cursor-pointer transition-all shadow-sm group">
+                        <div onclick="abrirPainelAluno('${aluno.id}', '${aluno.nome.replace(/'/g, "\\'")}', '${aluno.token}', '${linkAluno}')" class="bg-slate-950 border border-slate-900 hover:border-emerald-500/50 p-3.5 rounded-2xl flex items-center justify-between cursor-pointer transition-all shadow-sm group">
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 rounded-xl bg-black text-emerald-400 font-bold flex items-center justify-center text-xs border border-slate-800 group-hover:border-emerald-500/40">
                                     ${iniciais}
@@ -197,6 +199,7 @@
                     `;
                 }).join('');
             } catch (err) {
+                console.error('Erro geral:', err);
                 atualizarStatusSync(false);
             }
         }
@@ -232,12 +235,10 @@
 
             try {
                 const { data, error } = await supabaseClient.from('alunos').select('treinos').eq('id', id).single();
-                if (data && data.treinos) {
-                    treinosDoAluno = data.treinos;
-                } else {
-                    treinosDoAluno = [];
-                }
+                if (error) throw error;
+                treinosDoAluno = (data && data.treinos) ? data.treinos : [];
             } catch (e) {
+                console.error('Erro ao buscar treinos:', e);
                 treinosDoAluno = [];
             }
             renderizarTreinosAluno();
@@ -253,7 +254,10 @@
         async function criarTreinoDivisao() {
             const input = document.getElementById('input-nome-treino');
             const nome = input.value.trim();
-            if (!nome) return;
+            if (!nome) {
+                alert('Digite o nome da divisão de treino!');
+                return;
+            }
 
             treinosDoAluno.push({ id: 't_' + Date.now(), nome, exercicios: [] });
             input.value = '';
@@ -269,7 +273,7 @@
                     .update({ treinos: treinosDoAluno })
                     .eq('id', alunoSelecionado.id);
                 
-                if (error) console.error('Erro ao salvar no Supabase:', error.message);
+                if (error) alert('Erro ao salvar no banco: ' + error.message);
             } catch (err) {
                 console.error(err);
             }
@@ -277,7 +281,7 @@
 
         function renderizarTreinosAluno() {
             const container = document.getElementById('container-treinos-aluno');
-            if (treinosDoAluno.length === 0) {
+            if (!treinosDoAluno || treinosDoAluno.length === 0) {
                 container.innerHTML = `<p class="text-xs text-slate-600 text-center py-6">Nenhuma divisão criada ainda.</p>`;
                 return;
             }
@@ -286,7 +290,7 @@
                 <div onclick="abrirMontagemTreino('${t.id}')" class="bg-slate-950 border border-slate-900 hover:border-emerald-500/50 rounded-2xl p-4 flex justify-between items-center cursor-pointer transition-all shadow-sm">
                     <div>
                         <h3 class="font-bold text-xs text-emerald-400 uppercase tracking-wider">${t.nome}</h3>
-                        <p class="text-[10px] text-slate-500">${t.exercicios.length} exercício(s) prescrito(s)</p>
+                        <p class="text-[10px] text-slate-500">${t.exercicios ? t.exercicios.length : 0} exercício(s) prescrito(s)</p>
                     </div>
                     <span class="text-xs text-slate-400 font-bold">Abrir →</span>
                 </div>
@@ -296,6 +300,7 @@
         function abrirMontagemTreino(treinoId) {
             treinoAtivoId = treinoId;
             const treino = treinosDoAluno.find(t => t.id === treinoId);
+            if (!treino) return;
             document.getElementById('titulo-treino-ativo').innerText = treino.nome;
             
             document.getElementById('view-detalhe-aluno').classList.add('hidden');
@@ -407,6 +412,7 @@
 
             const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
             if (treino) {
+                if (!treino.exercicios) treino.exercicios = [];
                 treino.exercicios.push({ nome, musculo, equipamento, qtdSeries, seriesConfig });
                 document.getElementById('input-busca-ex').value = '';
                 await salvarTreinosNoSupabase();
@@ -417,7 +423,7 @@
         function renderizarListaExerciciosDivisao() {
             const container = document.getElementById('container-lista-exercicios-divisao');
             const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
-            if (!treino || treino.exercicios.length === 0) {
+            if (!treino || !treino.exercicios || treino.exercicios.length === 0) {
                 container.innerHTML = `<p class="text-xs text-slate-600 text-center py-4">Nenhum exercício adicionado ainda.</p>`;
                 return;
             }
@@ -435,7 +441,7 @@
 
         async function removerExercicioDivisao(idx) {
             const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
-            if (treino) {
+            if (treino && treino.exercicios) {
                 treino.exercicios.splice(idx, 1);
                 await salvarTreinosNoSupabase();
                 renderizarListaExerciciosDivisao();
@@ -445,11 +451,18 @@
         async function cadastrarAluno() {
             const input = document.getElementById('nome-novo-aluno');
             const nome = input.value.trim();
-            if (!nome) return;
+            if (!nome) {
+                alert('Digite o nome do aluno antes de cadastrar!');
+                return;
+            }
 
             const { error } = await supabaseClient.from('alunos').insert([{ nome, treinos: [] }]);
-            if (error) alert('Erro: ' + error.message);
-            else { input.value = ''; carregarAlunos(); }
+            if (error) {
+                alert('Erro ao cadastrar: ' + error.message);
+            } else {
+                input.value = '';
+                carregarAlunos();
+            }
         }
 
         function copiarLinkDirect(link) {
