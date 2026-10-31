@@ -114,15 +114,14 @@
                 </div>
                 <div id="subbox-volume" class="bg-af-card border border-slate-800 rounded-2xl p-4 text-center text-xs text-slate-400 py-6">
                     <div class="text-sm font-bold text-white mb-1" id="admin-vol-total">0 kg</div>
-                    <p class="text-[10px] text-slate-500">Volume acumulado nos treinos realizados pelo aluno.</p>
+                    <p class="text-[10px] text-slate-500">Volume total acumulado nas sessões concluídas.</p>
                 </div>
                 <div id="subbox-series" class="hidden bg-af-card border border-slate-800 rounded-2xl p-4 text-center text-xs text-slate-400 py-6">
                     <div class="text-sm font-bold text-white mb-1" id="admin-qtd-series">0</div>
-                    <p class="text-[10px] text-slate-500">Total de séries registradas e validadas.</p>
+                    <p class="text-[10px] text-slate-500">Total de séries validadas pelo atleta.</p>
                 </div>
                 <div id="subbox-grupos" class="hidden bg-af-card border border-slate-800 rounded-2xl p-4 text-center text-xs text-slate-400 py-6">
-                    <div class="text-sm font-bold text-af-orange mb-1">Ativo</div>
-                    <p class="text-[10px] text-slate-500">Monitoramento de grupos musculares em dia.</p>
+                    <div id="admin-lista-grupos" class="text-xs text-slate-200 space-y-1">Nenhum registro de grupo muscular ainda.</div>
                 </div>
             </div>
         </div>
@@ -185,7 +184,6 @@
                         </div>
                     </div>
 
-                    <!-- Bloco de Repetições para Pirâmides (Método Geral) -->
                     <div id="bloco-piramide-reps" class="hidden space-y-1">
                         <label class="block text-[10px] text-slate-400 uppercase font-bold">Faixa de Repetições (Pirâmide)</label>
                         <input type="text" id="input-reps-piramide" placeholder="Ex: 10 a 12 ou 8 a 12" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-xs text-white font-bold text-center">
@@ -317,8 +315,32 @@
         function atualizarRelatoriosAdmin() {
             let volTotal = historicoTreinosAluno.reduce((acc, h) => acc + (h.volume || 0), 0);
             let totalSeries = historicoTreinosAluno.reduce((acc, h) => acc + (h.qtdSeriesValidadas || 0), 0);
+            
             document.getElementById('admin-vol-total').innerText = `${volTotal.toLocaleString('pt-BR')} kg`;
             document.getElementById('admin-qtd-series').innerText = totalSeries;
+
+            // Coleta e lista os grupos musculares trabalhados no histórico
+            let gruposSet = new Set();
+            historicoTreinosAluno.forEach(h => {
+                if (h.exerciciosRealizados) {
+                    h.exerciciosRealizados.forEach(exR => {
+                        // Busca o músculo correspondente nas divisões cadastradas
+                        treinosDoAluno.forEach(t => {
+                            if (t.exercicios) {
+                                let match = t.exercicios.find(e => e.nome.toLowerCase() === exR.nome.toLowerCase());
+                                if (match && match.musculo) gruposSet.add(match.musculo);
+                            }
+                        });
+                    });
+                }
+            });
+
+            const containerGrupos = document.getElementById('admin-lista-grupos');
+            if (gruposSet.size > 0) {
+                containerGrupos.innerHTML = Array.from(gruposSet).map(g => `<div class="bg-black border border-slate-800 p-2 rounded-lg font-bold text-af-orange">${g} - Treinado</div>`).join('');
+            } else {
+                containerGrupos.innerHTML = `Nenhum grupo muscular registrado ainda.`;
+            }
         }
 
         function mudarAbaAdminAluno(aba) {
