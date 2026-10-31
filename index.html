@@ -149,7 +149,7 @@
 
     <script>
         const SUPABASE_URL = 'https://dzifzikdeojazyswjguw.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5cHNjY25mcmpma3h0Y3J1ZXh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MTg3NjgsImV4cCI6MjEwODk5NDc2OH0.Y3rycAN_O1IL99OdMJsC_TRMrSEKJp4vQJho2P4D_W0';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6aWZ6aWtkZW9qYXp5c3dqZ3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MTg3NjgsImV4cCI6MjEwODk5NDc2OH0.Y3rycAN_O1IL99OdMJsC_TRMrSEKJp4vQJho2P4D_W0';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let alunoSelecionado = null;
@@ -230,7 +230,6 @@
             document.getElementById('view-lista-alunos').classList.add('hidden');
             document.getElementById('view-detalhe-aluno').classList.remove('hidden');
 
-            // Busca os treinos salvos na coluna do Supabase deste aluno
             try {
                 const { data, error } = await supabaseClient.from('alunos').select('treinos').eq('id', id).single();
                 if (data && data.treinos) {

@@ -133,7 +133,6 @@
                 document.getElementById('nome-aluno').innerText = aluno.nome;
                 document.getElementById('badge-modo').innerText = 'Online';
 
-                // Puxa os treinos reais salvos no banco para este aluno específico!
                 treinosDoAlunoCarregados = aluno.treinos || [];
                 renderizarDivisoesTreino(treinosDoAlunoCarregados);
             } catch (err) {
@@ -295,7 +294,7 @@
         }
 
         function fecharTimerDescanso() {
-            clearInterval(timerIdentity = null);
+            clearInterval(timerInterval); // Corrigido o erro de sintaxe anterior
             document.getElementById('bar-timer-descanso').classList.add('hidden');
         }
 
