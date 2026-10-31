@@ -75,7 +75,6 @@
                 <h2 id="titulo-treino-ativo" class="font-bold text-xs text-emerald-400 uppercase tracking-wider">Treino Ativo</h2>
             </div>
 
-            <!-- Formulário de Adicionar Exercício com Autocompletar e Métodos -->
             <div class="bg-slate-950 border border-slate-900 rounded-2xl p-4 space-y-3 relative">
                 <h3 class="font-bold text-xs uppercase text-slate-300">Adicionar Exercício</h3>
                 
@@ -84,7 +83,6 @@
                     <div class="relative">
                         <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Nome do Exercício</label>
                         <input type="text" id="input-busca-ex" oninput="filtrarSugestoesExercicios(this.value)" placeholder="Digite ou busque (ex: Supino Reto)..." class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:border-emerald-500 focus:outline-none" autocomplete="off">
-                        <!-- Lista de Sugestões Autocompletar -->
                         <div id="sugestoes-autocomplete" class="hidden absolute left-0 right-0 top-16 bg-slate-900 border border-slate-800 rounded-xl max-h-40 overflow-y-auto z-30 shadow-2xl"></div>
                     </div>
 
@@ -118,20 +116,14 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Descanso (Segundos)</label>
-                            <input type="number" id="input-descanso-ex" value="90" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-xs text-white text-center font-bold focus:border-emerald-500 focus:outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Quantidade de Séries</label>
-                            <input type="number" id="input-qtd-series-ex" value="4" onchange="gerarCamposSeriesAdmin(this.value)" min="1" max="10" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-xs text-white text-center font-bold focus:border-emerald-500 focus:outline-none">
-                        </div>
+                    <div>
+                        <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Quantidade de Séries</label>
+                        <input type="number" id="input-qtd-series-ex" value="4" onchange="gerarCamposSeriesAdmin(this.value)" min="1" max="10" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-xs text-white text-center font-bold focus:border-emerald-500 focus:outline-none">
                     </div>
 
-                    <!-- Configuração Individual por Série (Métodos Avançados + Blocos/Drops) -->
+                    <!-- Configuração Individual por Série (Método + Descanso customizado por série) -->
                     <div class="space-y-2 pt-2 border-t border-slate-900">
-                        <label class="block text-[11px] font-bold text-slate-300">Configuração de Métodos por Série</label>
+                        <label class="block text-[11px] font-bold text-slate-300">Configuração de Séries & Descanso Específico</label>
                         <div id="container-config-series-admin" class="space-y-2"></div>
                     </div>
 
@@ -141,7 +133,6 @@
                 </div>
             </div>
 
-            <!-- Lista de Exercícios da Divisão Atual -->
             <div class="space-y-2">
                 <h3 class="font-bold text-xs uppercase tracking-wider text-slate-400 px-1">Exercícios Desta Divisão</h3>
                 <div id="container-lista-exercicios-divisao" class="space-y-2">
@@ -290,7 +281,7 @@
             let html = '';
             for (let i = 1; i <= qtd; i++) {
                 html += `
-                    <div class="bg-black border border-slate-800 p-2 rounded-xl space-y-1.5 serie-config-item" data-serie="${i}">
+                    <div class="bg-black border border-slate-800 p-2.5 rounded-xl space-y-1.5 serie-config-item" data-serie="${i}">
                         <div class="flex items-center gap-2">
                             <span class="font-bold text-slate-400 text-xs w-4">${i}ª</span>
                             <select onchange="atualizarMetodoSerie(this)" class="select-metodo-serie flex-1 bg-slate-900 border border-slate-800 rounded-lg p-1 text-[11px] text-slate-200 focus:outline-none">
@@ -299,6 +290,10 @@
                                 <option value="Rest Pause">Rest-Pause</option>
                                 <option value="Cluster Set">Cluster Set</option>
                             </select>
+                            <div class="flex items-center gap-1">
+                                <input type="number" value="90" class="input-descanso-serie w-12 bg-slate-900 border border-slate-800 rounded p-1 text-center text-xs text-emerald-400 font-bold" title="Descanso em segundos">
+                                <span class="text-[9px] text-slate-500">s</span>
+                            </div>
                         </div>
                         <div class="box-detalhe-metodo hidden text-[10px] text-slate-400 pl-6"></div>
                     </div>
@@ -326,7 +321,6 @@
             const nome = document.getElementById('input-busca-ex').value.trim();
             const musculo = document.getElementById('select-musculo-ex').value;
             const equipamento = document.getElementById('select-equipamento-ex').value;
-            const descanso = parseInt(document.getElementById('input-descanso-ex').value) || 90;
             const qtdSeries = parseInt(document.getElementById('input-qtd-series-ex').value) || 4;
 
             if (!nome) {
@@ -340,18 +334,19 @@
             document.querySelectorAll('.serie-config-item').forEach(item => {
                 const num = item.getAttribute('data-serie');
                 const metodo = item.querySelector('.select-metodo-serie').value;
+                const descanso = parseInt(item.querySelector('.input-descanso-serie').value) || 90;
                 let detalhe = 0;
                 if (metodo === 'Drop Set') {
                     detalhe = parseInt(item.querySelector('.input-qtd-drops')?.value) || 2;
                 } else if (metodo === 'Rest Pause' || metodo === 'Cluster Set') {
                     detalhe = parseInt(item.querySelector('.input-qtd-blocos')?.value) || 2;
                 }
-                seriesConfig.push({ num, metodo, detalhe });
+                seriesConfig.push({ num, metodo, descanso, detalhe });
             });
 
             const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
             if (treino) {
-                treino.exercicios.push({ nome, musculo, equipamento, descanso, qtdSeries, seriesConfig });
+                treino.exercicios.push({ nome, musculo, equipamento, qtdSeries, seriesConfig });
                 document.getElementById('input-busca-ex').value = '';
                 renderizarListaExerciciosDivisao();
             }
@@ -368,7 +363,7 @@
             container.innerHTML = treino.exercicios.map((ex, idx) => `
                 <div class="bg-black border border-slate-900 p-3 rounded-xl flex justify-between items-center text-xs">
                     <div>
-                        <span class="text-[10px] text-emerald-400 font-bold uppercase">${ex.musculo} • ${ex.equipamento} • Descanso: ${ex.descanso}s</span>
+                        <span class="text-[10px] text-emerald-400 font-bold uppercase">${ex.musculo} • ${ex.equipamento}</span>
                         <div class="font-bold text-slate-200">${idx + 1}. ${ex.nome} (${ex.qtdSeries} Séries)</div>
                     </div>
                     <button onclick="treino.exercicios.splice(${idx}, 1); renderizarListaExerciciosDivisao();" class="text-xs text-red-400 font-bold">✕</button>

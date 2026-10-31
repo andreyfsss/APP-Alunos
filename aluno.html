@@ -77,7 +77,7 @@
         
         <div id="painel-erro" class="hidden bg-red-950/40 border border-red-900/60 p-4 rounded-2xl text-center space-y-2">
             <h2 class="font-bold text-red-400 text-xs">Acesso Restrito</h2>
-            <p class="text-xs text-slate-300">Nenhum token válido encontrado.</p>
+            <p class="text-xs text-slate-300">Nenhum token válido encontrado ou link incorreto.</p>
         </div>
 
         <!-- Volume do Dia -->
@@ -104,27 +104,23 @@
         let timerInterval = null;
         let tempoRestante = 0;
 
-        const treinoFichaAluno = [
+        const treinoExemploAluno = [
             {
                 nome: 'Supino Reto com Halteres',
                 grupo: 'Peitoral',
                 equipamento: 'Halter',
-                descanso: 90,
                 series: [
-                    { num: 1, anterior: '24kg × 12 @7', metodo: 'Normal' },
-                    { num: 2, anterior: '26kg × 10 @8', metodo: 'Normal' },
-                    { num: 3, anterior: '28kg × 8 @8.5', metodo: 'Normal' },
-                    { num: 4, anterior: '28kg × 8 @9', metodo: 'Drop Set', detalhe: 2 }
+                    { num: 1, anterior: '24kg × 12 @7', metodo: 'Normal', descanso: 90 },
+                    { num: 2, anterior: '26kg × 10 @8', metodo: 'Normal', descanso: 90 },
+                    { num: 3, anterior: '28kg × 8 @8.5', metodo: 'Normal', descanso: 120 },
+                    { num: 4, anterior: '28kg × 8 @9', metodo: 'Drop Set', detalhe: 2, descanso: 120 }
                 ]
             }
         ];
 
         async function inicializarAppAluno() {
             const urlParams = new URLSearchParams(window.location.search);
-            let token = urlParams.get('token');
-
-            if (token) localStorage.setItem('aluno_token', token);
-            else token = localStorage.getItem('aluno_token');
+            const token = urlParams.get('token');
 
             if (!token) {
                 document.getElementById('lista-exercicios-aluno').classList.add('hidden');
@@ -139,7 +135,7 @@
 
                 alunoAtualId = aluno.id;
                 document.getElementById('nome-aluno').innerText = aluno.nome;
-                renderizarExerciciosAluno(treinoFichaAluno);
+                renderizarExerciciosAluno(treinoExemploAluno);
             } catch (err) {
                 console.error(err);
                 document.getElementById('painel-erro').classList.remove('hidden');
@@ -174,8 +170,8 @@
                                     <span class="text-slate-500 uppercase">Ant:</span>
                                     <strong class="text-emerald-400 font-bold">${s.anterior}</strong>
                                 </div>
-                                <button onclick="dispararTimerDescanso(${ex.descanso})" class="ml-auto bg-slate-900 hover:bg-emerald-950 text-emerald-400 border border-slate-800 text-[9px] px-2 py-1 rounded-lg font-bold flex items-center gap-1">
-                                    ⏱️ ${ex.descanso}s
+                                <button onclick="dispararTimerDescanso(${s.descanso})" class="ml-auto bg-slate-900 hover:bg-emerald-950 text-emerald-400 border border-slate-800 text-[9px] px-2 py-1 rounded-lg font-bold flex items-center gap-1">
+                                    ⏱️ ${s.descanso}s
                                 </button>
                             </div>
 
@@ -221,20 +217,19 @@
             fecharRPEFullScreen();
         }
 
-        // Sistema de Alarme Sonoro via Web Audio API (Faz um "Beep" ao zerar)
         function tocarAlarmeSonoro() {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // Nota D5
+                osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
                 gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
                 osc.start();
                 osc.stop(audioCtx.currentTime + 0.5);
-            } catch (e) { console.log('Áudio bloqueado pelo navegador até interagir'); }
+            } catch (e) { console.log('Áudio aguardando interação'); }
         }
 
         function dispararTimerDescanso(segundos) {
