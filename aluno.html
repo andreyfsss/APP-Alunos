@@ -100,7 +100,7 @@
 
     <script>
         const SUPABASE_URL = 'https://dzifzikdeojazyswjguw.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5cHNjY25mcmpma3h0Y3J1ZXh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MTg3NjgsImV4cCI6MjEwODk5NDc2OH0.Y3rycAN_O1IL99OdMJsC_TRMrSEKJp4vQJho2P4D_W0';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6aWZ6aWtkZW9qYXp5c3dqZ3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MTg3NjgsImV4cCI6MjEwODk5NDc2OH0.Y3rycAN_O1IL99OdMJsC_TRMrSEKJp4vQJho2P4D_W0';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let alunoAtualId = null;
@@ -157,7 +157,6 @@
                 renderizarExerciciosAluno(treinoFichaAluno);
             } catch (err) {
                 console.error(err);
-                document.getElementById('painel-erro').classList.add('hidden'); // Ajustado para ocultar ficha se der erro
                 document.getElementById('painel-erro').classList.remove('hidden');
                 document.getElementById('lista-exercicios-aluno').classList.add('hidden');
             }
