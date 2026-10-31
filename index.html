@@ -10,26 +10,23 @@
 <body class="bg-black text-slate-100 min-h-screen p-3 md:p-6 flex flex-col items-center antialiased">
 
     <div class="max-w-md w-full space-y-5">
-        <!-- Topo & Indicador de Conexão -->
+        <!-- Header -->
         <div class="flex justify-between items-center bg-slate-950 border border-slate-900 rounded-2xl p-4 shadow-xl">
             <div>
                 <h1 class="font-black text-lg text-emerald-400 tracking-wider">AF PRO</h1>
-                <p class="text-[10px] text-slate-500">Gestão de Treinos & Alunos</p>
+                <p class="text-[10px] text-slate-500">Gestão de Treinos & Evolução</p>
             </div>
             <div class="flex items-center gap-2">
                 <span id="badge-status" class="flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-full bg-emerald-950/60 text-emerald-400 border border-emerald-800/40 font-medium">
                     <span id="dot-status" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                     <span id="texto-status">Sincronizado</span>
                 </span>
-                <button onclick="sincronizarManual()" class="bg-slate-900 hover:bg-slate-800 text-slate-300 p-1.5 rounded-lg border border-slate-800 text-xs transition-all" title="Sincronizar">
-                    🔄
-                </button>
+                <button onclick="sincronizarManual()" class="bg-slate-900 hover:bg-slate-800 text-slate-300 p-1.5 rounded-lg border border-slate-800 text-xs transition-all" title="Sincronizar">🔄</button>
             </div>
         </div>
 
-        <!-- TELA 1: LISTA DE ALUNOS (VISÃO PRINCIPAL) -->
+        <!-- TELA 1: LISTA DE ALUNOS -->
         <div id="view-lista-alunos" class="space-y-4">
-            <!-- Cadastrar Aluno -->
             <div class="bg-slate-950 border border-slate-900 rounded-2xl p-4 space-y-3 shadow-lg">
                 <h2 class="font-bold text-xs uppercase tracking-wider text-slate-400">Cadastrar Novo Aluno</h2>
                 <div class="flex gap-2">
@@ -38,7 +35,6 @@
                 </div>
             </div>
 
-            <!-- Alunos Ativos -->
             <div class="space-y-2">
                 <h2 class="font-bold text-xs uppercase tracking-wider text-slate-400 px-1">Alunos Ativos</h2>
                 <div id="container-alunos" class="space-y-2">
@@ -47,39 +43,34 @@
             </div>
         </div>
 
-        <!-- TELA 2: GESTÃO DO ALUNO SELECIONADO -->
+        <!-- TELA 2: PAINEL DO ALUNO SELECIONADO -->
         <div id="view-detalhe-aluno" class="hidden space-y-4">
-            <!-- Topo do Aluno Selecionado -->
             <div class="flex items-center justify-between bg-slate-950 border border-slate-900 rounded-2xl p-4">
                 <div class="flex items-center gap-3">
-                    <button onclick="voltarParaLista()" class="bg-slate-900 hover:bg-slate-800 text-slate-400 px-2.5 py-1.5 rounded-xl text-xs font-bold border border-slate-800">
-                        ← Voltar
-                    </button>
+                    <button onclick="voltarParaLista()" class="bg-slate-900 hover:bg-slate-800 text-slate-400 px-2.5 py-1.5 rounded-xl text-xs font-bold border border-slate-800">← Voltar</button>
                     <div>
                         <h2 id="detalhe-nome-aluno" class="font-bold text-sm text-emerald-400">Aluno</h2>
-                        <p class="text-[10px] text-slate-500">Montagem & Evolução</p>
+                        <p class="text-[10px] text-slate-500">Ficha & Prescrição Avançada</p>
                     </div>
                 </div>
-                <button id="btn-copiar-link-aluno" class="text-xs bg-emerald-950/80 hover:bg-emerald-900/80 text-emerald-400 border border-emerald-800/50 px-3 py-1.5 rounded-xl font-medium transition-all">
-                    Copiar Link
-                </button>
+                <button id="btn-copiar-link-aluno" class="text-xs bg-emerald-950/80 hover:bg-emerald-900/80 text-emerald-400 border border-emerald-800/50 px-3 py-1.5 rounded-xl font-medium transition-all">Copiar Link</button>
             </div>
 
-            <!-- Abas do Personal (Treinos vs Relatórios) -->
+            <!-- Navegação de Abas -->
             <div class="grid grid-cols-2 bg-slate-950 p-1 rounded-2xl border border-slate-900 text-xs">
-                <button id="tab-treinos" onclick="trocarAba('treinos')" class="py-2.5 rounded-xl font-bold bg-emerald-500 text-black transition-all">Treinos & Montagem</button>
+                <button id="tab-treinos" onclick="trocarAba('treinos')" class="py-2.5 rounded-xl font-bold bg-emerald-500 text-black transition-all">Ficha & Prescrição</button>
                 <button id="tab-relatorios" onclick="trocarAba('relatorios')" class="py-2.5 rounded-xl font-bold text-slate-400 hover:text-white transition-all">Relatórios & Evolução</button>
             </div>
 
-            <!-- Conteúdo Aba 1: Montador de Treino -->
+            <!-- ABA 1: CONSTRUTOR DE FICHA -->
             <div id="conteudo-treinos" class="space-y-4">
                 <div class="bg-slate-950 border border-slate-900 rounded-2xl p-4 space-y-4">
-                    <h3 class="font-bold text-xs uppercase text-slate-300">Adicionar Exercício à Ficha</h3>
+                    <h3 class="font-bold text-xs uppercase text-slate-300">Prescrever Novo Exercício</h3>
                     
                     <div class="space-y-3">
                         <div>
                             <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Nome do Exercício</label>
-                            <input type="text" id="ex-nome" placeholder="Ex: Puxada Alta Aberta" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:border-emerald-500 focus:outline-none">
+                            <input type="text" id="ex-nome" placeholder="Ex: Supino Reto no Crossover" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:border-emerald-500 focus:outline-none">
                         </div>
 
                         <div class="grid grid-cols-2 gap-2">
@@ -113,24 +104,27 @@
                             </div>
                         </div>
 
-                        <!-- Séries e Técnicas Específicas por Série -->
+                        <!-- Descanso Padrão entre Séries -->
+                        <div>
+                            <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Tempo de Descanso Pós-Série (segundos)</label>
+                            <input type="number" id="ex-descanso" value="90" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:border-emerald-500 focus:outline-none" placeholder="Ex: 90">
+                        </div>
+
+                        <!-- Construtor Modular de Séries -->
                         <div class="space-y-2 pt-2 border-t border-slate-900">
                             <div class="flex justify-between items-center">
-                                <span class="text-[11px] font-bold text-slate-300">Configuração de Séries & Técnicas</span>
+                                <span class="text-[11px] font-bold text-slate-300">Estrutura de Séries & Técnicas</span>
                                 <button onclick="adicionarLinhaSerieBuilder()" class="text-[10px] bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-slate-800 px-2.5 py-1 rounded-lg">+ Série</button>
                             </div>
-                            <div id="container-series-builder" class="space-y-2">
-                                <!-- Linha da Série gerada via JS -->
-                            </div>
+                            <div id="container-series-builder" class="space-y-2"></div>
                         </div>
 
                         <button onclick="salvarExerciciosFicha()" class="w-full bg-emerald-500 hover:bg-emerald-400 font-bold py-3 rounded-xl text-black text-xs transition-all shadow-md shadow-emerald-950 mt-2">
-                            Adicionar Exercício ao Treino
+                            Salvar Exercício na Ficha
                         </button>
                     </div>
                 </div>
 
-                <!-- Lista de Exercícios Adicionados no Treino Atual -->
                 <div class="space-y-2">
                     <h3 class="font-bold text-xs uppercase tracking-wider text-slate-400 px-1">Ficha Atual do Aluno</h3>
                     <div id="container-ficha-montada" class="space-y-3">
@@ -139,65 +133,40 @@
                 </div>
             </div>
 
-            <!-- Conteúdo Aba 2: Relatórios & Evolução (Apenas Personal) -->
+            <!-- ABA 2: RELATÓRIOS E EVOLUÇÃO -->
             <div id="conteudo-relatorios" class="hidden space-y-4">
-                <!-- Sugestão Inteligente de Carga -->
-                <div class="bg-slate-950 border border-slate-900 rounded-2xl p-4 space-y-2">
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-400">💡 Sugestão para a Próxima Semana</span>
-                    <p id="texto-sugestao-inteligente" class="text-xs text-slate-300 leading-relaxed">
-                        Com base no RPE médio da última sessão (RPE ~7.5), o aluno respondeu bem ao estímulo. **Recomendação:** Aumentar +1kg a +2kg nos exercícios multiarticulares mantendo a mesma faixa de repetições.
-                    </p>
-                </div>
-
-                <!-- Filtros de Volume -->
-                <div class="bg-slate-950 border border-slate-900 rounded-2xl p-4 space-y-4">
-                    <div class="flex justify-between items-center">
-                        <h3 class="font-bold text-xs uppercase text-slate-300">Métricas de Volume</h3>
-                        <div class="flex gap-1 text-[10px]">
-                            <button onclick="filtrarPeriodo('semanal')" id="btn-periodo-semanal" class="px-2.5 py-1 rounded-lg bg-emerald-500 text-black font-bold">Semanal</button>
-                            <button onclick="filtrarPeriodo('mensal')" id="btn-periodo-mensal" class="px-2.5 py-1 rounded-lg bg-slate-900 text-slate-400 font-medium">Mensal</button>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="bg-black border border-slate-900 p-3 rounded-xl">
-                            <span class="text-[10px] text-slate-500 uppercase font-bold">Volume Total (kg)</span>
-                            <div id="metric-vol-total" class="text-lg font-black text-emerald-400">12.450 kg</div>
-                        </div>
-                        <div class="bg-black border border-slate-900 p-3 rounded-xl">
-                            <span class="text-[10px] text-slate-500 uppercase font-bold">Total de Séries</span>
-                            <div id="metric-series-total" class="text-lg font-black text-emerald-400">48 séries</div>
-                        </div>
+                <!-- Controle Semanal vs Mensal -->
+                <div class="flex justify-between items-center bg-slate-950 p-2 border border-slate-900 rounded-2xl">
+                    <span class="text-xs font-bold text-slate-300 px-2">Escopo Visual:</span>
+                    <div class="flex gap-1 text-[10px]">
+                        <button onclick="alterarEscopo('semanal')" id="btn-escopo-semanal" class="px-3 py-1.5 rounded-xl bg-emerald-500 text-black font-bold">Semanal</button>
+                        <button onclick="alterarEscopo('mensal')" id="btn-escopo-mensal" class="px-3 py-1.5 rounded-xl bg-slate-900 text-slate-400 font-medium">Mensal</button>
                     </div>
                 </div>
 
-                <!-- Filtro por Exercício Específico -->
+                <!-- Painel de Séries por Agrupamento Muscular (Meta vs Realizado) -->
                 <div class="bg-slate-950 border border-slate-900 rounded-2xl p-4 space-y-3">
-                    <h3 class="font-bold text-xs uppercase text-slate-300">Evolução por Exercício Específico</h3>
-                    <select id="select-exercicio-evolucao" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-xs text-slate-200 focus:border-emerald-500 focus:outline-none">
-                        <option value="">Selecione um exercício para analisar...</option>
-                        <option value="Puxada Alta">Puxada Alta Aberta</option>
-                        <option value="Remada Baixa">Remada Baixa Fechada</option>
-                        <option value="Rosca Direta">Rosca Direta no Crossover</option>
+                    <h3 class="font-bold text-xs uppercase text-slate-300 flex justify-between">
+                        <span>Volume de Séries por Grupo Muscular</span>
+                        <span id="label-escopo-musculos" class="text-emerald-400">Semana Ativa</span>
+                    </h3>
+                    <div id="container-volume-muscular" class="space-y-2 text-xs">
+                        <!-- Gerado via JS -->
+                    </div>
+                </div>
+
+                <!-- Evolução Específica por Exercício (Filtro Dinâmico) -->
+                <div class="bg-slate-950 border border-slate-900 rounded-2xl p-4 space-y-3">
+                    <h3 class="font-bold text-xs uppercase text-slate-300">Filtrar Progresso por Exercício</h3>
+                    <select id="select-exercicio-evolucao" onchange="filtrarHistoricoExercicio(this.value)" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-xs text-slate-200 focus:border-emerald-500 focus:outline-none">
+                        <option value="">Selecione um exercício...</option>
+                        <option value="Remada Baixa Fechada">Remada Baixa Fechada</option>
+                        <option value="Rosca Direta com Barra Cross">Rosca Direta com Barra Cross</option>
+                        <option value="Supino Reto no Crossover">Supino Reto no Crossover</option>
                     </select>
 
                     <div id="box-grafico-progresso" class="bg-black border border-slate-900 rounded-xl p-3 text-xs space-y-2 text-slate-300">
-                        <div class="flex justify-between border-b border-slate-900 pb-1.5 text-[11px] font-bold text-emerald-400">
-                            <span>Sessão / Data</span>
-                            <span>Carga Máx × Reps</span>
-                        </div>
-                        <div class="flex justify-between text-[11px]">
-                            <span>Sessão 12/10</span>
-                            <span>20kg × 12 reps (@RPE 8)</span>
-                        </div>
-                        <div class="flex justify-between text-[11px]">
-                            <span>Sessão 19/10</span>
-                            <span>22.5kg × 10 reps (@RPE 8.5)</span>
-                        </div>
-                        <div class="flex justify-between text-[11px] font-bold text-emerald-400">
-                            <span>Sessão 26/10 (Atual)</span>
-                            <span>25kg × 10 reps (@RPE 9) 📈</span>
-                        </div>
+                        <p class="text-[11px] text-slate-500 text-center py-2">Selecione um exercício acima para visualizar a linha de evolução.</p>
                     </div>
                 </div>
             </div>
@@ -212,25 +181,32 @@
         let alunoSelecionado = null;
         let fichaExerciciosTemp = [];
 
+        // Estrutura conceitual de metas semanais por agrupamento muscular
+        const metasGrupamentoSemana = [
+            { grupo: 'Costas', meta: 16, realizadas: 12 },
+            { grupo: 'Peitoral', meta: 14, realizadas: 14 },
+            { grupo: 'Quadríceps', meta: 16, realizadas: 8 },
+            { grupo: 'Bíceps', meta: 10, realizadas: 10 },
+            { grupo: 'Tríceps', meta: 10, realizadas: 6 }
+        ];
+
         async function carregarAlunos() {
             const { data, error } = await supabaseClient.from('alunos').select('*').order('created_at', { ascending: false });
             const container = document.getElementById('container-alunos');
             
             if (error) {
                 atualizarStatusConexao(false);
-                container.innerHTML = `<p class="text-xs text-red-400 text-center py-4">Erro ao carregar alunos do banco.</p>`;
+                container.innerHTML = `<p class="text-xs text-red-400 text-center py-4">Erro ao carregar alunos.</p>`;
                 return;
             }
 
             atualizarStatusConexao(true);
-
             if (data.length === 0) {
                 container.innerHTML = `<p class="text-xs text-slate-600 text-center py-6">Nenhum aluno cadastrado ainda.</p>`;
                 return;
             }
 
             const baseURL = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
-
             container.innerHTML = data.map(aluno => {
                 const linkAluno = `${baseURL}aluno.html?token=${aluno.token}`;
                 const iniciais = aluno.nome.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
@@ -243,7 +219,7 @@
                             </div>
                             <div>
                                 <h3 class="font-bold text-sm text-slate-200 group-hover:text-emerald-400 transition-colors">${aluno.nome}</h3>
-                                <p class="text-[10px] text-slate-500">Toque para gerenciar treino & relatórios</p>
+                                <p class="text-[10px] text-slate-500">Toque para gerenciar ficha & evolução</p>
                             </div>
                         </div>
                         <button onclick="event.stopPropagation(); copiarLinkDirect('${linkAluno}')" class="text-xs bg-slate-900 hover:bg-emerald-950 text-slate-300 hover:text-emerald-400 border border-slate-800 px-3 py-1.5 rounded-xl font-medium transition-all">
@@ -262,11 +238,11 @@
             document.getElementById('view-lista-alunos').classList.add('hidden');
             document.getElementById('view-detalhe-aluno').classList.remove('hidden');
 
-            // Reseta a lista de séries do montador
             document.getElementById('container-series-builder').innerHTML = '';
             adicionarLinhaSerieBuilder();
             adicionarLinhaSerieBuilder();
             adicionarLinhaSerieBuilder();
+            renderizarMetasMusculares();
         }
 
         function voltarParaLista() {
@@ -294,45 +270,82 @@
             const index = container.children.length + 1;
 
             const div = document.createElement('div');
-            div.className = 'flex items-center gap-2 bg-black border border-slate-800 p-2 rounded-xl text-xs';
+            div.className = 'bg-black border border-slate-800 p-2.5 rounded-xl space-y-2 text-xs';
             div.innerHTML = `
-                <span class="font-bold text-slate-400 w-4">${index}</span>
-                <select class="input-tecnica-serie flex-1 bg-slate-900 border border-slate-800 rounded-lg p-1.5 text-xs text-slate-200 focus:outline-none">
-                    <option value="Normal">Série Normal</option>
-                    <option value="Drop Set">Drop Set (Múltiplas reduções)</option>
-                    <option value="Cluster Set">Cluster Set / Rest Pause</option>
-                </select>
-                <button onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-300 px-1 font-bold">✕</button>
+                <div class="flex items-center gap-2">
+                    <span class="font-bold text-slate-400 w-4">${index}</span>
+                    <select onchange="trocarTipoSerieBuilder(this)" class="select-tipo-serie flex-1 bg-slate-900 border border-slate-800 rounded-lg p-1.5 text-xs text-slate-200 focus:outline-none">
+                        <option value="Normal">Série Normal</option>
+                        <option value="Drop Set">Drop Set (Múltiplos Drops)</option>
+                        <option value="Rest Pause">Rest-Pause (Pausas Curtas)</option>
+                        <option value="Cluster Set">Cluster Set (Pausa Intra-Série)</option>
+                    </select>
+                    <button onclick="this.parentElement.parentElement.remove()" class="text-red-400 hover:text-red-300 px-1 font-bold">✕</button>
+                </div>
+                <div class="box-metadata-tecnica hidden text-[10px] bg-slate-900/60 p-2 rounded-lg space-y-1 text-slate-400">
+                    <!-- Configurações específicas da técnica -->
+                </div>
             `;
             container.appendChild(div);
+        }
+
+        function trocarTipoSerieBuilder(select) {
+            const box = select.parentElement.parentElement.querySelector('.box-metadata-tecnica');
+            const tipo = select.value;
+
+            if (tipo === 'Drop Set') {
+                box.classList.remove('hidden');
+                box.innerHTML = `
+                    <label class="block">Número de reduções (Drops):</label>
+                    <input type="number" min="1" max="5" value="2" class="input-num-drops w-full bg-black border border-slate-800 rounded p-1 text-white">
+                `;
+            } else if (tipo === 'Rest Pause' || tipo === 'Cluster Set') {
+                box.classList.remove('hidden');
+                box.innerHTML = `
+                    <label class="block">Tempo de descanso intra-série (segundos):</label>
+                    <input type="number" value="15" class="input-intra-rest w-full bg-black border border-slate-800 rounded p-1 text-white">
+                `;
+            } else {
+                box.classList.add('hidden');
+                box.innerHTML = '';
+            }
         }
 
         function salvarExerciciosFicha() {
             const nome = document.getElementById('ex-nome').value.trim();
             const musculo = document.getElementById('ex-musculo').value;
             const equipamento = document.getElementById('ex-equipamento').value;
+            const descanso = parseInt(document.getElementById('ex-descanso').value) || 90;
 
             if (!nome) {
                 alert('Digite o nome do exercício!');
                 return;
             }
 
-            const tecnicas = Array.from(document.querySelectorAll('.input-tecnica-serie')).map(s => s.value);
+            const seriesNodes = document.querySelectorAll('#container-series-builder > div');
+            const seriesData = Array.from(seriesNodes).map((node, i) => {
+                const tipo = node.querySelector('.select-tipo-serie').value;
+                let drops = 0;
+                let intraRest = 0;
 
-            fichaExerciciosTemp.push({
-                nome,
-                musculo,
-                equipamento,
-                series: tecnicas
+                if (tipo === 'Drop Set') {
+                    const inputDrop = node.querySelector('.input-num-drops');
+                    drops = inputDrop ? parseInt(inputDrop.value) : 2;
+                } else if (tipo === 'Rest Pause' || tipo === 'Cluster Set') {
+                    const inputIntra = node.querySelector('.input-intra-rest');
+                    intraRest = inputIntra ? parseInt(inputIntra.value) : 15;
+                }
+
+                return { num: i + 1, tipo, drops, intraRest };
             });
 
+            fichaExerciciosTemp.push({ nome, musculo, equipamento, descanso, series: seriesData });
             renderizarFichaMontada();
             document.getElementById('ex-nome').value = '';
         }
 
         function renderizarFichaMontada() {
             const container = document.getElementById('container-ficha-montada');
-            
             if (fichaExerciciosTemp.length === 0) {
                 container.innerHTML = `<p class="text-xs text-slate-600 text-center py-6">Nenhum exercício montado para este aluno ainda.</p>`;
                 return;
@@ -344,6 +357,7 @@
                         <div>
                             <span class="text-[10px] uppercase font-bold text-emerald-400">${ex.musculo} • ${ex.equipamento}</span>
                             <h4 class="font-bold text-xs text-slate-200">${i + 1}. ${ex.nome}</h4>
+                            <span class="text-[9px] text-slate-500">Descanso pós-série: ${ex.descanso}s</span>
                         </div>
                         <div class="flex items-center gap-1">
                             <button onclick="reordenarExercicios(${i}, ${i-1})" ${i === 0 ? 'disabled class="opacity-30"' : ''} class="text-xs bg-black px-2 py-1 rounded border border-slate-800 text-slate-300">▲</button>
@@ -352,7 +366,7 @@
                         </div>
                     </div>
                     <div class="text-[10px] text-slate-400 space-y-0.5 border-t border-slate-900 pt-1.5">
-                        ${ex.series.map((t, idx) => `<div>Série ${idx + 1}: <strong class="text-slate-300">${t}</strong></div>`).join('')}
+                        ${ex.series.map(s => `<div>Série ${s.num}: <strong class="text-slate-300">${s.tipo}</strong> ${s.drops ? `(${s.drops} drops)` : ''} ${s.intraRest ? `(${s.intraRest}s intra)` : ''}</div>`).join('')}
                     </div>
                 </div>
             `).join('');
@@ -370,19 +384,73 @@
             renderizarFichaMontada();
         }
 
+        function renderizarMetasMusculares() {
+            const container = document.getElementById('container-volume-muscular');
+            container.innerHTML = metasGrupamentoSemana.map(m => {
+                const pct = Math.min(100, Math.round((m.realizadas / m.meta) * 100));
+                return `
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-[11px]">
+                            <span class="font-bold text-slate-200">${m.grupo}</span>
+                            <span><strong class="text-emerald-400">${m.realizadas}</strong> / ${m.meta} séries (${pct}%)</span>
+                        </div>
+                        <div class="w-full h-1.5 bg-black rounded-full overflow-hidden border border-slate-900">
+                            <div class="h-full bg-emerald-500 rounded-full" style="width: ${pct}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function alterarEscopo(escopo) {
+            document.getElementById('label-escopo-musculos').innerText = escopo === 'semanal' ? 'Semana Ativa' : 'Mês Ativo';
+            if (escopo === 'semanal') {
+                document.getElementById('btn-escopo-semanal').className = 'px-3 py-1.5 rounded-xl bg-emerald-500 text-black font-bold';
+                document.getElementById('btn-escopo-mensal').className = 'px-3 py-1.5 rounded-xl bg-slate-900 text-slate-400 font-medium';
+            } else {
+                document.getElementById('btn-escopo-mensal').className = 'px-3 py-1.5 rounded-xl bg-emerald-500 text-black font-bold';
+                document.getElementById('btn-escopo-semanal').className = 'px-3 py-1.5 rounded-xl bg-slate-900 text-slate-400 font-medium';
+            }
+        }
+
+        function filtrarHistoricoExercicio(nomeEx) {
+            const box = document.getElementById('box-grafico-progresso');
+            if (!nomeEx) {
+                box.innerHTML = `<p class="text-[11px] text-slate-500 text-center py-2">Selecione um exercício acima para ver o histórico.</p>`;
+                return;
+            }
+
+            box.innerHTML = `
+                <div class="flex justify-between border-b border-slate-900 pb-1.5 text-[11px] font-bold text-emerald-400">
+                    <span>Sessão / Data</span>
+                    <span>Carga × Reps (@RPE)</span>
+                </div>
+                <div class="flex justify-between text-[11px]">
+                    <span>12/10/2026</span>
+                    <span>20kg × 12 reps (@RPE 8)</span>
+                </div>
+                <div class="flex justify-between text-[11px]">
+                    <span>19/10/2026</span>
+                    <span>22.5kg × 10 reps (@RPE 8.5)</span>
+                </div>
+                <div class="flex justify-between text-[11px] font-bold text-emerald-400">
+                    <span>26/10/2026 (Último)</span>
+                    <span>25kg × 10 reps (@RPE 9) 📈</span>
+                </div>
+            `;
+        }
+
         async function cadastrarAluno() {
             const input = document.getElementById('nome-novo-aluno');
             const nome = input.value.trim();
-
             if (!nome) {
                 alert('Digite o nome do aluno!');
                 return;
             }
 
             const { error } = await supabaseClient.from('alunos').insert([{ nome }]);
-
             if (error) {
-                alert('Erro ao cadastrar aluno: ' + error.message);
+                alert('Erro ao cadastrar: ' + error.message);
             } else {
                 input.value = '';
                 carregarAlunos();
@@ -391,7 +459,7 @@
 
         function copiarLinkDirect(link) {
             navigator.clipboard.writeText(link);
-            alert('Link de acesso exclusivo copiado para a área de transferência!');
+            alert('Link exclusivo copiado!');
         }
 
         function atualizarStatusConexao(online) {
