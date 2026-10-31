@@ -115,10 +115,13 @@
                 <div id="subbox-volume" class="bg-af-card border border-slate-800 rounded-2xl p-4 text-center text-xs text-slate-400 py-6">
                     <div class="text-sm font-bold text-white mb-1" id="admin-vol-total">0 kg</div>
                     <p class="text-[10px] text-slate-500">Volume total acumulado nas sessões concluídas.</p>
+                    <p class="text-[10px] text-slate-500 mt-1" id="admin-ultima-sessao"></p>
+                    <div id="admin-vol-grupos" class="mt-3 space-y-1 text-left"></div>
                 </div>
                 <div id="subbox-series" class="hidden bg-af-card border border-slate-800 rounded-2xl p-4 text-center text-xs text-slate-400 py-6">
                     <div class="text-sm font-bold text-white mb-1" id="admin-qtd-series">0</div>
                     <p class="text-[10px] text-slate-500">Total de séries validadas pelo atleta.</p>
+                    <div id="admin-series-grupos" class="mt-3 space-y-1 text-left"></div>
                 </div>
                 <div id="subbox-grupos" class="hidden bg-af-card border border-slate-800 rounded-2xl p-4 text-center text-xs text-slate-400 py-6">
                     <div id="admin-lista-grupos" class="text-xs text-slate-200 space-y-1">Nenhum registro de grupo muscular ainda.</div>
@@ -312,38 +315,53 @@
             document.getElementById('val-menos-peso').innerText = menos;
         }
 
+        async function recarregarHistoricoAdmin() {
+            if (!alunoSelecionado) return;
+            const { data, error } = await supabaseClient.from('alunos').select('treinos, historico').eq('id', alunoSelecionado.id).single();
+            if (error) { alert('Erro ao atualizar relatório: ' + error.message); return; }
+            // não sobrescreve 'treinos' local (pode ter edição em andamento); só traz o histórico novo
+            historicoTreinosAluno = (data && data.historico) ? data.historico : [];
+        }
+
         function atualizarRelatoriosAdmin() {
-            let volTotal = historicoTreinosAluno.reduce((acc, h) => acc + (h.volume || 0), 0);
-            let totalSeries = historicoTreinosAluno.reduce((acc, h) => acc + (h.qtdSeriesValidadas || 0), 0);
-            
+            const mapaMusculo = {};
+            treinosDoAluno.forEach(t => (t.exercicios || []).forEach(e => { if (e.musculo) mapaMusculo[e.nome.toLowerCase()] = e.musculo; }));
+
+            const grupos = {};
+            let volTotal = 0, totalSeries = 0;
+            historicoTreinosAluno.forEach(h => {
+                volTotal += h.volume || 0;
+                totalSeries += h.qtdSeriesValidadas || 0;
+                (h.exerciciosRealizados || []).forEach(exR => {
+                    const musculo = exR.musculo || mapaMusculo[(exR.nome || '').toLowerCase()] || 'Sem grupo';
+                    const g = grupos[musculo] || (grupos[musculo] = { volume: 0, series: 0 });
+                    const volEx = (typeof exR.volume === 'number') ? exR.volume : (exR.series || []).reduce((s, x) => s + (x.carga || 0) * (x.reps || 0), 0);
+                    g.volume += volEx;
+                    g.series += (exR.series || []).length;
+                });
+            });
+
             document.getElementById('admin-vol-total').innerText = `${volTotal.toLocaleString('pt-BR')} kg`;
             document.getElementById('admin-qtd-series').innerText = totalSeries;
 
-            // Coleta e lista os grupos musculares trabalhados no histórico
-            let gruposSet = new Set();
-            historicoTreinosAluno.forEach(h => {
-                if (h.exerciciosRealizados) {
-                    h.exerciciosRealizados.forEach(exR => {
-                        // Busca o músculo correspondente nas divisões cadastradas
-                        treinosDoAluno.forEach(t => {
-                            if (t.exercicios) {
-                                let match = t.exercicios.find(e => e.nome.toLowerCase() === exR.nome.toLowerCase());
-                                if (match && match.musculo) gruposSet.add(match.musculo);
-                            }
-                        });
-                    });
-                }
-            });
+            const ultima = historicoTreinosAluno.length ? historicoTreinosAluno[historicoTreinosAluno.length - 1] : null;
+            document.getElementById('admin-ultima-sessao').innerText = ultima
+                ? `${historicoTreinosAluno.length} sessão(ões) • última: ${new Date(ultima.data).toLocaleString('pt-BR')}`
+                : 'Nenhuma sessão registrada ainda.';
 
-            const containerGrupos = document.getElementById('admin-lista-grupos');
-            if (gruposSet.size > 0) {
-                containerGrupos.innerHTML = Array.from(gruposSet).map(g => `<div class="bg-black border border-slate-800 p-2 rounded-lg font-bold text-af-orange">${g} - Treinado</div>`).join('');
-            } else {
-                containerGrupos.innerHTML = `Nenhum grupo muscular registrado ainda.`;
-            }
+            const linha = (nome, valor) => `<div class="flex justify-between bg-black border border-slate-800 p-2 rounded-lg"><span class="font-bold text-af-orange">${nome}</span><span class="text-slate-200 font-bold">${valor}</span></div>`;
+            const nomes = Object.keys(grupos);
+            const vazio = '<p class="text-[10px] text-slate-500 text-center">Nenhum grupo muscular registrado ainda.</p>';
+
+            document.getElementById('admin-vol-grupos').innerHTML = nomes.length
+                ? nomes.sort((a, b) => grupos[b].volume - grupos[a].volume).map(n => linha(n, `${grupos[n].volume.toLocaleString('pt-BR')} kg`)).join('') : '';
+            document.getElementById('admin-series-grupos').innerHTML = nomes.length
+                ? nomes.sort((a, b) => grupos[b].series - grupos[a].series).map(n => linha(n, `${grupos[n].series} séries`)).join('') : '';
+            document.getElementById('admin-lista-grupos').innerHTML = nomes.length
+                ? nomes.sort((a, b) => grupos[b].volume - grupos[a].volume).map(n => linha(n, `${grupos[n].volume.toLocaleString('pt-BR')} kg • ${grupos[n].series} séries`)).join('') : vazio;
         }
 
-        function mudarAbaAdminAluno(aba) {
+        async function mudarAbaAdminAluno(aba) {
             if (aba === 'treinos') {
                 document.getElementById('sec-admin-treinos').classList.remove('hidden');
                 document.getElementById('sec-admin-relatorios').classList.add('hidden');
@@ -354,6 +372,8 @@
                 document.getElementById('sec-admin-treinos').classList.add('hidden');
                 document.getElementById('tab-admin-relatorios').className = 'flex-1 py-2 rounded-xl bg-af-orange text-black font-bold transition-all';
                 document.getElementById('tab-admin-treinos').className = 'flex-1 py-2 rounded-xl text-slate-400 hover:text-white font-bold transition-all';
+                await recarregarHistoricoAdmin();
+                calcularEvolucaoRecenteAdmin();
                 atualizarRelatoriosAdmin();
             }
         }
@@ -415,7 +435,12 @@
 
         async function salvarTreinosNoSupabase() {
             if (!alunoSelecionado) return;
-            try { await supabaseClient.from('alunos').update({ treinos: treinosDoAluno }).eq('id', alunoSelecionado.id); } catch (err) {}
+            try {
+                const { data, error } = await supabaseClient.from('alunos').update({ treinos: treinosDoAluno }).eq('id', alunoSelecionado.id).select('id');
+                if (error || !data || data.length === 0) {
+                    alert('ATENÇÃO: não salvou no banco. ' + (error ? error.message : 'Nenhuma linha atualizada (verifique a política UPDATE/RLS no Supabase).'));
+                }
+            } catch (err) { alert('ATENÇÃO: falha de conexão ao salvar. ' + err.message); }
         }
 
         function renderizarTreinosAluno() {
