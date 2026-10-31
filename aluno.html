@@ -25,13 +25,13 @@
         </div>
     </header>
 
-    <!-- Barra Flutuante de Descanso -->
+    <!-- Barra Flutuante de Descanso com Fôlego Único -->
     <div id="bar-timer-descanso" class="hidden fixed top-16 left-0 right-0 z-30 bg-emerald-950/95 border-b border-emerald-800 backdrop-blur p-3 shadow-2xl">
         <div class="max-w-md mx-auto flex justify-between items-center text-xs">
             <span class="text-emerald-300 font-bold flex items-center gap-1.5">
-                ⏱️ Descanso Obrigatório: <span id="display-tempo-timer" class="text-sm text-emerald-400 font-black">01:30</span>
+                ⏱️ Descanso: <span id="display-tempo-timer" class="text-sm text-emerald-400 font-black">01:30</span>
             </span>
-            <button onclick="adicionarTempoTimer(30)" class="bg-slate-900 text-emerald-400 text-[10px] px-2.5 py-1 rounded-lg font-bold border border-slate-800">+30s Fôlego</button>
+            <button id="btn-folego-extra" onclick="adicionarTempoTimer(30)" class="bg-slate-900 text-emerald-400 text-[10px] px-2.5 py-1 rounded-lg font-bold border border-slate-800 transition-all">+30s Fôlego (1x)</button>
         </div>
     </div>
 
@@ -115,6 +115,7 @@
         let inputRPEAtivo = null;
         let timerInterval = null;
         let tempoRestante = 0;
+        let folegoUtilizado = false;
         let treinosDoAlunoCarregados = [];
 
         async function carregarDadosAluno() {
@@ -175,34 +176,58 @@
             document.getElementById('view-divisoes-aluno').classList.remove('hidden');
         }
 
+        function alternarColapsoExercicio(cabecalhoElement) {
+            const cardBody = cabecalhoElement.nextElementSibling;
+            const seta = cabecalhoElement.querySelector('.seta-toggle');
+            if (cardBody.classList.contains('hidden')) {
+                cardBody.classList.remove('hidden');
+                if (seta) seta.style.transform = 'rotate(180deg)';
+            } else {
+                cardBody.classList.add('hidden');
+                if (seta) seta.style.transform = 'rotate(0deg)';
+            }
+        }
+
         function renderizarExerciciosAluno(exercicios) {
             const container = document.getElementById('lista-exercicios-aluno');
 
             container.innerHTML = exercicios.map((ex, index) => {
                 const htmlSeries = ex.seriesConfig.map(s => {
-                    let htmlDrops = '';
+                    let htmlDetalheMetodo = '';
+                    
                     if (s.metodo === 'Drop Set' && s.detalhe > 0) {
                         for (let d = 1; d <= s.detalhe; d++) {
-                            htmlDrops += `
-                                <div class="grid grid-cols-3 gap-1 pt-1 border-t border-slate-900 mt-1">
-                                    <span class="col-span-3 text-[9px] text-emerald-400 font-bold uppercase">↳ Drop ${d}</span>
+                            htmlDetalheMetodo += `
+                                <div class="grid grid-cols-3 gap-1 pt-1.5 border-t border-slate-900 mt-1.5">
+                                    <span class="col-span-3 text-[10px] text-emerald-400 font-black uppercase tracking-wide">↳ Drop ${d} (Sem Pausa)</span>
                                     <input type="number" step="0.5" class="w-full bg-slate-900 border border-slate-800 rounded p-1 text-center text-xs text-white" placeholder="kg">
                                     <input type="number" class="w-full bg-slate-900 border border-slate-800 rounded p-1 text-center text-xs text-white" placeholder="reps">
-                                    <div class="text-[9px] text-slate-500 flex items-center justify-center font-bold">Sem pausa</div>
+                                    <div class="text-[9px] text-slate-500 flex items-center justify-center font-bold">Falha</div>
+                                </div>
+                            `;
+                        }
+                    } else if ((s.metodo === 'Rest Pause' || s.metodo === 'Cluster Set') && s.detalhe > 0) {
+                        for (let b = 1; b <= s.detalhe; b++) {
+                            htmlDetalheMetodo += `
+                                <div class="grid grid-cols-3 gap-1 pt-1.5 border-t border-slate-900 mt-1.5">
+                                    <span class="col-span-3 text-[10px] text-cyan-400 font-black uppercase tracking-wide">↳ ${s.metodo} • Bloco ${b}</span>
+                                    <input type="number" step="0.5" class="w-full bg-slate-900 border border-slate-800 rounded p-1 text-center text-xs text-white" placeholder="kg">
+                                    <input type="number" class="w-full bg-slate-900 border border-slate-800 rounded p-1 text-center text-xs text-white" placeholder="reps">
+                                    <div class="text-[9px] text-cyan-500 flex items-center justify-center font-bold">Pausa curta</div>
                                 </div>
                             `;
                         }
                     }
 
                     return `
-                        <div class="bg-black border border-slate-800 p-2 rounded-xl space-y-1.5 serie-item">
+                        <div class="bg-black border border-slate-800 p-2.5 rounded-xl space-y-2 serie-item">
                             <div class="flex items-center gap-1.5">
-                                <span class="w-4 text-center font-bold text-[11px] text-slate-400">${s.num}</span>
-                                <div class="bg-slate-900 border border-slate-800/80 px-2 py-0.5 rounded-lg text-[9px] text-slate-300 flex items-center gap-1">
-                                    <span class="text-slate-500 uppercase">Método:</span>
+                                <span class="w-4 text-center font-bold text-[11px] text-slate-400">${s.num}ª</span>
+                                <div class="bg-slate-900 border border-slate-800/80 px-2 py-0.5 rounded-lg text-[10px] text-slate-300 flex items-center gap-1">
+                                    <span class="text-slate-500 uppercase text-[9px]">Método:</span>
                                     <strong class="text-emerald-400 font-bold">${s.metodo}</strong>
                                 </div>
-                                <button onclick="dispararTimerDescanso(${s.descanso || 90})" class="ml-auto bg-slate-900 hover:bg-emerald-950 text-emerald-400 border border-slate-800 text-[9px] px-2 py-1 rounded-lg font-bold flex items-center gap-1">
+                                <button onclick="dispararTimerDescanso(${s.descanso || 90})" class="ml-auto bg-slate-900 hover:bg-emerald-950 text-emerald-400 border border-slate-800 text-[10px] px-2 py-1 rounded-lg font-bold flex items-center gap-1">
                                     ⏱️ ${s.descanso || 90}s
                                 </button>
                             </div>
@@ -212,19 +237,22 @@
                                 <input type="number" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-1.5 text-center text-xs font-bold text-white focus:border-emerald-500 focus:outline-none" placeholder="reps">
                                 <input readonly onclick="abrirRPEFullScreen(this)" type="text" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-1.5 text-center text-xs font-bold text-emerald-400 cursor-pointer focus:outline-none" placeholder="RPE">
                             </div>
-                            ${htmlDrops}
+                            ${htmlDetalheMetodo}
                         </div>
                     `;
                 }).join('');
 
                 return `
                     <div class="bg-slate-950 border border-slate-900 rounded-2xl overflow-hidden shadow-md">
-                        <div class="p-3.5 bg-slate-950 flex justify-between items-center">
+                        <div onclick="alternarColapsoExercicio(this)" class="p-3.5 bg-slate-950 flex justify-between items-center cursor-pointer select-none hover:bg-slate-900/50 transition-colors">
                             <div>
                                 <span class="text-[9px] font-bold uppercase tracking-wider text-emerald-400">${ex.musculo} • ${ex.equipamento}</span>
                                 <h3 class="font-bold text-xs text-slate-100">${index + 1}. ${ex.nome}</h3>
                             </div>
-                            <span class="text-[9px] bg-black text-slate-400 px-2 py-0.5 rounded border border-slate-800">${ex.qtdSeries} Séries</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[9px] bg-black text-slate-400 px-2 py-0.5 rounded border border-slate-800">${ex.qtdSeries} Séries</span>
+                                <span class="seta-toggle text-xs text-slate-400 transition-transform duration-200" style="transform: rotate(180deg);">▼</span>
+                            </div>
                         </div>
                         <div class="p-2.5 border-t border-slate-900 space-y-2 bg-slate-950">
                             ${htmlSeries}
@@ -266,6 +294,13 @@
 
         function dispararTimerDescanso(segundos) {
             tempoRestante = segundos;
+            folegoUtilizado = false; // Reseta o direito ao fôlego para este novo timer
+            
+            const btnFolego = document.getElementById('btn-folego-extra');
+            btnFolego.classList.remove('hidden');
+            btnFolego.innerText = '+30s Fôlego (1x)';
+            btnFolego.disabled = false;
+
             document.getElementById('bar-timer-descanso').classList.remove('hidden');
             atualizarDisplayTimer();
 
@@ -289,8 +324,17 @@
         }
 
         function adicionarTempoTimer(secs) {
+            if (folegoUtilizado) return; // Se já usou, não faz nada
+            
+            folegoUtilizado = true;
             tempoRestante += secs;
             atualizarDisplayTimer();
+
+            // Esconde ou desativa o botão imediatamente após o clique único
+            const btnFolego = document.getElementById('btn-folego-extra');
+            btnFolego.classList.add('opacity-40', 'cursor-not-allowed');
+            btnFolego.innerText = 'Fôlego Usado';
+            btnFolego.disabled = true;
         }
 
         function fecharTimerDescanso() {
