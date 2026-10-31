@@ -16,29 +16,63 @@
         <div class="max-w-md mx-auto flex justify-between items-center">
             <div>
                 <h1 id="nome-aluno" class="font-bold text-sm text-emerald-400">Carregando aluno...</h1>
-                <p id="sub-treino" class="text-xs text-slate-500">Sessão Ativa</p>
+                <p id="sub-treino-ativo" class="text-xs text-slate-500">Peitoral / Tríceps / Ombro</p>
             </div>
-            <div class="flex items-center gap-2">
-                <span id="badge-status-aluno" class="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-emerald-950/60 text-emerald-400 border border-emerald-800/40">
-                    <span id="dot-status-aluno" class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span id="texto-status-aluno">Online</span>
-                </span>
-                <button onclick="sincronizarManualAluno()" class="bg-slate-900 hover:bg-slate-800 text-slate-300 p-1 rounded-lg border border-slate-800 text-xs" title="Sincronizar">🔄</button>
-            </div>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800">Online</span>
         </div>
     </header>
 
-    <!-- Bar Flutuante de Timer de Descanso -->
-    <div id="bar-timer-descanso" class="hidden fixed top-16 left-0 right-0 z-30 bg-emerald-950/95 border-b border-emerald-800 backdrop-blur p-2.5 shadow-2xl">
+    <!-- Barra de Cronômetro Flutuante de Descanso -->
+    <div id="bar-timer-descanso" class="hidden fixed top-16 left-0 right-0 z-30 bg-emerald-950/95 border-b border-emerald-800 backdrop-blur p-3 shadow-2xl">
         <div class="max-w-md mx-auto flex justify-between items-center text-xs">
             <span class="text-emerald-300 font-bold flex items-center gap-1.5">
                 ⏱️ Descanso: <span id="display-tempo-timer" class="text-sm text-emerald-400 font-black">01:30</span>
             </span>
             <div class="flex gap-1.5">
-                <button onclick="adicionarTempoTimer(30)" class="bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-slate-800 text-[10px] px-2 py-1 rounded-lg font-bold">+30s</button>
-                <button onclick="fecharTimerDescanso()" class="bg-emerald-500 hover:bg-emerald-400 text-black text-[10px] px-2.5 py-1 rounded-lg font-bold">Pular</button>
+                <button onclick="adicionarTempoTimer(30)" class="bg-slate-900 text-emerald-400 text-[10px] px-2 py-1 rounded-lg font-bold border border-slate-800">+30s</button>
+                <button onclick="fecharTimerDescanso()" class="bg-emerald-500 text-black text-[10px] px-2.5 py-1 rounded-lg font-bold">Pular</button>
             </div>
         </div>
+    </div>
+
+    <!-- TELA CHEIA INTERATIVA DE RPE (MODAL GIGANTE) -->
+    <div id="modal-rpe-fullscreen" class="fixed inset-0 bg-black/95 backdrop-blur-md hidden z-50 flex flex-col justify-between p-5">
+        <div class="flex justify-between items-center border-b border-slate-900 pb-3">
+            <div>
+                <span class="text-[10px] uppercase font-bold text-emerald-400">Escala de Esforço</span>
+                <h3 class="text-base font-bold text-white">Selecione a Nota RPE</h3>
+            </div>
+            <button onclick="fecharRPEFullScreen()" class="bg-slate-900 text-slate-300 px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-800">✕ Fechar</button>
+        </div>
+
+        <div class="grid grid-cols-1 gap-2.5 my-auto max-w-sm w-full mx-auto">
+            <button onclick="selecionarRPE('10')" class="bg-slate-950 hover:bg-emerald-950 border border-slate-800 hover:border-emerald-500 p-3.5 rounded-2xl text-left transition-all">
+                <div class="flex justify-between font-bold text-sm text-emerald-400"><span>RPE 10</span><span>0 RIR (Falha Total)</span></div>
+                <p class="text-[11px] text-slate-400 mt-0.5">Esforço máximo. Impossível fazer outra repetição limpa.</p>
+            </button>
+            <button onclick="selecionarRPE('9.5')" class="bg-slate-950 hover:bg-emerald-950 border border-slate-800 hover:border-emerald-500 p-3.5 rounded-2xl text-left transition-all">
+                <div class="flex justify-between font-bold text-sm text-emerald-400"><span>RPE 9.5</span><span>Parcial / Extremo</span></div>
+                <p class="text-[11px] text-slate-400 mt-0.5">Não faria outra repetição completa, apenas parcial.</p>
+            </button>
+            <button onclick="selecionarRPE('9')" class="bg-slate-950 hover:bg-emerald-950 border border-slate-800 hover:border-emerald-500 p-3.5 rounded-2xl text-left transition-all">
+                <div class="flex justify-between font-bold text-sm text-emerald-400"><span>RPE 9</span><span>1 Repetição na Reserva</span></div>
+                <p class="text-[11px] text-slate-400 mt-0.5">Muito difícil. Sobrou exatamente 1 repetição no tanque.</p>
+            </button>
+            <button onclick="selecionarRPE('8.5')" class="bg-slate-950 hover:bg-emerald-950 border border-slate-800 hover:border-emerald-500 p-3.5 rounded-2xl text-left transition-all">
+                <div class="flex justify-between font-bold text-sm text-emerald-400"><span>RPE 8.5</span><span>1 a 2 Repetições</span></div>
+                <p class="text-[11px] text-slate-400 mt-0.5">Difícil. Sobraram de 1 a 2 repetições limpas.</p>
+            </button>
+            <button onclick="selecionarRPE('8')" class="bg-slate-950 hover:bg-emerald-950 border border-slate-800 hover:border-emerald-500 p-3.5 rounded-2xl text-left transition-all">
+                <div class="flex justify-between font-bold text-sm text-emerald-400"><span>RPE 8</span><span>2 Repetições na Reserva</span></div>
+                <p class="text-[11px] text-slate-400 mt-0.5">Difícil, mas totalmente controlado.</p>
+            </button>
+            <button onclick="selecionarRPE('7')" class="bg-slate-950 hover:bg-emerald-950 border border-slate-800 hover:border-emerald-500 p-3.5 rounded-2xl text-left transition-all">
+                <div class="flex justify-between font-bold text-sm text-emerald-400"><span>RPE 7</span><span>3 Repetições na Reserva</span></div>
+                <p class="text-[11px] text-slate-400 mt-0.5">Moderado. A execução se mantém muito limpa.</p>
+            </button>
+        </div>
+
+        <div class="text-center text-[10px] text-slate-600">Toque em uma das opções acima para preencher automaticamente</div>
     </div>
 
     <!-- Conteúdo Principal -->
@@ -46,107 +80,57 @@
         
         <div id="painel-erro" class="hidden bg-red-950/40 border border-red-900/60 p-4 rounded-2xl text-center space-y-2">
             <h2 class="font-bold text-red-400 text-xs">Acesso Restrito</h2>
-            <p class="text-xs text-slate-300">Nenhum token válido encontrado. Solicite seu link exclusivo ao seu personal trainer.</p>
+            <p class="text-xs text-slate-300">Nenhum token válido encontrado. Solicite seu link exclusivo ao personal.</p>
         </div>
 
         <!-- Volume do Dia -->
         <div class="bg-slate-950 border border-slate-900 rounded-2xl p-4 space-y-1 shadow-lg">
             <span class="text-[10px] uppercase font-bold text-slate-500">Volume do treino de hoje</span>
             <div class="text-2xl font-black text-emerald-400" id="volume-total-aluno">0 kg</div>
-            <p class="text-[11px] text-slate-400">Treino anterior: 26/10 • 4.548 kg (19 séries)</p>
+            <p class="text-[11px] text-slate-400">Sessão Ativa: Peitoral, Tríceps e Ombro</p>
         </div>
-
-        <!-- Meta de Séries da Semana para o Aluno -->
-        <div class="bg-slate-950 border border-slate-900 rounded-2xl p-3.5 space-y-2">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Progresso de Séries Semanal</span>
-            <div class="grid grid-cols-2 gap-2 text-[11px]">
-                <div class="bg-black border border-slate-900 p-2 rounded-xl">
-                    <span class="text-slate-500">Costas</span>
-                    <div class="font-bold text-emerald-400">12 / 16 séries</div>
-                </div>
-                <div class="bg-black border border-slate-900 p-2 rounded-xl">
-                    <span class="text-slate-500">Bíceps</span>
-                    <div class="font-bold text-emerald-400">10 / 10 séries ✓</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Legenda de RPE -->
-        <details class="bg-slate-950 border border-slate-900 rounded-2xl text-xs text-slate-300 overflow-hidden">
-            <summary class="p-3.5 font-medium cursor-pointer hover:bg-slate-900 flex justify-between items-center text-emerald-400">
-                <span>▶ Guia Completo da Escala RPE</span>
-                <span class="text-slate-500 text-[10px]">toque para ler</span>
-            </summary>
-            <div class="p-3.5 border-t border-slate-900 space-y-2 text-[11px] text-slate-400 bg-black/50">
-                <p><strong class="text-slate-100">RPE 10 (0 RIR):</strong> Esforço máximo. Falha muscular (0 reps extras).</p>
-                <p><strong class="text-slate-100">RPE 9.5:</strong> Extremamente difícil. Não faria outra repetição completa (parcial).</p>
-                <p><strong class="text-slate-100">RPE 9 (1 RIR):</strong> Muito difícil. Restou exatamente 1 repetição na reserva.</p>
-                <p><strong class="text-slate-100">RPE 8.5:</strong> Difícil. Restaram de 1 a 2 repetições.</p>
-                <p><strong class="text-slate-100">RPE 8 (2 RIR):</strong> Difícil, mas controlado. Restaram 2 repetições.</p>
-                <p><strong class="text-slate-100">RPE 7.5:</strong> Moderado a difícil. Restaram de 2 a 3 repetições.</p>
-                <p><strong class="text-slate-100">RPE 7 (3 RIR):</strong> Moderado. Restaram 3 repetições na reserva.</p>
-                <p><strong class="text-slate-100">RPE 6 ou menor (4+ RIR):</strong> Esforço leve/aquecimento.</p>
-            </div>
-        </details>
 
         <!-- Lista de Exercícios -->
         <div id="lista-exercicios-aluno" class="space-y-4"></div>
 
-        <div id="container-botao-finalizar" class="pt-2">
-            <button onclick="finalizarTreinoAluno()" class="w-full bg-emerald-500 hover:bg-emerald-400 font-bold py-3.5 rounded-2xl transition-all shadow-lg shadow-emerald-950 text-black text-xs tracking-wide">
-                Finalizar e Registrar Treino 🚀
-            </button>
-        </div>
+        <button onclick="finalizarTreinoAluno()" class="w-full bg-emerald-500 hover:bg-emerald-400 font-bold py-3.5 rounded-2xl transition-all shadow-lg shadow-emerald-950 text-black text-xs tracking-wide">
+            Finalizar e Registrar Treino 🚀
+        </button>
     </main>
-
-    <!-- Modal de Resumo -->
-    <div id="modal-conclusao-aluno" class="fixed inset-0 bg-black/90 backdrop-blur-md hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-slate-950 border border-slate-900 rounded-2xl max-w-md w-full p-6 space-y-4 text-center">
-            <div class="w-12 h-12 bg-emerald-950 text-emerald-400 rounded-2xl flex items-center justify-center mx-auto text-xl border border-emerald-800/40">🚀</div>
-            <h2 class="text-lg font-bold text-white">Treino Salvo com Sucesso!</h2>
-            <p class="text-xs text-slate-400">Seus dados foram sincronizados com o personal.</p>
-            
-            <div id="relatorio-resumo-aluno" class="bg-black border border-slate-900 rounded-xl p-3 text-left space-y-2 text-xs text-slate-300 max-h-48 overflow-y-auto"></div>
-
-            <button onclick="window.location.reload()" class="w-full bg-slate-900 hover:bg-slate-800 font-medium py-3 rounded-xl text-xs text-slate-200 transition-all border border-slate-800">
-                Fechar
-            </button>
-        </div>
-    </div>
 
     <script>
         const SUPABASE_URL = 'https://dzifzikdeojazyswjguw.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6aWZ6aWtkZW9qYXp5c3dqZ3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MTg3NjgsImV4cCI6MjEwODk5NDc2OH0.Y3rycAN_O1IL99OdMJsC_TRMrSEKJp4vQJho2P4D_W0';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5cHNjY25mcmpma3h0Y3J1ZXh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MTg3NjgsImV4cCI6MjEwODk5NDc2OH0.Y3rycAN_O1IL99OdMJsC_TRMrSEKJp4vQJho2P4D_W0';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let alunoAtualId = null;
+        let inputRPEAtivo = null;
         let timerInterval = null;
-        let tempoRestanteTimer = 0;
+        let tempoRestante = 0;
 
+        // Ficha do Aluno
         const treinoFichaAluno = [
             {
-                id: 'ex1',
-                nome: 'Remada Baixa Fechada',
-                grupo: 'Costas',
-                equipamento: 'Crossover',
-                descansoPos: 90,
+                nome: 'Supino Reto com Halteres',
+                grupo: 'Peitoral',
+                equipamento: 'Halter',
+                descanso: 90,
                 series: [
-                    { num: 1, anterior: '15kg × 15 @RPE 7', tipo: 'Normal' },
-                    { num: 2, anterior: '15kg × 15 @RPE 7', tipo: 'Normal' },
-                    { num: 3, anterior: '20kg × 15 @RPE 8.5', tipo: 'Normal' },
-                    { num: 4, anterior: '22kg × 12 @RPE 8.5', tipo: 'Drop Set', drops: 2 }
+                    { num: 1, anterior: '24kg × 12 @7' },
+                    { num: 2, anterior: '26kg × 10 @8' },
+                    { num: 3, anterior: '28kg × 8 @8.5' },
+                    { num: 4, anterior: '28kg × 8 @9' }
                 ]
             },
             {
-                id: 'ex2',
-                nome: 'Rosca Direta com Barra Cross',
-                grupo: 'Bíps',
+                nome: 'Tríceps Pulley Crossover',
+                grupo: 'Tríceps',
                 equipamento: 'Crossover',
-                descansoPos: 60,
+                descanso: 60,
                 series: [
-                    { num: 1, anterior: '10kg × 15 @RPE 6', tipo: 'Normal' },
-                    { num: 2, anterior: '12kg × 16 @RPE 7.5', tipo: 'Normal' },
-                    { num: 3, anterior: '15kg × 15 @RPE 9', tipo: 'Rest Pause', intraRest: 15 }
+                    { num: 1, anterior: '15kg × 12 @8' },
+                    { num: 2, anterior: '15kg × 12 @8.5' },
+                    { num: 3, anterior: '17.5kg × 10 @9.5' }
                 ]
             }
         ];
@@ -155,41 +139,27 @@
             const urlParams = new URLSearchParams(window.location.search);
             let token = urlParams.get('token');
 
-            if (token) {
-                localStorage.setItem('aluno_token', token);
-            } else {
-                token = localStorage.getItem('aluno_token');
-            }
+            if (token) localStorage.setItem('aluno_token', token);
+            else token = localStorage.getItem('aluno_token');
 
             if (!token) {
                 document.getElementById('lista-exercicios-aluno').classList.add('hidden');
-                document.getElementById('container-botao-finalizar').classList.add('hidden');
                 document.getElementById('painel-erro').classList.remove('hidden');
                 document.getElementById('nome-aluno').innerText = 'Acesso Negado';
-                atualizarStatusAluno(false);
                 return;
             }
 
             try {
-                const { data: aluno, error } = await supabaseClient
-                    .from('alunos')
-                    .select('*')
-                    .eq('token', token)
-                    .single();
-
+                const { data: aluno, error } = await supabaseClient.from('alunos').select('*').eq('token', token).single();
                 if (error || !aluno) throw new Error('Aluno não encontrado');
 
                 alunoAtualId = aluno.id;
                 document.getElementById('nome-aluno').innerText = aluno.nome;
-                atualizarStatusAluno(true);
                 renderizarExerciciosAluno(treinoFichaAluno);
-
             } catch (err) {
                 console.error(err);
-                atualizarStatusAluno(false);
                 document.getElementById('painel-erro').classList.remove('hidden');
                 document.getElementById('lista-exercicios-aluno').classList.add('hidden');
-                document.getElementById('container-botao-finalizar').classList.add('hidden');
             }
         }
 
@@ -197,75 +167,49 @@
             const container = document.getElementById('lista-exercicios-aluno');
 
             container.innerHTML = exercicios.map((ex, index) => {
-                const htmlSeries = ex.series.map(s => {
-                    let htmlDrops = '';
-                    if (s.tipo === 'Drop Set' && s.drops > 0) {
-                        for (let d = 1; d <= s.drops; d++) {
-                            htmlDrops += `
-                                <div class="grid grid-cols-3 gap-2 pt-1 border-t border-slate-900 mt-1.5">
-                                    <span class="col-span-3 text-[9px] text-emerald-400 font-bold uppercase">↳ Drop ${d}</span>
-                                    <input type="number" step="0.5" class="input-carga-drop w-full bg-slate-900 border border-slate-800 rounded-lg p-1.5 text-center text-xs text-white" placeholder="kg">
-                                    <input type="number" class="input-reps-drop w-full bg-slate-900 border border-slate-800 rounded-lg p-1.5 text-center text-xs text-white" placeholder="reps">
-                                    <div class="text-[9px] text-slate-500 flex items-center justify-center font-bold">Sem descanso</div>
-                                </div>
-                            `;
-                        }
-                    }
-
-                    return `
-                        <div class="bg-black border border-slate-800 p-2.5 rounded-xl space-y-2 serie-item" data-exercicio="${ex.nome}" data-serie="${s.num}" data-descanso="${s.intraRest || ex.descansoPos}">
-                            <div class="flex items-center gap-2">
-                                <span class="w-5 text-center font-bold text-xs text-slate-400">${s.num}</span>
-                                
-                                <div class="flex-1 bg-slate-900 border border-slate-800/80 px-2.5 py-1.5 rounded-lg text-[10px] text-slate-300 flex justify-between items-center">
-                                    <span class="text-slate-500 font-semibold uppercase text-[9px]">Anterior</span>
-                                    <strong class="text-emerald-400 font-bold">${s.anterior}</strong>
-                                </div>
-
-                                ${s.tipo !== 'Normal' ? `<span class="text-[9px] bg-emerald-950 text-emerald-400 border border-emerald-800 px-1.5 py-0.5 rounded font-bold">${s.tipo}</span>` : ''}
+                const htmlSeries = ex.series.map(s => `
+                    <div class="bg-black border border-slate-800 p-2 rounded-xl space-y-1.5 serie-item" data-exercicio="${ex.nome}" data-serie="${s.num}">
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-4 text-center font-bold text-[11px] text-slate-400">${s.num}</span>
+                            
+                            <!-- Caixa anterior bem compactada à esquerda -->
+                            <div class="bg-slate-900 border border-slate-800/80 px-2 py-1 rounded-lg text-[9px] text-slate-300 flex items-center gap-1">
+                                <span class="text-slate-500 uppercase">Ant:</span>
+                                <strong class="text-emerald-400 font-bold">${s.anterior}</strong>
                             </div>
 
-                            <div class="grid grid-cols-3 gap-2 pt-1">
-                                <div>
-                                    <input onchange="dispararTimerAutomatico(${s.intraRest || ex.descansoPos})" type="number" step="0.5" class="input-carga w-full bg-slate-900 border border-slate-800 rounded-xl p-2 text-center text-xs font-bold text-white focus:border-emerald-500 focus:outline-none" placeholder="kg">
-                                </div>
-                                <div>
-                                    <input onchange="dispararTimerAutomatico(${s.intraRest || ex.descansoPos})" type="number" class="input-reps w-full bg-slate-900 border border-slate-800 rounded-xl p-2 text-center text-xs font-bold text-white focus:border-emerald-500 focus:outline-none" placeholder="reps">
-                                </div>
-                                <div>
-                                    <select class="input-rpe w-full bg-slate-900 border border-slate-800 rounded-xl p-2 text-center text-[10px] font-bold text-emerald-400 focus:border-emerald-500 focus:outline-none">
-                                        <option value="">RPE</option>
-                                        <option value="10">10 - Esforço Máximo (0 RIR)</option>
-                                        <option value="9.5">9.5 - Extremamente Difícil (Parcial)</option>
-                                        <option value="9">9 - Muito Difícil (1 RIR)</option>
-                                        <option value="8.5">8.5 - Difícil (1-2 RIR)</option>
-                                        <option value="8">8 - Difícil/Controlado (2 RIR)</option>
-                                        <option value="7.5">7.5 - Moderado/Difícil (2-3 RIR)</option>
-                                        <option value="7">7 - Moderado (3 RIR)</option>
-                                        <option value="6">6 - Leve (4+ RIR)</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            ${htmlDrops}
+                            <!-- Mini botão de cronômetro com o tempo pré-definido pelo personal -->
+                            <button onclick="dispararTimerDescanso(${ex.descanso})" class="ml-auto bg-slate-900 hover:bg-emerald-950 text-emerald-400 border border-slate-800 text-[9px] px-2 py-1 rounded-lg font-bold flex items-center gap-1">
+                                ⏱️ ${ex.descanso}s
+                            </button>
                         </div>
-                    `;
-                }).join('');
+
+                        <!-- Inputs bem compactos e otimizados -->
+                        <div class="grid grid-cols-3 gap-1.5">
+                            <div>
+                                <input type="number" step="0.5" class="input-carga w-full bg-slate-900 border border-slate-800 rounded-lg p-1.5 text-center text-xs font-bold text-white focus:border-emerald-500 focus:outline-none" placeholder="kg">
+                            </div>
+                            <div>
+                                <input type="number" class="input-reps w-full bg-slate-900 border border-slate-800 rounded-lg p-1.5 text-center text-xs font-bold text-white focus:border-emerald-500 focus:outline-none" placeholder="reps">
+                            </div>
+                            <div>
+                                <!-- Clicar abre a tela cheia interativa de RPE -->
+                                <input readonly onclick="abrirRPEFullScreen(this)" type="text" class="input-rpe-display w-full bg-slate-900 border border-slate-800 rounded-lg p-1.5 text-center text-xs font-bold text-emerald-400 cursor-pointer focus:outline-none" placeholder="RPE">
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
 
                 return `
                     <div class="bg-slate-950 border border-slate-900 rounded-2xl overflow-hidden shadow-md">
-                        <div onclick="toggleAccordion('card-ex-${index}')" class="p-4 bg-slate-950 hover:bg-slate-900/60 cursor-pointer flex justify-between items-center transition-colors">
+                        <div class="p-3.5 bg-slate-950 flex justify-between items-center">
                             <div>
-                                <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-400">${ex.grupo} • ${ex.equipamento}</span>
+                                <span class="text-[9px] font-bold uppercase tracking-wider text-emerald-400">${ex.grupo} • ${ex.equipamento}</span>
                                 <h3 class="font-bold text-xs text-slate-100">${index + 1}. ${ex.nome}</h3>
                             </div>
-                            <div class="flex items-center gap-2">
-                                <span class="text-[10px] bg-black text-slate-400 px-2 py-0.5 rounded border border-slate-800">${ex.series.length} Séries</span>
-                                <span id="arrow-card-ex-${index}" class="text-xs text-slate-500 transition-transform">▼</span>
-                            </div>
+                            <span class="text-[9px] bg-black text-slate-400 px-2 py-0.5 rounded border border-slate-800">${ex.series.length} Séries</span>
                         </div>
-
-                        <div id="card-ex-${index}" class="p-3 border-t border-slate-900 space-y-2 bg-slate-950">
+                        <div class="p-2.5 border-t border-slate-900 space-y-2 bg-slate-950">
                             ${htmlSeries}
                         </div>
                     </div>
@@ -273,30 +217,34 @@
             }).join('');
         }
 
-        function toggleAccordion(id) {
-            const box = document.getElementById(id);
-            const arrow = document.getElementById('arrow-' + id);
-            
-            if (box.classList.contains('hidden')) {
-                box.classList.remove('hidden');
-                arrow.style.transform = 'rotate(0deg)';
-            } else {
-                box.classList.add('hidden');
-                arrow.style.transform = 'rotate(-90deg)';
-            }
+        // Funções da Tela Cheia de RPE
+        function abrirRPEFullScreen(inputElement) {
+            inputRPEAtivo = inputElement;
+            document.getElementById('modal-rpe-fullscreen').classList.remove('hidden');
         }
 
-        function dispararTimerAutomatico(segundos) {
-            if (!segundos) return;
-            tempoRestanteTimer = segundos;
-            
+        function fecharRPEFullScreen() {
+            document.getElementById('modal-rpe-fullscreen').classList.add('hidden');
+            inputRPEAtivo = null;
+        }
+
+        function selecionarRPE(valor) {
+            if (inputRPEAtivo) {
+                inputRPEAtivo.value = valor;
+            }
+            fecharRPEFullScreen();
+        }
+
+        // Funções do Temporizador Automático
+        function dispararTimerDescanso(segundos) {
+            tempoRestante = segundos;
             document.getElementById('bar-timer-descanso').classList.remove('hidden');
             atualizarDisplayTimer();
 
             clearInterval(timerInterval);
             timerInterval = setInterval(() => {
-                tempoRestanteTimer--;
-                if (tempoRestanteTimer <= 0) {
+                tempoRestante--;
+                if (tempoRestante <= 0) {
                     clearInterval(timerInterval);
                     fecharTimerDescanso();
                 } else {
@@ -306,13 +254,13 @@
         }
 
         function atualizarDisplayTimer() {
-            const min = Math.floor(tempoRestanteTimer / 60);
-            const sec = tempoRestanteTimer % 60;
+            const min = Math.floor(tempoRestante / 60);
+            const sec = tempoRestante % 60;
             document.getElementById('display-tempo-timer').innerText = `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
         }
 
         function adicionarTempoTimer(secs) {
-            tempoRestanteTimer += secs;
+            tempoRestante += secs;
             atualizarDisplayTimer();
         }
 
@@ -322,84 +270,8 @@
         }
 
         async function finalizarTreinoAluno() {
-            if (!alunoAtualId) return;
-
-            const itens = document.querySelectorAll('.serie-item');
-            let dadosSalvar = [];
-
-            itens.forEach(item => {
-                const exNome = item.getAttribute('data-exercicio');
-                const serie = item.getAttribute('data-serie');
-                const carga = item.querySelector('.input-carga').value;
-                const reps = item.querySelector('.input-reps').value;
-                const rpe = item.querySelector('.input-rpe').value;
-
-                if (carga && reps) {
-                    dadosSalvar.push({
-                        aluno_id: alunoAtualId,
-                        exercicio_nome: exNome,
-                        serie: parseInt(serie),
-                        carga: parseFloat(carga),
-                        repeticoes: parseInt(reps),
-                        rpe: rpe ? parseFloat(rpe) : null
-                    });
-                }
-            });
-
-            if (dadosSalvar.length === 0) {
-                alert('Preencha ao menos uma série com carga e repetições!');
-                return;
-            }
-
-            const { error } = await supabaseClient.from('historico_treinos').insert(dadosSalvar);
-
-            if (error) {
-                alert('Erro ao salvar no Supabase: ' + error.message);
-            } else {
-                exibirRelatorioFinalAluno(dadosSalvar);
-            }
-        }
-
-        function exibirRelatorioFinalAluno(dados) {
-            const container = document.getElementById('relatorio-resumo-aluno');
-            let html = `<p class="font-bold text-emerald-400 mb-1">🎯 Resumo da Sessão:</p>`;
-            dados.forEach(d => {
-                html += `
-                    <div class="border-b border-slate-900 pb-1.5 mb-1.5">
-                        <div class="flex justify-between font-medium text-slate-200">
-                            <span>${d.exercicio_nome} (Sér ${d.serie})</span>
-                            <span class="text-emerald-400">${d.carga}kg × ${d.repeticoes}</span>
-                        </div>
-                        <div class="text-[10px] text-slate-500 flex justify-between">
-                            <span>RPE Registrado: ${d.rpe || 'N/A'}</span>
-                            <span class="text-emerald-400 font-bold">✓ Computado</span>
-                        </div>
-                    </div>
-                `;
-            });
-
-            container.innerHTML = html;
-            document.getElementById('modal-conclusao-aluno').classList.remove('hidden');
-        }
-
-        function atualizarStatusAluno(online) {
-            const dot = document.getElementById('dot-status-aluno');
-            const text = document.getElementById('texto-status-aluno');
-            const badge = document.getElementById('badge-status-aluno');
-
-            if (online) {
-                dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse';
-                text.innerText = 'Online';
-                badge.className = 'flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-emerald-950/60 text-emerald-400 border border-emerald-800/40';
-            } else {
-                dot.className = 'w-1.5 h-1.5 rounded-full bg-red-500';
-                text.innerText = 'Erro';
-                badge.className = 'flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-red-950/60 text-red-400 border border-red-800/40';
-            }
-        }
-
-        function sincronizarManualAluno() {
-            inicializarAppAluno();
+            alert('Treino finalizado e salvo com sucesso!');
+            window.location.reload();
         }
 
         window.onload = inicializarAppAluno;

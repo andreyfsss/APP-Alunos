@@ -10,19 +10,13 @@
 <body class="bg-black text-slate-100 min-h-screen p-3 md:p-6 flex flex-col items-center antialiased">
 
     <div class="max-w-md w-full space-y-5">
-        <!-- Header -->
+        <!-- Topo -->
         <div class="flex justify-between items-center bg-slate-950 border border-slate-900 rounded-2xl p-4 shadow-xl">
             <div>
                 <h1 class="font-black text-lg text-emerald-400 tracking-wider">AF PRO</h1>
-                <p class="text-[10px] text-slate-500">Gestão de Treinos & Evolução</p>
+                <p class="text-[10px] text-slate-500">Gestão de Alunos & Divisões de Treino</p>
             </div>
-            <div class="flex items-center gap-2">
-                <span id="badge-status" class="flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-full bg-emerald-950/60 text-emerald-400 border border-emerald-800/40 font-medium">
-                    <span id="dot-status" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span id="texto-status">Sincronizado</span>
-                </span>
-                <button onclick="sincronizarManual()" class="bg-slate-900 hover:bg-slate-800 text-slate-300 p-1.5 rounded-lg border border-slate-800 text-xs transition-all" title="Sincronizar">🔄</button>
-            </div>
+            <button onclick="carregarAlunos()" class="bg-slate-900 hover:bg-slate-800 text-slate-300 p-1.5 rounded-lg border border-slate-800 text-xs">🔄</button>
         </div>
 
         <!-- TELA 1: LISTA DE ALUNOS -->
@@ -31,7 +25,7 @@
                 <h2 class="font-bold text-xs uppercase tracking-wider text-slate-400">Cadastrar Novo Aluno</h2>
                 <div class="flex gap-2">
                     <input type="text" id="nome-novo-aluno" placeholder="Nome do aluno (ex: Juca)" class="flex-1 bg-black border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:border-emerald-500 focus:outline-none">
-                    <button onclick="cadastrarAluno()" class="bg-emerald-500 hover:bg-emerald-400 font-bold px-4 py-2.5 rounded-xl text-black text-xs transition-all shadow-md shadow-emerald-950">Cadastrar</button>
+                    <button onclick="cadastrarAluno()" class="bg-emerald-500 hover:bg-emerald-400 font-bold px-4 py-2.5 rounded-xl text-black text-xs transition-all shadow-md">Cadastrar</button>
                 </div>
             </div>
 
@@ -43,131 +37,33 @@
             </div>
         </div>
 
-        <!-- TELA 2: PAINEL DO ALUNO SELECIONADO -->
+        <!-- TELA 2: GESTÃO DO ALUNO (TREINOS POR DIVISÃO) -->
         <div id="view-detalhe-aluno" class="hidden space-y-4">
             <div class="flex items-center justify-between bg-slate-950 border border-slate-900 rounded-2xl p-4">
                 <div class="flex items-center gap-3">
                     <button onclick="voltarParaLista()" class="bg-slate-900 hover:bg-slate-800 text-slate-400 px-2.5 py-1.5 rounded-xl text-xs font-bold border border-slate-800">← Voltar</button>
                     <div>
                         <h2 id="detalhe-nome-aluno" class="font-bold text-sm text-emerald-400">Aluno</h2>
-                        <p class="text-[10px] text-slate-500">Ficha & Prescrição Avançada</p>
+                        <p class="text-[10px] text-slate-500">Montagem de Treinos</p>
                     </div>
                 </div>
                 <button id="btn-copiar-link-aluno" class="text-xs bg-emerald-950/80 hover:bg-emerald-900/80 text-emerald-400 border border-emerald-800/50 px-3 py-1.5 rounded-xl font-medium transition-all">Copiar Link</button>
             </div>
 
-            <!-- Navegação de Abas -->
-            <div class="grid grid-cols-2 bg-slate-950 p-1 rounded-2xl border border-slate-900 text-xs">
-                <button id="tab-treinos" onclick="trocarAba('treinos')" class="py-2.5 rounded-xl font-bold bg-emerald-500 text-black transition-all">Ficha & Prescrição</button>
-                <button id="tab-relatorios" onclick="trocarAba('relatorios')" class="py-2.5 rounded-xl font-bold text-slate-400 hover:text-white transition-all">Relatórios & Evolução</button>
-            </div>
-
-            <!-- ABA 1: CONSTRUTOR DE FICHA -->
-            <div id="conteudo-treinos" class="space-y-4">
-                <div class="bg-slate-950 border border-slate-900 rounded-2xl p-4 space-y-4">
-                    <h3 class="font-bold text-xs uppercase text-slate-300">Prescrever Novo Exercício</h3>
-                    
-                    <div class="space-y-3">
-                        <div>
-                            <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Nome do Exercício</label>
-                            <input type="text" id="ex-nome" placeholder="Ex: Supino Reto no Crossover" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:border-emerald-500 focus:outline-none">
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Músculo Alvo</label>
-                                <select id="ex-musculo" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-xs text-slate-200 focus:border-emerald-500 focus:outline-none">
-                                    <option value="Quadríceps">Quadríceps</option>
-                                    <option value="Posterior">Posterior de Coxa</option>
-                                    <option value="Glúteos">Glúteos</option>
-                                    <option value="Adutores">Adutores</option>
-                                    <option value="Costas">Costas</option>
-                                    <option value="Peitoral">Peitoral</option>
-                                    <option value="Ombros">Ombros</option>
-                                    <option value="Bíceps">Bíceps</option>
-                                    <option value="Tríceps">Tríceps</option>
-                                    <option value="Abdômen">Abdômen</option>
-                                    <option value="Panturrilha">Panturrilha</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Equipamento</label>
-                                <select id="ex-equipamento" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-xs text-slate-200 focus:border-emerald-500 focus:outline-none">
-                                    <option value="Halter">Halter</option>
-                                    <option value="Barra">Barra</option>
-                                    <option value="Livre">Livre / Peso Corporal</option>
-                                    <option value="Máquina">Máquina</option>
-                                    <option value="Crossover">Crossover / Cabo</option>
-                                    <option value="Kettlebell">Kettlebell</option>
-                                    <option value="Anilha">Anilha</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Descanso Padrão entre Séries -->
-                        <div>
-                            <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Tempo de Descanso Pós-Série (segundos)</label>
-                            <input type="number" id="ex-descanso" value="90" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:border-emerald-500 focus:outline-none" placeholder="Ex: 90">
-                        </div>
-
-                        <!-- Construtor Modular de Séries -->
-                        <div class="space-y-2 pt-2 border-t border-slate-900">
-                            <div class="flex justify-between items-center">
-                                <span class="text-[11px] font-bold text-slate-300">Estrutura de Séries & Técnicas</span>
-                                <button onclick="adicionarLinhaSerieBuilder()" class="text-[10px] bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-slate-800 px-2.5 py-1 rounded-lg">+ Série</button>
-                            </div>
-                            <div id="container-series-builder" class="space-y-2"></div>
-                        </div>
-
-                        <button onclick="salvarExerciciosFicha()" class="w-full bg-emerald-500 hover:bg-emerald-400 font-bold py-3 rounded-xl text-black text-xs transition-all shadow-md shadow-emerald-950 mt-2">
-                            Salvar Exercício na Ficha
-                        </button>
-                    </div>
-                </div>
-
-                <div class="space-y-2">
-                    <h3 class="font-bold text-xs uppercase tracking-wider text-slate-400 px-1">Ficha Atual do Aluno</h3>
-                    <div id="container-ficha-montada" class="space-y-3">
-                        <p class="text-xs text-slate-600 text-center py-6">Nenhum exercício montado para este aluno ainda.</p>
-                    </div>
+            <!-- Criar Nova Divisão de Treino (Ex: Peitoral, Tríceps e Ombro) -->
+            <div class="bg-slate-950 border border-slate-900 rounded-2xl p-4 space-y-3">
+                <h3 class="font-bold text-xs uppercase text-slate-300">Criar Divisão de Treino</h3>
+                <div class="flex gap-2">
+                    <input type="text" id="input-nome-treino" placeholder="Ex: Peitoral / Tríceps / Ombro" class="flex-1 bg-black border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:border-emerald-500 focus:outline-none">
+                    <button onclick="criarTreinoDivisao()" class="bg-emerald-500 hover:bg-emerald-400 font-bold px-4 py-2.5 rounded-xl text-black text-xs">Criar Treino</button>
                 </div>
             </div>
 
-            <!-- ABA 2: RELATÓRIOS E EVOLUÇÃO -->
-            <div id="conteudo-relatorios" class="hidden space-y-4">
-                <!-- Controle Semanal vs Mensal -->
-                <div class="flex justify-between items-center bg-slate-950 p-2 border border-slate-900 rounded-2xl">
-                    <span class="text-xs font-bold text-slate-300 px-2">Escopo Visual:</span>
-                    <div class="flex gap-1 text-[10px]">
-                        <button onclick="alterarEscopo('semanal')" id="btn-escopo-semanal" class="px-3 py-1.5 rounded-xl bg-emerald-500 text-black font-bold">Semanal</button>
-                        <button onclick="alterarEscopo('mensal')" id="btn-escopo-mensal" class="px-3 py-1.5 rounded-xl bg-slate-900 text-slate-400 font-medium">Mensal</button>
-                    </div>
-                </div>
-
-                <!-- Painel de Séries por Agrupamento Muscular (Meta vs Realizado) -->
-                <div class="bg-slate-950 border border-slate-900 rounded-2xl p-4 space-y-3">
-                    <h3 class="font-bold text-xs uppercase text-slate-300 flex justify-between">
-                        <span>Volume de Séries por Grupo Muscular</span>
-                        <span id="label-escopo-musculos" class="text-emerald-400">Semana Ativa</span>
-                    </h3>
-                    <div id="container-volume-muscular" class="space-y-2 text-xs">
-                        <!-- Gerado via JS -->
-                    </div>
-                </div>
-
-                <!-- Evolução Específica por Exercício (Filtro Dinâmico) -->
-                <div class="bg-slate-950 border border-slate-900 rounded-2xl p-4 space-y-3">
-                    <h3 class="font-bold text-xs uppercase text-slate-300">Filtrar Progresso por Exercício</h3>
-                    <select id="select-exercicio-evolucao" onchange="filtrarHistoricoExercicio(this.value)" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-xs text-slate-200 focus:border-emerald-500 focus:outline-none">
-                        <option value="">Selecione um exercício...</option>
-                        <option value="Remada Baixa Fechada">Remada Baixa Fechada</option>
-                        <option value="Rosca Direta com Barra Cross">Rosca Direta com Barra Cross</option>
-                        <option value="Supino Reto no Crossover">Supino Reto no Crossover</option>
-                    </select>
-
-                    <div id="box-grafico-progresso" class="bg-black border border-slate-900 rounded-xl p-3 text-xs space-y-2 text-slate-300">
-                        <p class="text-[11px] text-slate-500 text-center py-2">Selecione um exercício acima para visualizar a linha de evolução.</p>
-                    </div>
+            <!-- Lista de Treinos Criados para o Aluno -->
+            <div class="space-y-2">
+                <h2 class="font-bold text-xs uppercase tracking-wider text-slate-400 px-1">Treinos Prescritos</h2>
+                <div id="container-treinos-aluno" class="space-y-3">
+                    <p class="text-xs text-slate-600 text-center py-6">Nenhum treino criado ainda.</p>
                 </div>
             </div>
         </div>
@@ -175,19 +71,14 @@
 
     <script>
         const SUPABASE_URL = 'https://dzifzikdeojazyswjguw.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6aWZ6aWtkZW9qYXp5c3dqZ3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MTg3NjgsImV4cCI6MjEwODk5NDc2OH0.Y3rycAN_O1IL99OdMJsC_TRMrSEKJp4vQJho2P4D_W0';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5cHNjY25mcmpma3h0Y3J1ZXh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MTg3NjgsImV4cCI6MjEwODk5NDc2OH0.Y3rycAN_O1IL99OdMJsC_TRMrSEKJp4vQJho2P4D_W0';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let alunoSelecionado = null;
-        let fichaExerciciosTemp = [];
-
-        // Estrutura conceitual de metas semanais por agrupamento muscular
-        const metasGrupamentoSemana = [
-            { grupo: 'Costas', meta: 16, realizadas: 12 },
-            { grupo: 'Peitoral', meta: 14, realizadas: 14 },
-            { grupo: 'Quadríceps', meta: 16, realizadas: 8 },
-            { grupo: 'Bíceps', meta: 10, realizadas: 10 },
-            { grupo: 'Tríceps', meta: 10, realizadas: 6 }
+        let treinosDoAluno = [
+            { id: 't1', nome: 'Peitoral / Tríceps / Ombro', exercicios: [
+                { nome: 'Supino Reto com Halteres', musculo: 'Peitoral', equipamento: 'Halter', descanso: 90, series: 4 }
+            ]}
         ];
 
         async function carregarAlunos() {
@@ -195,12 +86,10 @@
             const container = document.getElementById('container-alunos');
             
             if (error) {
-                atualizarStatusConexao(false);
                 container.innerHTML = `<p class="text-xs text-red-400 text-center py-4">Erro ao carregar alunos.</p>`;
                 return;
             }
 
-            atualizarStatusConexao(true);
             if (data.length === 0) {
                 container.innerHTML = `<p class="text-xs text-slate-600 text-center py-6">Nenhum aluno cadastrado ainda.</p>`;
                 return;
@@ -219,7 +108,7 @@
                             </div>
                             <div>
                                 <h3 class="font-bold text-sm text-slate-200 group-hover:text-emerald-400 transition-colors">${aluno.nome}</h3>
-                                <p class="text-[10px] text-slate-500">Toque para gerenciar ficha & evolução</p>
+                                <p class="text-[10px] text-slate-500">Toque para montar treinos</p>
                             </div>
                         </div>
                         <button onclick="event.stopPropagation(); copiarLinkDirect('${linkAluno}')" class="text-xs bg-slate-900 hover:bg-emerald-950 text-slate-300 hover:text-emerald-400 border border-slate-800 px-3 py-1.5 rounded-xl font-medium transition-all">
@@ -237,12 +126,7 @@
             
             document.getElementById('view-lista-alunos').classList.add('hidden');
             document.getElementById('view-detalhe-aluno').classList.remove('hidden');
-
-            document.getElementById('container-series-builder').innerHTML = '';
-            adicionarLinhaSerieBuilder();
-            adicionarLinhaSerieBuilder();
-            adicionarLinhaSerieBuilder();
-            renderizarMetasMusculares();
+            renderizarTreinosAluno();
         }
 
         function voltarParaLista() {
@@ -251,235 +135,84 @@
             document.getElementById('view-lista-alunos').classList.remove('hidden');
         }
 
-        function trocarAba(aba) {
-            if (aba === 'treinos') {
-                document.getElementById('conteudo-treinos').classList.remove('hidden');
-                document.getElementById('conteudo-relatorios').classList.add('hidden');
-                document.getElementById('tab-treinos').className = 'py-2.5 rounded-xl font-bold bg-emerald-500 text-black transition-all';
-                document.getElementById('tab-relatorios').className = 'py-2.5 rounded-xl font-bold text-slate-400 hover:text-white transition-all';
-            } else {
-                document.getElementById('conteudo-treinos').classList.add('hidden');
-                document.getElementById('conteudo-relatorios').classList.remove('hidden');
-                document.getElementById('tab-relatorios').className = 'py-2.5 rounded-xl font-bold bg-emerald-500 text-black transition-all';
-                document.getElementById('tab-treinos').className = 'py-2.5 rounded-xl font-bold text-slate-400 hover:text-white transition-all';
-            }
-        }
-
-        function adicionarLinhaSerieBuilder() {
-            const container = document.getElementById('container-series-builder');
-            const index = container.children.length + 1;
-
-            const div = document.createElement('div');
-            div.className = 'bg-black border border-slate-800 p-2.5 rounded-xl space-y-2 text-xs';
-            div.innerHTML = `
-                <div class="flex items-center gap-2">
-                    <span class="font-bold text-slate-400 w-4">${index}</span>
-                    <select onchange="trocarTipoSerieBuilder(this)" class="select-tipo-serie flex-1 bg-slate-900 border border-slate-800 rounded-lg p-1.5 text-xs text-slate-200 focus:outline-none">
-                        <option value="Normal">Série Normal</option>
-                        <option value="Drop Set">Drop Set (Múltiplos Drops)</option>
-                        <option value="Rest Pause">Rest-Pause (Pausas Curtas)</option>
-                        <option value="Cluster Set">Cluster Set (Pausa Intra-Série)</option>
-                    </select>
-                    <button onclick="this.parentElement.parentElement.remove()" class="text-red-400 hover:text-red-300 px-1 font-bold">✕</button>
-                </div>
-                <div class="box-metadata-tecnica hidden text-[10px] bg-slate-900/60 p-2 rounded-lg space-y-1 text-slate-400">
-                    <!-- Configurações específicas da técnica -->
-                </div>
-            `;
-            container.appendChild(div);
-        }
-
-        function trocarTipoSerieBuilder(select) {
-            const box = select.parentElement.parentElement.querySelector('.box-metadata-tecnica');
-            const tipo = select.value;
-
-            if (tipo === 'Drop Set') {
-                box.classList.remove('hidden');
-                box.innerHTML = `
-                    <label class="block">Número de reduções (Drops):</label>
-                    <input type="number" min="1" max="5" value="2" class="input-num-drops w-full bg-black border border-slate-800 rounded p-1 text-white">
-                `;
-            } else if (tipo === 'Rest Pause' || tipo === 'Cluster Set') {
-                box.classList.remove('hidden');
-                box.innerHTML = `
-                    <label class="block">Tempo de descanso intra-série (segundos):</label>
-                    <input type="number" value="15" class="input-intra-rest w-full bg-black border border-slate-800 rounded p-1 text-white">
-                `;
-            } else {
-                box.classList.add('hidden');
-                box.innerHTML = '';
-            }
-        }
-
-        function salvarExerciciosFicha() {
-            const nome = document.getElementById('ex-nome').value.trim();
-            const musculo = document.getElementById('ex-musculo').value;
-            const equipamento = document.getElementById('ex-equipamento').value;
-            const descanso = parseInt(document.getElementById('ex-descanso').value) || 90;
-
-            if (!nome) {
-                alert('Digite o nome do exercício!');
+        function criarTreinoDivisao() {
+            const input = document.getElementById('input-nome-treino');
+            const nomeTreino = input.value.trim();
+            if (!nomeTreino) {
+                alert('Digite o nome da divisão de treino (ex: Peitoral, Tríceps e Ombro)');
                 return;
             }
 
-            const seriesNodes = document.querySelectorAll('#container-series-builder > div');
-            const seriesData = Array.from(seriesNodes).map((node, i) => {
-                const tipo = node.querySelector('.select-tipo-serie').value;
-                let drops = 0;
-                let intraRest = 0;
-
-                if (tipo === 'Drop Set') {
-                    const inputDrop = node.querySelector('.input-num-drops');
-                    drops = inputDrop ? parseInt(inputDrop.value) : 2;
-                } else if (tipo === 'Rest Pause' || tipo === 'Cluster Set') {
-                    const inputIntra = node.querySelector('.input-intra-rest');
-                    intraRest = inputIntra ? parseInt(inputIntra.value) : 15;
-                }
-
-                return { num: i + 1, tipo, drops, intraRest };
-            });
-
-            fichaExerciciosTemp.push({ nome, musculo, equipamento, descanso, series: seriesData });
-            renderizarFichaMontada();
-            document.getElementById('ex-nome').value = '';
+            treinosDoAluno.push({ id: 't_' + Date.now(), nome: nomeTreino, exercicios: [] });
+            input.value = '';
+            renderizarTreinosAluno();
         }
 
-        function renderizarFichaMontada() {
-            const container = document.getElementById('container-ficha-montada');
-            if (fichaExerciciosTemp.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-600 text-center py-6">Nenhum exercício montado para este aluno ainda.</p>`;
+        function renderizarTreinosAluno() {
+            const container = document.getElementById('container-treinos-aluno');
+            if (treinosDoAluno.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-600 text-center py-6">Nenhum treino criado.</p>`;
                 return;
             }
 
-            container.innerHTML = fichaExerciciosTemp.map((ex, i) => `
-                <div class="bg-slate-950 border border-slate-900 rounded-xl p-3 space-y-2">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <span class="text-[10px] uppercase font-bold text-emerald-400">${ex.musculo} • ${ex.equipamento}</span>
-                            <h4 class="font-bold text-xs text-slate-200">${i + 1}. ${ex.nome}</h4>
-                            <span class="text-[9px] text-slate-500">Descanso pós-série: ${ex.descanso}s</span>
-                        </div>
-                        <div class="flex items-center gap-1">
-                            <button onclick="reordenarExercicios(${i}, ${i-1})" ${i === 0 ? 'disabled class="opacity-30"' : ''} class="text-xs bg-black px-2 py-1 rounded border border-slate-800 text-slate-300">▲</button>
-                            <button onclick="reordenarExercicios(${i}, ${i+1})" ${i === fichaExerciciosTemp.length - 1 ? 'disabled class="opacity-30"' : ''} class="text-xs bg-black px-2 py-1 rounded border border-slate-800 text-slate-300">▼</button>
-                            <button onclick="removerExercicioFicha(${i})" class="text-xs text-red-400 ml-1">✕</button>
-                        </div>
+            container.innerHTML = treinosDoAluno.map((t, idx) => `
+                <div class="bg-slate-950 border border-slate-900 rounded-2xl p-4 space-y-3">
+                    <div class="flex justify-between items-center border-b border-slate-900 pb-2">
+                        <h3 class="font-bold text-xs text-emerald-400 uppercase tracking-wider">${t.nome}</h3>
+                        <button onclick="adicionarExercicioAoTreino('${t.id}')" class="text-[10px] bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-slate-800 px-2.5 py-1 rounded-lg">+ Exercício</button>
                     </div>
-                    <div class="text-[10px] text-slate-400 space-y-0.5 border-t border-slate-900 pt-1.5">
-                        ${ex.series.map(s => `<div>Série ${s.num}: <strong class="text-slate-300">${s.tipo}</strong> ${s.drops ? `(${s.drops} drops)` : ''} ${s.intraRest ? `(${s.intraRest}s intra)` : ''}</div>`).join('')}
+                    <div class="space-y-2">
+                        ${t.exercicios.length === 0 ? '<p class="text-[11px] text-slate-600 text-center py-2">Nenhum exercício adicionado neste treino.</p>' : 
+                            t.exercicios.map((ex, exIdx) => `
+                                <div class="bg-black border border-slate-900 p-2.5 rounded-xl flex justify-between items-center text-xs">
+                                    <div>
+                                        <span class="text-[10px] text-slate-500 font-bold">${ex.musculo} • ${ex.equipamento} • Descanso: ${ex.descanso}s</span>
+                                        <div class="font-bold text-slate-200">${ex.nome} (${ex.series} Séries)</div>
+                                    </div>
+                                    <button onclick="removerExercicio('${t.id}', ${exIdx})" class="text-red-400 hover:text-red-300 text-xs font-bold">✕</button>
+                                </div>
+                            `).join('')}
                     </div>
                 </div>
             `).join('');
         }
 
-        function reordenarExercicios(fromIndex, toIndex) {
-            if (toIndex < 0 || toIndex >= fichaExerciciosTemp.length) return;
-            const element = fichaExerciciosTemp.splice(fromIndex, 1)[0];
-            fichaExerciciosTemp.splice(toIndex, 0, element);
-            renderizarFichaMontada();
-        }
+        function adicionarExercicioAoTreino(treinoId) {
+            const nomeEx = prompt('Nome do Exercício (ex: Supino Reto com Halteres):');
+            if (!nomeEx) return;
+            const musculo = prompt('Músculo Alvo (ex: Peitoral):', 'Peitoral');
+            const equipamento = prompt('Equipamento (Halter, Barra, Máquina, Crossover):', 'Halter');
+            const descanso = parseInt(prompt('Tempo de Descanso padrão em segundos (ex: 90):', '90')) || 90;
+            const series = parseInt(prompt('Número de Séries:', '4')) || 4;
 
-        function removerExercicioFicha(index) {
-            fichaExerciciosTemp.splice(index, 1);
-            renderizarFichaMontada();
-        }
-
-        function renderizarMetasMusculares() {
-            const container = document.getElementById('container-volume-muscular');
-            container.innerHTML = metasGrupamentoSemana.map(m => {
-                const pct = Math.min(100, Math.round((m.realizadas / m.meta) * 100));
-                return `
-                    <div class="space-y-1">
-                        <div class="flex justify-between text-[11px]">
-                            <span class="font-bold text-slate-200">${m.grupo}</span>
-                            <span><strong class="text-emerald-400">${m.realizadas}</strong> / ${m.meta} séries (${pct}%)</span>
-                        </div>
-                        <div class="w-full h-1.5 bg-black rounded-full overflow-hidden border border-slate-900">
-                            <div class="h-full bg-emerald-500 rounded-full" style="width: ${pct}%"></div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function alterarEscopo(escopo) {
-            document.getElementById('label-escopo-musculos').innerText = escopo === 'semanal' ? 'Semana Ativa' : 'Mês Ativo';
-            if (escopo === 'semanal') {
-                document.getElementById('btn-escopo-semanal').className = 'px-3 py-1.5 rounded-xl bg-emerald-500 text-black font-bold';
-                document.getElementById('btn-escopo-mensal').className = 'px-3 py-1.5 rounded-xl bg-slate-900 text-slate-400 font-medium';
-            } else {
-                document.getElementById('btn-escopo-mensal').className = 'px-3 py-1.5 rounded-xl bg-emerald-500 text-black font-bold';
-                document.getElementById('btn-escopo-semanal').className = 'px-3 py-1.5 rounded-xl bg-slate-900 text-slate-400 font-medium';
+            const treino = treinosDoAluno.find(t => t.id === treinoId);
+            if (treino) {
+                treino.exercicios.push({ nome: nomeEx, musculo, equipamento, descanso, series });
+                renderizarTreinosAluno();
             }
         }
 
-        function filtrarHistoricoExercicio(nomeEx) {
-            const box = document.getElementById('box-grafico-progresso');
-            if (!nomeEx) {
-                box.innerHTML = `<p class="text-[11px] text-slate-500 text-center py-2">Selecione um exercício acima para ver o histórico.</p>`;
-                return;
+        function removerExercicio(treinoId, exIndex) {
+            const treino = treinosDoAluno.find(t => t.id === treinoId);
+            if (treino) {
+                treino.exercicios.splice(exIndex, 1);
+                renderizarTreinosAluno();
             }
-
-            box.innerHTML = `
-                <div class="flex justify-between border-b border-slate-900 pb-1.5 text-[11px] font-bold text-emerald-400">
-                    <span>Sessão / Data</span>
-                    <span>Carga × Reps (@RPE)</span>
-                </div>
-                <div class="flex justify-between text-[11px]">
-                    <span>12/10/2026</span>
-                    <span>20kg × 12 reps (@RPE 8)</span>
-                </div>
-                <div class="flex justify-between text-[11px]">
-                    <span>19/10/2026</span>
-                    <span>22.5kg × 10 reps (@RPE 8.5)</span>
-                </div>
-                <div class="flex justify-between text-[11px] font-bold text-emerald-400">
-                    <span>26/10/2026 (Último)</span>
-                    <span>25kg × 10 reps (@RPE 9) 📈</span>
-                </div>
-            `;
         }
 
         async function cadastrarAluno() {
             const input = document.getElementById('nome-novo-aluno');
             const nome = input.value.trim();
-            if (!nome) {
-                alert('Digite o nome do aluno!');
-                return;
-            }
+            if (!nome) return;
 
             const { error } = await supabaseClient.from('alunos').insert([{ nome }]);
-            if (error) {
-                alert('Erro ao cadastrar: ' + error.message);
-            } else {
-                input.value = '';
-                carregarAlunos();
-            }
+            if (error) alert('Erro: ' + error.message);
+            else { input.value = ''; carregarAlunos(); }
         }
 
         function copiarLinkDirect(link) {
             navigator.clipboard.writeText(link);
-            alert('Link exclusivo copiado!');
-        }
-
-        function atualizarStatusConexao(online) {
-            const dot = document.getElementById('dot-status');
-            const text = document.getElementById('texto-status');
-            const badge = document.getElementById('badge-status');
-
-            if (online) {
-                dot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
-                text.innerText = 'Sincronizado';
-                badge.className = 'flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-full bg-emerald-950/60 text-emerald-400 border border-emerald-800/40 font-medium';
-            } else {
-                dot.className = 'w-2 h-2 rounded-full bg-red-500';
-                text.innerText = 'Offline / Erro';
-                badge.className = 'flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-full bg-red-950/60 text-red-400 border border-red-800/40 font-medium';
-            }
-        }
-
-        function sincronizarManual() {
-            carregarAlunos();
+            alert('Link exclusivo do aluno copiado!');
         }
 
         window.onload = carregarAlunos;
