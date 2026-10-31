@@ -126,7 +126,6 @@
                 document.getElementById('nome-aluno').innerText = 'Atleta (Modo Teste)';
                 document.getElementById('badge-modo').innerText = 'Teste';
                 
-                // Puxa do localStorage compartilhado para teste
                 treinosDoAlunoCarregados = JSON.parse(localStorage.getItem('treinos_aluno_teste')) || [
                     {
                         id: 't_teste',
@@ -158,7 +157,6 @@
                 document.getElementById('nome-aluno').innerText = aluno.nome;
                 document.getElementById('badge-modo').innerText = 'Online';
 
-                // Puxa os treinos criados pelo personal para este ID de aluno exato
                 const treinosSalvos = localStorage.getItem('treinos_aluno_' + aluno.id);
                 if (treinosSalvos) {
                     treinosDoAlunoCarregados = JSON.parse(treinosSalvos);
