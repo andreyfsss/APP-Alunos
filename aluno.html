@@ -50,17 +50,9 @@
                 <div class="flex justify-between font-bold text-sm text-emerald-400"><span>RPE 10</span><span>0 RIR (Falha Total)</span></div>
                 <p class="text-[11px] text-slate-400 mt-0.5">Esforço máximo. Impossível fazer outra repetição limpa.</p>
             </button>
-            <button onclick="selecionarRPE('9.5')" class="bg-slate-950 hover:bg-emerald-950 border border-slate-800 hover:border-emerald-500 p-3.5 rounded-2xl text-left transition-all">
-                <div class="flex justify-between font-bold text-sm text-emerald-400"><span>RPE 9.5</span><span>Parcial / Extremo</span></div>
-                <p class="text-[11px] text-slate-400 mt-0.5">Não faria outra repetição completa, apenas parcial.</p>
-            </button>
             <button onclick="selecionarRPE('9')" class="bg-slate-950 hover:bg-emerald-950 border border-slate-800 hover:border-emerald-500 p-3.5 rounded-2xl text-left transition-all">
                 <div class="flex justify-between font-bold text-sm text-emerald-400"><span>RPE 9</span><span>1 Repetição na Reserva</span></div>
                 <p class="text-[11px] text-slate-400 mt-0.5">Muito difícil. Sobrou exatamente 1 repetição no tanque.</p>
-            </button>
-            <button onclick="selecionarRPE('8.5')" class="bg-slate-950 hover:bg-emerald-950 border border-slate-800 hover:border-emerald-500 p-3.5 rounded-2xl text-left transition-all">
-                <div class="flex justify-between font-bold text-sm text-emerald-400"><span>RPE 8.5</span><span>1 a 2 Repetições</span></div>
-                <p class="text-[11px] text-slate-400 mt-0.5">Difícil. Sobraram de 1 a 2 repetições limpas.</p>
             </button>
             <button onclick="selecionarRPE('8')" class="bg-slate-950 hover:bg-emerald-950 border border-slate-800 hover:border-emerald-500 p-3.5 rounded-2xl text-left transition-all">
                 <div class="flex justify-between font-bold text-sm text-emerald-400"><span>RPE 8</span><span>2 Repetições na Reserva</span></div>
@@ -93,10 +85,13 @@
                 <h2 id="titulo-divisao-ativa" class="font-bold text-xs text-emerald-400 uppercase tracking-wider">Treino</h2>
             </div>
 
-            <div class="bg-slate-950 border border-slate-900 rounded-2xl p-4 space-y-1 shadow-lg">
-                <span class="text-[10px] uppercase font-bold text-slate-500">Volume do treino</span>
-                <div class="text-2xl font-black text-emerald-400" id="volume-total-aluno">0 kg</div>
-                <p class="text-[11px] text-slate-400">Preencha suas cargas e reps</p>
+            <!-- Bloco de Histórico / Tonnage da Semana Anterior -->
+            <div class="bg-slate-950 border border-slate-900 rounded-2xl p-3.5 flex justify-between items-center text-xs">
+                <div>
+                    <span class="text-[10px] uppercase font-bold text-slate-500 block">Histórico da Semana Anterior</span>
+                    <strong class="text-slate-300 font-semibold" id="texto-historico-anterior">4 Séries | Volume: 2.400 kg</strong>
+                </div>
+                <span class="text-emerald-400 font-black text-sm" id="volume-total-aluno">0 kg</span>
             </div>
 
             <div id="lista-exercicios-aluno" class="space-y-4"></div>
@@ -117,6 +112,11 @@
         let tempoRestante = 0;
         let folegoUtilizado = false;
         let treinosDoAlunoCarregados = [];
+
+        function validarApenasNumeros(input) {
+            input.value = input.value.replace(/[^0-9.]/g, '');
+            calcularVolumeTotal();
+        }
 
         async function carregarDadosAluno() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -169,6 +169,7 @@
 
             document.getElementById('view-divisoes-aluno').classList.add('hidden');
             document.getElementById('view-execucao-treino').classList.remove('hidden');
+            calcularVolumeTotal();
         }
 
         function voltarParaDivisoes() {
@@ -198,10 +199,10 @@
                     if (s.metodo === 'Drop Set' && s.detalhe > 0) {
                         for (let d = 1; d <= s.detalhe; d++) {
                             htmlDetalheMetodo += `
-                                <div class="grid grid-cols-3 gap-1 pt-1.5 border-t border-slate-900 mt-1.5">
+                                <div class="grid grid-cols-3 gap-1 pt-1.5 border-t border-slate-900 mt-1.5 drop-bloco-item">
                                     <span class="col-span-3 text-[10px] text-emerald-400 font-black uppercase tracking-wide">↳ Drop ${d} (Sem Pausa)</span>
-                                    <input type="number" step="0.5" class="w-full bg-slate-900 border border-slate-800 rounded p-1 text-center text-xs text-white" placeholder="kg">
-                                    <input type="number" class="w-full bg-slate-900 border border-slate-800 rounded p-1 text-center text-xs text-white" placeholder="reps">
+                                    <input type="number" step="0.5" oninput="validarApenasNumeros(this)" class="w-full bg-slate-900 border border-slate-800 rounded p-1 text-center text-xs text-white input-carga" placeholder="kg">
+                                    <input type="number" oninput="validarApenasNumeros(this)" class="w-full bg-slate-900 border border-slate-800 rounded p-1 text-center text-xs text-white input-reps" placeholder="reps">
                                     <div class="text-[9px] text-slate-500 flex items-center justify-center font-bold">Falha</div>
                                 </div>
                             `;
@@ -209,14 +210,20 @@
                     } else if ((s.metodo === 'Rest Pause' || s.metodo === 'Cluster Set') && s.detalhe > 0) {
                         for (let b = 1; b <= s.detalhe; b++) {
                             htmlDetalheMetodo += `
-                                <div class="grid grid-cols-3 gap-1 pt-1.5 border-t border-slate-900 mt-1.5">
-                                    <span class="col-span-3 text-[10px] text-cyan-400 font-black uppercase tracking-wide">↳ ${s.metodo} • Bloco ${b}</span>
-                                    <input type="number" step="0.5" class="w-full bg-slate-900 border border-slate-800 rounded p-1 text-center text-xs text-white" placeholder="kg">
-                                    <input type="number" class="w-full bg-slate-900 border border-slate-800 rounded p-1 text-center text-xs text-white" placeholder="reps">
-                                    <div class="text-[9px] text-cyan-500 flex items-center justify-center font-bold">Pausa curta</div>
+                                <div class="grid grid-cols-3 gap-1 pt-1.5 border-t border-slate-900 mt-1.5 cluster-bloco-item">
+                                    <span class="col-span-3 text-[10px] text-cyan-400 font-black uppercase tracking-wide">↳ ${s.metodo} • Bloco ${b} (${s.descanso || 15}s pausa)</span>
+                                    <input type="number" step="0.5" oninput="validarApenasNumeros(this)" class="w-full bg-slate-900 border border-slate-800 rounded p-1 text-center text-xs text-white input-carga" placeholder="kg">
+                                    <input type="number" oninput="validarApenasNumeros(this)" class="w-full bg-slate-900 border border-slate-800 rounded p-1 text-center text-xs text-white input-reps" placeholder="reps">
+                                    <button onclick="dispararTimerDescanso(${s.descanso || 15})" class="bg-cyan-950 text-cyan-400 border border-cyan-800 text-[9px] rounded font-bold">⏱️ Pausa</button>
                                 </div>
                             `;
                         }
+                    } else if (s.metodo === 'FST-7' && s.detalhe > 0) {
+                        htmlDetalheMetodo += `
+                            <div class="pt-1.5 border-t border-slate-900 mt-1.5 text-[10px] text-purple-400 font-bold">
+                                FST-7 Ativo: ${s.detalhe} séries curtas consecutivas (${s.descanso || 30}s de intervalo entre elas).
+                            </div>
+                        `;
                     }
 
                     return `
@@ -227,14 +234,15 @@
                                     <span class="text-slate-500 uppercase text-[9px]">Método:</span>
                                     <strong class="text-emerald-400 font-bold">${s.metodo}</strong>
                                 </div>
+                                ${s.metodo !== 'Drop Set' ? `
                                 <button onclick="dispararTimerDescanso(${s.descanso || 90})" class="ml-auto bg-slate-900 hover:bg-emerald-950 text-emerald-400 border border-slate-800 text-[10px] px-2 py-1 rounded-lg font-bold flex items-center gap-1">
                                     ⏱️ ${s.descanso || 90}s
-                                </button>
+                                </button>` : ''}
                             </div>
 
                             <div class="grid grid-cols-3 gap-1.5">
-                                <input type="number" step="0.5" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-1.5 text-center text-xs font-bold text-white focus:border-emerald-500 focus:outline-none" placeholder="kg">
-                                <input type="number" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-1.5 text-center text-xs font-bold text-white focus:border-emerald-500 focus:outline-none" placeholder="reps">
+                                <input type="number" step="0.5" oninput="validarApenasNumeros(this)" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-1.5 text-center text-xs font-bold text-white focus:border-emerald-500 focus:outline-none input-carga" placeholder="kg">
+                                <input type="number" oninput="validarApenasNumeros(this)" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-1.5 text-center text-xs font-bold text-white focus:border-emerald-500 focus:outline-none input-reps" placeholder="reps">
                                 <input readonly onclick="abrirRPEFullScreen(this)" type="text" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-1.5 text-center text-xs font-bold text-emerald-400 cursor-pointer focus:outline-none" placeholder="RPE">
                             </div>
                             ${htmlDetalheMetodo}
@@ -260,6 +268,20 @@
                     </div>
                 `;
             }).join('');
+        }
+
+        function calcularVolumeTotal() {
+            let volumeTotal = 0;
+            document.querySelectorAll('.serie-item').forEach(serie => {
+                const cargaInput = serie.querySelector('.input-carga');
+                const repsInput = serie.querySelector('.input-reps');
+                if (cargaInput && repsInput) {
+                    const carga = parseFloat(cargaInput.value) || 0;
+                    const reps = parseFloat(repsInput.value) || 0;
+                    volumeTotal += carga * reps;
+                }
+            });
+            document.getElementById('volume-total-aluno').innerText = `${volumeTotal.toLocaleString('pt-BR')} kg`;
         }
 
         function abrirRPEFullScreen(inputElement) {
@@ -294,10 +316,10 @@
 
         function dispararTimerDescanso(segundos) {
             tempoRestante = segundos;
-            folegoUtilizado = false; // Reseta o direito ao fôlego para este novo timer
+            folegoUtilizado = false;
             
             const btnFolego = document.getElementById('btn-folego-extra');
-            btnFolego.classList.remove('hidden');
+            btnFolego.classList.remove('hidden', 'opacity-40', 'cursor-not-allowed');
             btnFolego.innerText = '+30s Fôlego (1x)';
             btnFolego.disabled = false;
 
@@ -324,13 +346,12 @@
         }
 
         function adicionarTempoTimer(secs) {
-            if (folegoUtilizado) return; // Se já usou, não faz nada
+            if (folegoUtilizado) return;
             
             folegoUtilizado = true;
             tempoRestante += secs;
             atualizarDisplayTimer();
 
-            // Esconde ou desativa o botão imediatamente após o clique único
             const btnFolego = document.getElementById('btn-folego-extra');
             btnFolego.classList.add('opacity-40', 'cursor-not-allowed');
             btnFolego.innerText = 'Fôlego Usado';
