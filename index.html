@@ -63,7 +63,7 @@
                 </div>
             </div>
 
-            <!-- Abas Internas com Caixa Laranja Acompanhando -->
+            <!-- Abas Internas -->
             <div class="flex gap-1 bg-af-card p-1.5 rounded-2xl border border-slate-800 text-[11px] font-bold text-center">
                 <button onclick="mudarAbaAdminAluno('treinos')" id="tab-admin-treinos" class="flex-1 py-2 rounded-xl bg-af-orange text-black transition-all">🏋️ Treinos</button>
                 <button onclick="mudarAbaAdminAluno('relatorios')" id="tab-admin-relatorios" class="flex-1 py-2 rounded-xl text-slate-400 hover:text-white transition-all">📊 Relatórios</button>
@@ -119,7 +119,7 @@
             </div>
         </div>
 
-        <!-- TELA 3: MONTAGEM DE EXERCÍCIOS COM CONFIGURAÇÃO MODULAR POR SÉRIE -->
+        <!-- TELA 3: MONTAGEM DE EXERCÍCIOS -->
         <div id="view-montar-exercicios" class="hidden space-y-4">
             <div class="flex items-center justify-between bg-af-card border border-slate-800 rounded-2xl p-4">
                 <button onclick="voltarParaTreinos()" class="bg-black text-slate-400 px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-800">← Voltar</button>
@@ -162,13 +162,24 @@
                         </div>
                     </div>
 
-                    <div>
-                        <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Quantidade de Séries</label>
-                        <input type="number" id="input-qtd-series-ex" value="4" oninput="validarApenasNumeros(this)" onchange="gerarCamposSeriesAdmin(this.value)" min="1" max="10" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-xs text-white text-center font-bold">
+                    <!-- Qtd de Séries e Método Macro do Exercício Lado a Lado -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Qtd de Séries</label>
+                            <input type="number" id="input-qtd-series-ex" value="4" oninput="validarApenasNumeros(this)" onchange="gerarCamposSeriesAdmin(this.value)" min="1" max="10" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-xs text-white text-center font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Método Geral</label>
+                            <select id="select-metodo-geral-ex" onchange="alternarVisibilidadeMetodoMacro(this.value)" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-xs text-af-orange font-bold">
+                                <option value="Nulo">Nulo (Nenhum)</option>
+                                <option value="Pirâmide Crescente">Pirâmide Crescente</option>
+                                <option value="Pirâmide Decrescente">Pirâmide Decrescente</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <!-- Configuração Modular por Série (Com opção Nulo / Normal e Métodos Avançados) -->
-                    <div class="space-y-2 pt-2 border-t border-slate-800">
+                    <!-- Configuração Modular por Série (Fica visível se Método Geral for Nulo) -->
+                    <div id="bloco-configuracao-modular" class="space-y-2 pt-2 border-t border-slate-800">
                         <label class="block text-[11px] font-bold text-slate-300">Configuração de Métodos por Série</label>
                         <div id="container-config-series-admin" class="space-y-2"></div>
                     </div>
@@ -226,7 +237,8 @@
                                 </div>
                             </div>
                             <div class="flex items-center gap-1.5" onclick="event.stopPropagation()">
-                                <button onclick="editarNomeAluno('${aluno.id}', '${aluno.nome}')" class="text-xs bg-black text-slate-300 border border-slate-800 px-2.5 py-1.5 rounded-xl font-bold">✏️</button>
+                                <button onclick="editarNomeAluno('${aluno.id}', '${aluno.nome}')" class="text-xs bg-black text-slate-300 border border-slate-800 px-2.5 py-1.5 rounded-xl font-bold" title="Editar Nome">✏️</button>
+                                <button onclick="apagarAluno('${aluno.id}', '${aluno.nome.replace(/'/g, "\\'")}')" class="text-xs bg-black text-rose-400 border border-slate-800 px-2.5 py-1.5 rounded-xl font-bold" title="Apagar Aluno">🗑️</button>
                                 <button onclick="copiarLinkDirect('${linkAluno}')" class="text-xs bg-af-orange text-black px-3 py-1.5 rounded-xl font-black">Copiar</button>
                             </div>
                         </div>
@@ -240,6 +252,13 @@
             if (!novoNome || !novoNome.trim()) return;
             const { error } = await supabaseClient.from('alunos').update({ nome: novoNome.trim() }).eq('id', id);
             if (error) alert('Erro: ' + error.message);
+            else carregarAlunos();
+        }
+
+        async function apagarAluno(id, nome) {
+            if (!confirm(`Deseja realmente APAGAR o aluno "${nome}" e todos os seus treinos?`)) return;
+            const { error } = await supabaseClient.from('alunos').delete().eq('id', id);
+            if (error) alert('Erro ao apagar: ' + error.message);
             else carregarAlunos();
         }
 
@@ -279,6 +298,15 @@
             });
             document.getElementById(`subbox-${sub}`).classList.remove('hidden');
             document.getElementById(`subtab-${sub === 'volume' ? 'vol' : sub === 'series' ? 'ser' : 'grp'}`).className = 'flex-1 py-1.5 rounded-lg bg-af-orange text-black font-bold transition-all';
+        }
+
+        function alternarVisibilidadeMetodoMacro(valor) {
+            const blocoModular = document.getElementById('bloco-configuracao-modular');
+            if (valor !== 'Nulo') {
+                blocoModular.classList.add('hidden');
+            } else {
+                blocoModular.classList.remove('hidden');
+            }
         }
 
         function voltarParaLista() {
@@ -423,26 +451,33 @@
             const musculo = document.getElementById('select-musculo-ex').value;
             const equipamento = document.getElementById('select-equipamento-ex').value;
             const qtdSeries = parseInt(document.getElementById('input-qtd-series-ex').value) || 4;
+            const metodoGeral = document.getElementById('select-metodo-geral-ex').value;
 
             if (!nome) { alert('Digite o nome do exercício!'); return; }
             if (!baseExerciciosGlobais.includes(nome)) baseExerciciosGlobais.push(nome);
 
             const seriesConfig = [];
-            document.querySelectorAll('.serie-config-item').forEach(item => {
-                const num = item.getAttribute('data-serie');
-                const metodo = item.querySelector('.select-metodo-serie').value;
-                const descanso = parseInt(item.querySelector('.input-descanso-serie').value) || 90;
-                let detalhe = 0;
-                if (metodo === 'Drop Set') detalhe = parseInt(item.querySelector('.input-qtd-drops')?.value) || 2;
-                else if (metodo === 'Rest Pause' || metodo === 'Cluster Set') detalhe = parseInt(item.querySelector('.input-qtd-blocos')?.value) || 2;
-                else if (metodo === 'FST-7') detalhe = parseInt(item.querySelector('.input-qtd-fst7')?.value) || 7;
-                seriesConfig.push({ num, metodo, descanso, detalhe });
-            });
+            if (metodoGeral !== 'Nulo') {
+                for (let i = 1; i <= qtdSeries; i++) {
+                    seriesConfig.push({ num: i, metodo: 'Série Normal', descanso: 90 });
+                }
+            } else {
+                document.querySelectorAll('.serie-config-item').forEach(item => {
+                    const num = item.getAttribute('data-serie');
+                    const metodo = item.querySelector('.select-metodo-serie').value;
+                    const descanso = parseInt(item.querySelector('.input-descanso-serie').value) || 90;
+                    let detalhe = 0;
+                    if (metodo === 'Drop Set') detalhe = parseInt(item.querySelector('.input-qtd-drops')?.value) || 2;
+                    else if (metodo === 'Rest Pause' || metodo === 'Cluster Set') detalhe = parseInt(item.querySelector('.input-qtd-blocos')?.value) || 2;
+                    else if (metodo === 'FST-7') detalhe = parseInt(item.querySelector('.input-qtd-fst7')?.value) || 7;
+                    seriesConfig.push({ num, metodo, descanso, detalhe });
+                });
+            }
 
             const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
             if (treino) {
                 if (!treino.exercicios) treino.exercicios = [];
-                treino.exercicios.push({ nome, musculo, equipamento, qtdSeries, seriesConfig });
+                treino.exercicios.push({ nome, musculo, equipamento, qtdSeries, metodoGeral, seriesConfig });
                 document.getElementById('input-busca-ex').value = '';
                 await salvarTreinosNoSupabase();
                 renderizarListaExerciciosDivisao();
@@ -461,6 +496,7 @@
                     <div>
                         <span class="text-[10px] text-af-orange font-bold uppercase">${ex.musculo} • ${ex.equipamento}</span>
                         <div class="font-bold text-slate-200">${idx + 1}. ${ex.nome} (${ex.qtdSeries} Séries)</div>
+                        ${ex.metodoGeral && ex.metodoGeral !== 'Nulo' ? `<span class="text-[9px] text-amber-400 font-bold">Método: ${ex.metodoGeral}</span>` : ''}
                     </div>
                     <button onclick="removerExercicioDivisao(${idx})" class="text-xs text-rose-400 font-bold">✕</button>
                 </div>

@@ -115,7 +115,7 @@
         <div id="aba-atleta-relatorios" class="hidden space-y-4">
             <div class="bg-af-card border border-slate-800 rounded-2xl p-5 space-y-3 text-center">
                 <h3 class="font-bold text-sm text-af-orange uppercase">Resumo Mensal do Atleta</h3>
-                <p class="text-xs text-slate-400">Aqui você acompanha o seu progresso geral de volume e constância nos treinos prescritos pelo personal.</p>
+                <p class="text-xs text-slate-400">Aqui você acompanha o seu progresso geral de volume e constância nos treinos prescritos.</p>
                 <div class="grid grid-cols-2 gap-2 pt-2">
                     <div class="bg-black p-3 rounded-xl border border-slate-800">
                         <span class="text-[10px] uppercase text-slate-500 font-bold block">Treinos Realizados</span>
@@ -142,9 +142,11 @@
         let treinosDoAlunoCarregados = [];
 
         const explicacoesMetodos = {
-            'Drop Set': 'O Drop-Set consiste em fazer a série até a falha, reduzir a carga em ~20% imediatamente sem descanso e continuar até a falha.',
+            'Pirâmide Crescente': 'Na Pirâmide Crescente, você aumenta o peso e diminui o número de repetições a cada série realizada.',
+            'Pirâmide Decrescente': 'Na Pirâmide Decrescente, você começa com a carga mais pesada e reduz o peso aumentando as repetições.',
+            'Drop Set': 'O Drop-Set consiste em fazer a série até a falha, reduzir a carga em ~20% sem descanso e continuar até a falha.',
             'Rest Pause': 'No Rest-Pause, faça até a falha, descanse de 10 a 15 segundos sem tirar a carga e faça mais repetições.',
-            'Cluster Set': 'No Cluster Set, divida a série em mini-blocos com intervalos curtos entre eles para manter alta intensidade.',
+            'Cluster Set': 'No Cluster Set, divida a série em mini-blocos com pausas curtas entre eles.',
             'FST-7': 'Protocolo de 7 séries consecutivas com intervalos curtos de 30 a 45s.'
         };
 
@@ -229,22 +231,11 @@
         function renderizarExerciciosAluno(exercicios) {
             const container = document.getElementById('lista-exercicios-aluno');
             container.innerHTML = exercicios.map((ex, index) => {
-                const htmlSeries = ex.seriesConfig.map(s => {
-                    const metodoExibicao = (s.metodo === 'Nulo' || !s.metodo) ? 'Normal' : s.metodo;
-                    const possuiExplicacao = metodoExibicao !== 'Normal';
+                const metodoGeral = ex.metodoGeral && ex.metodoGeral !== 'Nulo' ? ex.metodoGeral : null;
 
-                    let htmlDetalheMetodo = '';
-                    if (metodoExibicao === 'Drop Set' && s.detalhe > 0) {
-                        for (let d = 1; d <= s.detalhe; d++) {
-                            htmlDetalheMetodo += `
-                                <div class="grid grid-cols-4 gap-1 pt-1 border-t border-slate-800 mt-1 items-center">
-                                    <span class="text-[8px] text-emerald-400 font-bold">Drop ${d}</span>
-                                    <input type="number" step="0.5" oninput="validarApenasNumeros(this)" class="w-full bg-slate-900 border border-slate-800 rounded p-1 text-center text-[10px] text-white input-carga" placeholder="kg">
-                                    <input type="number" oninput="validarApenasNumeros(this)" class="w-full bg-slate-900 border border-slate-800 rounded p-1 text-center text-[10px] text-white input-reps" placeholder="reps">
-                                    <span class="text-[8px] text-slate-500 text-center">Falha</span>
-                                </div>`;
-                        }
-                    }
+                const htmlSeries = ex.seriesConfig.map(s => {
+                    const metodoExibicao = metodoGeral || ((s.metodo === 'Nulo' || !s.metodo) ? 'Normal' : s.metodo);
+                    const possuiExplicacao = metodoExibicao !== 'Normal';
 
                     return `
                         <div class="bg-black border border-slate-800 p-2.5 rounded-xl space-y-2 serie-item">
@@ -269,7 +260,6 @@
                                 <input type="number" oninput="validarApenasNumeros(this)" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-1 text-center text-xs font-bold text-white input-reps" placeholder="reps">
                                 <input readonly onclick="abrirRPEFullScreen(this)" type="text" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-1 text-center text-xs font-bold text-af-orange cursor-pointer" placeholder="RPE">
                             </div>
-                            ${htmlDetalheMetodo}
                         </div>`;
                 }).join('');
 
@@ -278,7 +268,7 @@
                         <div onclick="alternarColapsoExercicio(this)" class="p-3.5 bg-af-card flex justify-between items-center cursor-pointer select-none">
                             <div>
                                 <span class="text-[9px] font-bold uppercase tracking-wider text-af-orange">${ex.musculo} • ${ex.equipamento}</span>
-                                <h3 class="font-bold text-xs text-slate-100">${index + 1}. ${ex.nome}</h3>
+                                <h3 class="font-bold text-xs text-slate-100">${index + 1}. ${ex.nome} ${metodoGeral ? `<span onclick="event.stopPropagation(); mostrarExplicacaoMetodo('${metodoGeral}')" class="text-[9px] text-af-orange font-bold ml-1 px-1.5 py-0.5 bg-orange-950/40 rounded border border-orange-800/40 cursor-pointer">ℹ️ ${metodoGeral}</span>` : ''}</h3>
                             </div>
                             <div class="flex items-center gap-2">
                                 <span class="text-[9px] bg-black text-slate-400 px-2 py-0.5 rounded border border-slate-800">${ex.qtdSeries} Séries</span>
@@ -316,7 +306,7 @@
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(880, ctx.currentTime); // Tom agudo nítido
+                osc.frequency.setValueAtTime(880, ctx.currentTime);
                 gain.gain.setValueAtTime(0.15, ctx.currentTime);
                 osc.connect(gain);
                 gain.connect(ctx.destination);
