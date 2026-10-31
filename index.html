@@ -9,7 +9,7 @@
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen p-4 flex flex-col items-center">
 
-    <div class="max-w-md w-full space-y-6">
+    <div class="max-w-md w-full space-y-6 pb-20">
         <!-- Topo -->
         <div class="flex justify-between items-center bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg">
             <div>
@@ -19,20 +19,97 @@
             <span class="text-[10px] px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800/50">Online</span>
         </div>
 
-        <!-- Cadastrar Aluno -->
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-lg">
-            <h2 class="font-bold text-xs uppercase tracking-wider text-slate-300">Cadastrar Novo Aluno</h2>
-            <div class="flex gap-2">
-                <input type="text" id="nome-novo-aluno" placeholder="Nome do aluno..." class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white focus:border-orange-500 focus:outline-none">
-                <button onclick="cadastrarAluno()" class="bg-orange-500 hover:bg-orange-400 font-bold px-4 py-2.5 rounded-xl text-slate-950 text-xs transition-all shadow-md">Cadastrar</button>
+        <!-- Visão Principal / Lista de Alunos ou Detalhes do Aluno -->
+        <div id="view-home" class="space-y-4">
+            <!-- Cadastrar Aluno -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-lg">
+                <h2 class="font-bold text-xs uppercase tracking-wider text-slate-300">Cadastrar Novo Aluno</h2>
+                <div class="flex gap-2">
+                    <input type="text" id="nome-novo-aluno" placeholder="Nome do aluno..." class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white focus:border-orange-500 focus:outline-none">
+                    <button onclick="cadastrarAluno()" class="bg-orange-500 hover:bg-orange-400 font-bold px-4 py-2.5 rounded-xl text-slate-950 text-xs transition-all shadow-md">Cadastrar</button>
+                </div>
+            </div>
+
+            <!-- Lista de Alunos Ativos -->
+            <div class="space-y-3">
+                <h2 class="font-bold text-xs uppercase tracking-wider text-slate-400 px-1">Alunos Ativos (Clique para gerenciar)</h2>
+                <div id="lista-alunos" class="space-y-2">
+                    <p class="text-xs text-slate-500 text-center py-6">Carregando alunos...</p>
+                </div>
             </div>
         </div>
 
-        <!-- Lista de Alunos Ativos -->
-        <div class="space-y-3">
-            <h2 class="font-bold text-xs uppercase tracking-wider text-slate-400 px-1">Alunos Ativos</h2>
-            <div id="lista-alunos" class="space-y-2">
-                <p class="text-xs text-slate-500 text-center py-6">Carregando alunos...</p>
+        <!-- Visão Detalhada do Aluno (Montagem de Treinos) -->
+        <div id="view-aluno-detalhe" class="hidden space-y-4">
+            <div class="flex items-center justify-between bg-slate-900 border border-slate-800 rounded-2xl p-4">
+                <div>
+                    <button onclick="voltarHome()" class="text-xs text-orange-400 font-semibold mb-1 hover:underline">← Voltar para Alunos</button>
+                    <h2 id="detalhe-nome-aluno" class="text-base font-bold text-white">Nome do Aluno</h2>
+                </div>
+                <button onclick="copiarLinkAluno()" class="text-xs bg-orange-500/10 text-orange-400 border border-orange-500/30 px-3 py-2 rounded-xl font-medium">Copiar Link</button>
+            </div>
+
+            <!-- Abas de Navegação -->
+            <div class="flex bg-slate-900 border border-slate-800 p-1 rounded-2xl text-xs font-semibold">
+                <button onclick="mudarAba('treinos')" id="aba-btn-treinos" class="flex-1 py-2.5 rounded-xl bg-orange-500 text-slate-950 transition-all">Treinos e Ficha</button>
+                <button onclick="mudarAba('evolucao')" id="aba-btn-evolucao" class="flex-1 py-2.5 rounded-xl text-slate-400 hover:text-white transition-all">Relatórios e Evolução</button>
+            </div>
+
+            <!-- Aba Treinos -->
+            <div id="aba-treinos" class="space-y-4">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+                    <h3 class="font-bold text-xs text-slate-200">Criar Novo Treino (Ex: Treino A - Costas/Bíceps)</h3>
+                    <input type="text" id="form-nome-treino" placeholder="Nome do Treino (ex: A - Costas e Bíceps)" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-orange-500 focus:outline-none">
+                    
+                    <div class="border-t border-slate-800 pt-3 space-y-2">
+                        <h4 class="text-[11px] font-bold text-orange-400">Adicionar Exercício</h4>
+                        <input type="text" id="ex-nome" placeholder="Nome do exercício (ex: Puxada Alta)" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-orange-500 focus:outline-none">
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="text" id="ex-grupo" placeholder="Músculo alvo (ex: Costas)" class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-orange-500 focus:outline-none">
+                            <select id="ex-equipamento" class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-orange-500 focus:outline-none">
+                                <option value="Halter">Halter</option>
+                                <option value="Barra">Barra</option>
+                                <option value="Máquina">Máquina</option>
+                                <option value="Crossover">Crossover</option>
+                                <option value="Livre">Livre / Corporal</option>
+                                <option value="Kettlebell">Kettlebell</option>
+                                <option value="Anilha">Anilha</option>
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="number" id="ex-series" placeholder="Qtd Séries (ex: 4)" value="3" class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-orange-500 focus:outline-none">
+                            <select id="ex-tecnica" class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-orange-500 focus:outline-none">
+                                <option value="Normal">Série Normal</option>
+                                <option value="Drop Set">Drop Set</option>
+                                <option value="Cluster Set">Cluster Set / Rest-Pause</option>
+                            </select>
+                        </div>
+                        <button onclick="adicionarExercicioNaFila()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 rounded-xl border border-slate-700">+ Adicionar à Ficha</button>
+                    </div>
+
+                    <!-- Ficha temporária -->
+                    <div id="fila-exercicios" class="space-y-2 pt-2 border-t border-slate-800">
+                        <p class="text-[11px] text-slate-500 text-center py-2">Nenhum exercício adicionado a este treino ainda.</p>
+                    </div>
+
+                    <button onclick="salvarTreinoCompleto()" class="w-full bg-orange-500 hover:bg-orange-400 font-bold py-3 rounded-xl text-slate-950 text-xs transition-all shadow-md">Salvar Treino Completo na Ficha</button>
+                </div>
+
+                <!-- Lista de Treinos Cadastrados -->
+                <div class="space-y-3" id="lista-treinos-salvos">
+                    <!-- Renderizado dinamicamente -->
+                </div>
+            </div>
+
+            <!-- Aba Relatórios e Evolução -->
+            <div id="aba-evolucao" class="hidden space-y-4">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 text-xs text-slate-300">
+                    <h3 class="font-bold text-orange-400 text-sm">📈 Relatórios e Cargas Recentes</h3>
+                    <p class="text-slate-400 text-[11px]">Acompanhamento de volume, recordes pessoais e histórico de execuções registradas pelo aluno.</p>
+                    <div id="relatorio-historico-aluno" class="space-y-2 pt-2">
+                        <p class="text-slate-500 text-center py-4">Carregando histórico de execuções...</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -42,16 +119,14 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6aWZ6aWtkZW9qYXp5c3dqZ3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MTg3NjgsImV4cCI6MjEwODk5NDc2OH0.Y3rycAN_O1IL99OdMJsC_TRMrSEKJp4vQJho2P4D_W0';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        let alunoSelecionado = null;
+        let exerciciosFila = [];
+
         async function carregarAlunos() {
             const { data, error } = await supabaseClient.from('alunos').select('*').order('created_at', { ascending: false });
             const container = document.getElementById('lista-alunos');
             
-            if (error) {
-                container.innerHTML = `<p class="text-xs text-red-400 text-center">Erro ao carregar alunos.</p>`;
-                return;
-            }
-
-            if (data.length === 0) {
+            if (error || !data || data.length === 0) {
                 container.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">Nenhum aluno cadastrado ainda.</p>`;
                 return;
             }
@@ -63,19 +138,17 @@
                 const iniciais = aluno.nome.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 
                 return `
-                    <div class="bg-slate-900 border border-slate-800 hover:border-slate-700 p-3.5 rounded-2xl flex items-center justify-between transition-all shadow-sm">
+                    <div onclick='abrirAluno(${JSON.stringify(aluno)}, "${linkAluno}")' class="bg-slate-900 border border-slate-800 hover:border-orange-500/50 p-3.5 rounded-2xl flex items-center justify-between transition-all cursor-pointer shadow-sm group">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-slate-800 text-orange-400 font-bold flex items-center justify-center text-xs border border-slate-700/50">
+                            <div class="w-10 h-10 rounded-xl bg-slate-800 text-orange-400 font-bold flex items-center justify-center text-xs border border-slate-700/50 group-hover:border-orange-500/50">
                                 ${iniciais}
                             </div>
                             <div>
-                                <h3 class="font-bold text-sm text-slate-200">${aluno.nome}</h3>
-                                <p class="text-[10px] text-slate-400">Acesso via Link Exclusivo</p>
+                                <h3 class="font-bold text-sm text-slate-200 group-hover:text-orange-400 transition-colors">${aluno.nome}</h3>
+                                <p class="text-[10px] text-slate-400">Clique para montar treinos</p>
                             </div>
                         </div>
-                        <button onclick="copiarLink('${linkAluno}')" class="text-xs bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/30 px-3 py-2 rounded-xl font-medium transition-all">
-                            Copiar Link
-                        </button>
+                        <span class="text-xs text-slate-500">→</span>
                     </div>
                 `;
             }).join('');
@@ -84,25 +157,159 @@
         async function cadastrarAluno() {
             const input = document.getElementById('nome-novo-aluno');
             const nome = input.value.trim();
-
-            if (!nome) {
-                alert('Digite o nome do aluno!');
-                return;
-            }
+            if (!nome) return alert('Digite o nome do aluno!');
 
             const { error } = await supabaseClient.from('alunos').insert([{ nome }]);
+            if (error) alert('Erro: ' + error.message);
+            else { input.value = ''; carregarAlunos(); }
+        }
 
-            if (error) {
-                alert('Erro ao cadastrar: ' + error.message);
+        function abrirAluno(aluno, link) {
+            alunoSelecionado = aluno;
+            window.linkAlunoAtual = link;
+            document.getElementById('detalhe-nome-aluno').innerText = aluno.nome;
+            document.getElementById('view-home').classList.add('hidden');
+            document.getElementById('view-aluno-detalhe').classList.remove('hidden');
+            carregarTreinosDoAluno();
+            carregarRelatorioAluno();
+        }
+
+        function voltarHome() {
+            alunoSelecionado = null;
+            document.getElementById('view-aluno-detalhe').classList.add('hidden');
+            document.getElementById('view-home').classList.remove('hidden');
+            carregarAlunos();
+        }
+
+        function copiarLinkAluno() {
+            navigator.clipboard.writeText(window.linkAlunoAtual);
+            alert('Link exclusivo do aluno copiado!');
+        }
+
+        function mudarAba(aba) {
+            if (aba === 'treinos') {
+                document.getElementById('aba-treinos').classList.remove('hidden');
+                document.getElementById('aba-evolucao').classList.add('hidden');
+                document.getElementById('aba-btn-treinos').className = 'flex-1 py-2.5 rounded-xl bg-orange-500 text-slate-950 transition-all';
+                document.getElementById('aba-btn-evolucao').className = 'flex-1 py-2.5 rounded-xl text-slate-400 hover:text-white transition-all';
             } else {
-                input.value = '';
-                carregarAlunos();
+                document.getElementById('aba-treinos').classList.add('hidden');
+                document.getElementById('aba-evolucao').classList.remove('hidden');
+                document.getElementById('aba-btn-treinos').className = 'flex-1 py-2.5 rounded-xl text-slate-400 hover:text-white transition-all';
+                document.getElementById('aba-btn-evolucao').className = 'flex-1 py-2.5 rounded-xl bg-orange-500 text-slate-950 transition-all';
             }
         }
 
-        function copiarLink(link) {
-            navigator.clipboard.writeText(link);
-            alert('Link exclusivo copiado para a área de transferência!');
+        function adicionarExercicioNaFila() {
+            const nome = document.getElementById('ex-nome').value.trim();
+            const grupo = document.getElementById('ex-grupo').value.trim();
+            const equipamento = document.getElementById('ex-equipamento').value;
+            const series = parseInt(document.getElementById('ex-series').value) || 3;
+            const tecnica = document.getElementById('ex-tecnica').value;
+
+            if (!nome || !grupo) return alert('Preencha o nome do exercício e o músculo alvo.');
+
+            exerciciosFila.push({ nome, grupo, equipamento, series, tecnica });
+            document.getElementById('ex-nome').value = '';
+            document.getElementById('ex-grupo').value = '';
+            renderizarFila();
+        }
+
+        function renderizarFila() {
+            const container = document.getElementById('fila-exercicios');
+            if (exerciciosFila.length === 0) {
+                container.innerHTML = `<p class="text-[11px] text-slate-500 text-center py-2">Nenhum exercício adicionado a este treino ainda.</p>`;
+                return;
+            }
+            container.innerHTML = exerciciosFila.map((ex, idx) => `
+                <div class="bg-slate-950 border border-slate-800 p-2 rounded-xl flex justify-between items-center text-xs">
+                    <div>
+                        <span class="font-bold text-slate-200">${idx+1}. ${ex.nome}</span>
+                        <p class="text-[10px] text-orange-400">${ex.grupo} • ${ex.equipamento} • ${ex.series} Séries (${ex.tecnica})</p>
+                    </div>
+                    <button onclick="removerFila(${idx})" class="text-red-400 text-xs px-2">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function removerFila(idx) {
+            exerciciosFila.splice(idx, 1);
+            renderizarFila();
+        }
+
+        async function salvarTreinoCompleto() {
+            const nomeTreino = document.getElementById('form-nome-treino').value.trim();
+            if (!nomeTreino) return alert('Dê um nome para o treino (ex: Treino A).');
+            if (exerciciosFila.length === 0) return alert('Adicione pelo menos um exercício.');
+
+            const { error } = await supabaseClient.from('treinos_alunos').insert([{
+                aluno_id: alunoSelecionado.id,
+                nome_treino: nomeTreino,
+                exercicios: exerciciosFila
+            }]);
+
+            if (error) alert('Erro ao salvar: ' + error.message);
+            else {
+                document.getElementById('form-nome-treino').value = '';
+                exerciciosFila = [];
+                renderizarFila();
+                carregarTreinosDoAluno();
+                alert('Treino salvo com sucesso para o aluno!');
+            }
+        }
+
+        async function carregarTreinosDoAluno() {
+            const { data } = await supabaseClient.from('treinos_alunos').select('*').eq('aluno_id', alunoSelecionado.id);
+            const container = document.getElementById('lista-treinos-salvos');
+
+            if (!data || data.length === 0) {
+                container.innerHTML = `<div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 text-center text-xs text-slate-500">Nenhum treino montado para este aluno ainda.</div>`;
+                return;
+            }
+
+            container.innerHTML = data.map(t => `
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-2">
+                    <div class="flex justify-between items-center">
+                        <h4 class="font-bold text-xs text-orange-400">${t.nome_treino}</h4>
+                        <button onclick="deletarTreino('${t.id}')" class="text-red-400 text-[10px]">Excluir Treino</button>
+                    </div>
+                    <div class="space-y-1">
+                        ${t.exercicios.map(ex => `
+                            <div class="text-[11px] text-slate-300 bg-slate-950 p-2 rounded-xl flex justify-between">
+                                <span>${ex.nome} (${ex.grupo} - ${ex.equipamento})</span>
+                                <span class="text-orange-400">${ex.series} séries • ${ex.tecnica}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function deletarTreino(id) {
+            if (confirm('Deseja excluir este treino?')) {
+                await supabaseClient.from('treinos_alunos').delete().eq('id', id);
+                carregarTreinosDoAluno();
+            }
+        }
+
+        async function carregarRelatorioAluno() {
+            const { data } = await supabaseClient.from('historico_treinos').select('*').eq('aluno_id', alunoSelecionado.id).order('created_at', { ascending: false }).limit(20);
+            const container = document.getElementById('relatorio-historico-aluno');
+
+            if (!data || data.length === 0) {
+                container.innerHTML = `<p class="text-slate-500 text-center py-4">Nenhum treino registrado pelo aluno ainda.</p>`;
+                return;
+            }
+
+            container.innerHTML = data.map(h => `
+                <div class="bg-slate-950 border border-slate-800 p-2.5 rounded-xl flex justify-between items-center">
+                    <div>
+                        <span class="font-bold text-slate-200">${h.exercicio_nome}</span>
+                        <p class="text-[10px] text-slate-400">Série ${h.serie} • RPE ${h.rpe || 'N/A'}</p>
+                    </div>
+                    <span class="text-orange-400 font-bold">${h.carga}kg × ${h.repeticoes} reps</span>
+                </div>
+            `).join('');
         }
 
         window.onload = carregarAlunos;
