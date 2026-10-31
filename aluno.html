@@ -243,9 +243,10 @@
                 const htmlSeries = ex.seriesConfig.map(s => {
                     const textoMetodoExibido = metodoGeral ? '-' : ((s.metodo === 'Nulo' || !s.metodo) ? 'Série Normal' : s.metodo);
                     const temExplicacao = textoMetodoExibido !== '-';
+                    const repsMeta = s.repsSugeridas || 'reps';
 
                     return `
-                        <div class="bg-black border border-slate-800 p-2.5 rounded-xl space-y-2 serie-item">
+                        <div class="bg-black border border-slate-800 p-2.5 rounded-xl space-y-2 serie-item" data-serie-concluida="false">
                             <div class="flex items-center gap-1.5">
                                 <span class="w-4 text-center font-bold text-[11px] text-slate-400">${s.num}ª</span>
                                 
@@ -256,23 +257,28 @@
                                 </div>
 
                                 <button onclick="dispararTimerDescanso(${s.descanso || 90})" class="ml-auto bg-black text-af-orange border border-slate-800 text-[10px] px-2 py-1 rounded-lg font-bold">⏱️ ${s.descanso || 90}s</button>
+                                
+                                <!-- BOTÃO VALIDAR / CHECK DA SÉRIE -->
+                                <button onclick="toggleValidarSerie(this)" class="bg-slate-900 border border-slate-800 hover:border-emerald-500 text-slate-400 px-2 py-1 rounded-lg text-xs font-bold transition-all btn-check-serie" title="Marcar série como feita">
+                                    ✔
+                                </button>
                             </div>
 
                             <!-- RÓTULOS DISCRETOS NO TOPO DAS 4 CAIXINHAS -->
                             <div class="grid grid-cols-4 gap-1.5 text-[8px] font-bold text-slate-500 uppercase text-center">
                                 <div>ANT.</div>
                                 <div>KG</div>
-                                <div>REPS</div>
+                                <div>REPS (${repsMeta})</div>
                                 <div>RPE</div>
                             </div>
 
-                            <!-- 4 CAIXINHAS COMPACTAS DA MESMA ALTURA -->
+                            <!-- 4 CAIXINHAS COMPACTAS -->
                             <div class="grid grid-cols-4 gap-1.5 items-center">
                                 <div class="bg-slate-900 border border-slate-800 rounded-lg p-1.5 text-center flex items-center justify-center h-8" title="Treino Anterior">
                                     <span class="text-[10px] font-bold text-slate-400">-</span>
                                 </div>
                                 <input type="number" step="0.5" oninput="validarApenasNumeros(this)" class="w-full h-8 bg-slate-900 border border-slate-800 rounded-lg p-1 text-center text-xs font-bold text-white input-carga focus:border-af-orange focus:outline-none" placeholder="kg">
-                                <input type="number" oninput="validarApenasNumeros(this)" class="w-full h-8 bg-slate-900 border border-slate-800 rounded-lg p-1 text-center text-xs font-bold text-white input-reps focus:border-af-orange focus:outline-none" placeholder="${s.repsSugeridas || 'reps'}">
+                                <input type="number" oninput="validarApenasNumeros(this)" class="w-full h-8 bg-slate-900 border border-slate-800 rounded-lg p-1 text-center text-xs font-bold text-white input-reps focus:border-af-orange focus:outline-none" placeholder="${repsMeta}">
                                 <input readonly onclick="abrirRPEFullScreen(this)" type="text" class="w-full h-8 bg-slate-900 border border-slate-800 rounded-lg p-1 text-center text-xs font-bold text-af-orange cursor-pointer focus:outline-none" placeholder="RPE">
                             </div>
                         </div>`;
@@ -293,6 +299,35 @@
                         <div class="p-2.5 border-t border-slate-800 space-y-2 bg-af-card">${htmlSeries}</div>
                     </div>`;
             }).join('');
+        }
+
+        function toggleValidarSerie(botao) {
+            const serieItem = botao.closest('.serie-item');
+            const carga = serieItem.querySelector('.input-carga').value;
+            const reps = serieItem.querySelector('.input-reps').value;
+            const rpe = serieItem.querySelector('input[readonly]').value;
+
+            if (!carga || !reps || !rpe) {
+                alert('Preencha Carga, Repetições e RPE antes de validar a série!');
+                return;
+            }
+
+            const concluida = serieItem.getAttribute('data-serie-concluida') === 'true';
+            if (!concluida) {
+                serieItem.setAttribute('data-serie-concluida', 'true');
+                serieItem.classList.remove('border-slate-800');
+                serieItem.classList.add('border-emerald-500/80', 'bg-emerald-950/20');
+                botao.classList.remove('bg-slate-900', 'text-slate-400');
+                botao.classList.add('bg-emerald-500', 'text-black', 'border-emerald-400');
+                botao.innerText = '✔ Feito';
+            } else {
+                serieItem.setAttribute('data-serie-concluida', 'false');
+                serieItem.classList.remove('border-emerald-500/80', 'bg-emerald-950/20');
+                serieItem.classList.add('border-slate-800');
+                botao.classList.remove('bg-emerald-500', 'text-black', 'border-emerald-400');
+                botao.classList.add('bg-slate-900', 'text-slate-400');
+                botao.innerText = '✔';
+            }
         }
 
         function calcularVolumeTotal() {
@@ -352,7 +387,19 @@
         }
 
         async function finalizarTreinoAluno() {
-            alert('Treino finalizado e registrado com sucesso!');
+            let todasValidadas = true;
+            document.querySelectorAll('.serie-item').forEach(serie => {
+                if (serie.getAttribute('data-serie-concluida') !== 'true') {
+                    todasValidadas = false;
+                }
+            });
+
+            if (!todasValidadas) {
+                alert('Atenção: Por favor, preencha e valide (clique no botão verde ✔) todas as séries antes de finalizar o treino!');
+                return;
+            }
+
+            alert('Treino finalizado e registrado com sucesso! Ótimo trabalho atleta 🚀');
             window.location.reload();
         }
 
