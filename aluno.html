@@ -248,15 +248,31 @@
             if (seta) seta.style.transform = cardBody.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
         }
 
+        function obterCargaAnterior(nomeExercicio, numSerie) {
+            if (!historicoTreinosAluno || historicoTreinosAluno.length === 0) return '-';
+            for (let i = historicoTreinosAluno.length - 1; i >= 0; i--) {
+                const reg = historicoTreinosAluno[i];
+                if (reg.exerciciosFeitos && reg.exerciciosFeitos[nomeExercicio]) {
+                    const dadosSerie = reg.exerciciosFeitos[nomeExercicio][numSerie];
+                    if (dadosSerie && dadosSerie.carga) {
+                        return `${dadosSerie.carga}kg`;
+                    }
+                }
+            }
+            return '-';
+        }
+
         function renderizarExerciciosAluno(exercicios) {
             const container = document.getElementById('lista-exercicios-aluno');
             container.innerHTML = exercicios.map((ex, index) => {
                 const metodoGeral = ex.metodoGeral && ex.metodoGeral !== 'Nulo' ? ex.metodoGeral : null;
+                const repsMetaGeral = ex.repsPiramide || '10 a 12';
 
                 const htmlSeries = ex.seriesConfig.map(s => {
                     const textoMetodoExibido = metodoGeral ? '-' : (s.metodo || 'Série Normal');
                     const temExplicacao = textoMetodoExibido !== '-';
-                    const repsMeta = s.repsSugeridas || '10 a 12';
+                    const repsMeta = metodoGeral ? repsMetaGeral : (s.repsSugeridas || '10 a 12');
+                    const cargaAnt = obterCargaAnterior(ex.nome, s.num);
 
                     let htmlSubLinhas = '';
                     if (!metodoGeral && (s.metodo === 'Drop Set' || s.metodo === 'Rest Pause' || s.metodo === 'Cluster Set')) {
@@ -273,7 +289,7 @@
                     }
 
                     return `
-                        <div class="bg-black border border-slate-800 p-2.5 rounded-xl space-y-2 serie-item" data-serie-concluida="false">
+                        <div class="bg-black border border-slate-800 p-2.5 rounded-xl space-y-2 serie-item" data-serie-concluida="false" data-num-serie="${s.num}" data-nome-ex="${ex.nome}">
                             <div class="flex items-center gap-1.5">
                                 <span class="w-4 text-center font-bold text-[11px] text-slate-400">${s.num}ª</span>
                                 
@@ -302,7 +318,7 @@
                             <!-- 4 CAIXINHAS COMPACTAS -->
                             <div class="grid grid-cols-4 gap-1.5 items-center">
                                 <div class="bg-slate-900 border border-slate-800 rounded-lg p-1.5 text-center flex items-center justify-center h-8" title="Treino Anterior">
-                                    <span class="text-[10px] font-bold text-slate-400">-</span>
+                                    <span class="text-[10px] font-bold text-slate-400">${cargaAnt}</span>
                                 </div>
                                 <input type="number" step="0.5" oninput="validarApenasNumeros(this)" class="w-full h-8 bg-slate-900 border border-slate-800 rounded-lg p-1 text-center text-xs font-bold text-white input-carga focus:border-af-orange focus:outline-none" placeholder="kg">
                                 <input type="number" oninput="validarApenasNumeros(this)" class="w-full h-8 bg-slate-900 border border-slate-800 rounded-lg p-1 text-center text-xs font-bold text-white input-reps focus:border-af-orange focus:outline-none" placeholder="${repsMeta}">
@@ -428,16 +444,36 @@
             }
 
             let volumeSessao = 0;
+            let qtdSeriesValidadas = 0;
+            let exerciciosFeitosMap = {};
+
             document.querySelectorAll('.serie-item').forEach(serie => {
+                const nomeEx = serie.getAttribute('data-nome-ex');
+                const numSerie = serie.getAttribute('data-num-serie');
                 const c = parseFloat(serie.querySelector('.input-carga')?.value) || 0;
                 const r = parseFloat(serie.querySelector('.input-reps')?.value) || 0;
+                
                 volumeSessao += c * r;
+                qtdSeriesValidadas++;
+
+                if (!exerciciosFeitosMap[nomeEx]) exerciciosFeitosMap[nomeEx] = {};
+                exerciciosFeitosMap[nomeEx][numSerie] = { carga: c, reps: r };
             });
+
+            // Comparar com o último treino para ver evolução (Mais peso, Mesmo peso, Menos peso)
+            let comparativoGeral = 'mesmo';
+            if (historicoTreinosAluno && historicoTreinosAluno.length > 0) {
+                const ultimoTreino = historicoTreinosAluno[historicoTreinosAluno.length - 1];
+                if (volumeSessao > (ultimoTreino.volume || 0)) comparativoGeral = 'mais';
+                else if (volumeSessao < (ultimoTreino.volume || 0)) comparativoGeral = 'menos';
+            }
 
             const novoRegistro = {
                 data: new Date().toISOString(),
                 volume: volumeSessao,
-                comparativo: 'mesmo'
+                qtdSeriesValidadas: qtdSeriesValidadas,
+                comparativo: comparativoGeral,
+                exerciciosFeitos: exerciciosFeitosMap
             };
 
             historicoTreinosAluno.push(novoRegistro);
