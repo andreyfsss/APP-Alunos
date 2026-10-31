@@ -56,7 +56,6 @@
                 <button id="btn-copiar-link-aluno" class="text-xs bg-emerald-950/80 hover:bg-emerald-900/80 text-emerald-400 border border-emerald-800/50 px-3 py-1.5 rounded-xl font-medium transition-all">Copiar Link</button>
             </div>
 
-            <!-- Criar Nova Divisão -->
             <div class="bg-slate-950 border border-slate-900 rounded-2xl p-4 space-y-3">
                 <h3 class="font-bold text-xs uppercase text-slate-300">Nova Divisão de Treino</h3>
                 <div class="flex gap-2">
@@ -65,7 +64,6 @@
                 </div>
             </div>
 
-            <!-- Lista de Divisões -->
             <div class="space-y-2">
                 <h2 class="font-bold text-xs uppercase tracking-wider text-slate-400 px-1">Treinos Prescritos</h2>
                 <div id="container-treinos-aluno" class="space-y-3">
@@ -162,13 +160,14 @@
                 
                 if (error) {
                     atualizarStatusSync(false);
+                    document.getElementById('container-alunos').innerHTML = `<p class="text-xs text-red-400 text-center py-4">Erro: ${error.message}</p>`;
                     return;
                 }
 
                 atualizarStatusSync(true);
                 const container = document.getElementById('container-alunos');
 
-                if (data.length === 0) {
+                if (!data || data.length === 0) {
                     container.innerHTML = `<p class="text-xs text-slate-600 text-center py-6">Nenhum aluno cadastrado.</p>`;
                     return;
                 }
@@ -176,7 +175,7 @@
                 const baseURL = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
                 container.innerHTML = data.map(aluno => {
                     const linkAluno = `${baseURL}aluno.html?token=${aluno.token}`;
-                    const iniciais = aluno.nome.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                    const iniciais = (aluno.nome || 'Aluno').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 
                     return `
                         <div onclick="abrirPainelAluno('${aluno.id}', '${aluno.nome}', '${linkAluno}')" class="bg-slate-950 border border-slate-900 hover:border-emerald-500/50 p-3.5 rounded-2xl flex items-center justify-between cursor-pointer transition-all shadow-sm group">
@@ -197,6 +196,7 @@
                 }).join('');
             } catch (err) {
                 atualizarStatusSync(false);
+                console.error(err);
             }
         }
 
@@ -228,7 +228,6 @@
             document.getElementById('view-lista-alunos').classList.add('hidden');
             document.getElementById('view-detalhe-aluno').classList.remove('hidden');
 
-            // Carrega os treinos salvos deste aluno no localStorage (ou mock inicial)
             const salvo = localStorage.getItem('treinos_aluno_' + id);
             if (salvo) {
                 treinosDoAluno = JSON.parse(salvo);
