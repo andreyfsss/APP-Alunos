@@ -33,7 +33,7 @@
         <!-- Abas Principais do Atleta -->
         <div class="max-w-md mx-auto px-3 pb-2 flex gap-2 text-xs">
             <button onclick="mudarAbaAtiva('treinos')" id="tab-atleta-treinos" class="flex-1 py-1.5 px-3 rounded-xl font-bold bg-af-orange text-black">🏋️ Treinos</button>
-            <button onclick="mudarAbaAtiva('relatorios')" id="tab-atleta-relatorios" class="flex-1 py-1.5 px-3 rounded-xl font-bold bg-black text-slate-400 border border-slate-800">📊 Relatórios & Evolução</button>
+            <button onclick="mudarAbaAtiva('relatorios')" id="tab-atleta-relatorios" class="flex-1 py-1.5 px-3 rounded-xl font-bold bg-black text-slate-400 border border-slate-800">📊 Relatórios</button>
         </div>
     </header>
 
@@ -82,7 +82,7 @@
         <!-- ABA 1: TREINOS -->
         <div id="aba-atleta-treinos" class="space-y-4">
             <div id="view-divisoes-aluno" class="space-y-3">
-                <h2 class="font-bold text-xs uppercase tracking-wider text-slate-400 px-1">Selecione Seu Treino de Hoje</h2>
+                <h2 class="font-bold text-xs uppercase tracking-wider text-slate-400 px-1">Seu Treino de Hoje</h2>
                 <div id="container-lista-divisoes" class="space-y-2.5">
                     <p class="text-xs text-slate-600 text-center py-6">Carregando treinos...</p>
                 </div>
@@ -111,24 +111,22 @@
             </div>
         </div>
 
-        <!-- ABA 2: RELATÓRIOS & EVOLUÇÃO -->
+        <!-- ABA 2: RELATÓRIOS SIMPLIFICADOS DO ATLETA -->
         <div id="aba-atleta-relatorios" class="hidden space-y-4">
-            <!-- Seletor Semana / Mês -->
-            <div class="flex gap-1 bg-af-card p-1 rounded-xl border border-slate-800 text-xs font-bold text-center">
-                <button onclick="mudarPeriodoRelatorio('semana')" id="btn-per-semana" class="flex-1 py-1.5 rounded-lg bg-af-orange text-black">Semana</button>
-                <button onclick="mudarPeriodoRelatorio('mes')" id="btn-per-mes" class="flex-1 py-1.5 rounded-lg text-slate-400">Mês</button>
+            <div class="bg-af-card border border-slate-800 rounded-2xl p-5 space-y-3 text-center">
+                <h3 class="font-bold text-sm text-af-orange uppercase">Resumo Mensal do Atleta</h3>
+                <p class="text-xs text-slate-400">Aqui você acompanha o seu progresso geral de volume e constância nos treinos prescritos pelo personal.</p>
+                <div class="grid grid-cols-2 gap-2 pt-2">
+                    <div class="bg-black p-3 rounded-xl border border-slate-800">
+                        <span class="text-[10px] uppercase text-slate-500 font-bold block">Treinos Realizados</span>
+                        <strong class="text-lg text-white">0</strong>
+                    </div>
+                    <div class="bg-black p-3 rounded-xl border border-slate-800">
+                        <span class="text-[10px] uppercase text-slate-500 font-bold block">Volume Total (Mês)</span>
+                        <strong class="text-lg text-af-orange">0 kg</strong>
+                    </div>
+                </div>
             </div>
-
-            <!-- Sub-Abas de Relatório -->
-            <div class="flex gap-1 bg-black p-1 rounded-xl border border-slate-800 text-xs font-bold text-center">
-                <button onclick="mudarSubAbaRelatorio('volume')" id="subtab-atleta-vol" class="flex-1 py-1.5 rounded-lg bg-af-orange text-black">Volume</button>
-                <button onclick="mudarSubAbaRelatorio('series')" id="subtab-atleta-ser" class="flex-1 py-1.5 rounded-lg text-slate-400">Séries</button>
-                <button onclick="mudarSubAbaRelatorio('grupos')" id="subtab-atleta-grp" class="flex-1 py-1.5 rounded-lg text-slate-400">Grupos</button>
-            </div>
-
-            <div id="relatorio-box-volume" class="bg-af-card border border-slate-800 rounded-2xl p-4 text-center text-xs text-slate-400 py-10">Nenhum volume registrado ainda neste período.</div>
-            <div id="relatorio-box-series" class="hidden bg-af-card border border-slate-800 rounded-2xl p-4 text-center text-xs text-slate-400 py-10">Nenhuma série registrada.</div>
-            <div id="relatorio-box-grupos" class="hidden bg-af-card border border-slate-800 rounded-2xl p-4 text-center text-xs text-slate-400 py-10">Nenhum grupo muscular treinado ainda.</div>
         </div>
     </main>
 
@@ -144,14 +142,15 @@
         let treinosDoAlunoCarregados = [];
 
         const explicacoesMetodos = {
-            'Pirâmide Crescente': 'Na Pirâmide Crescente, você aumenta o peso e diminui o número de repetições a cada série.',
-            'Pirâmide Decrescente': 'Na Pirâmide Decrescente, você começa com a carga mais pesada e reduz o peso aumentando as repetições.',
-            'Cluster Set': 'No Cluster Set, a série é dividida em mini-blocos com pausas curtas.'
+            'Drop Set': 'O Drop-Set consiste em fazer a série até a falha, reduzir a carga em ~20% imediatamente sem descanso e continuar até a falha.',
+            'Rest Pause': 'No Rest-Pause, faça até a falha, descanse de 10 a 15 segundos sem tirar a carga e faça mais repetições.',
+            'Cluster Set': 'No Cluster Set, divida a série em mini-blocos com intervalos curtos entre eles para manter alta intensidade.',
+            'FST-7': 'Protocolo de 7 séries consecutivas com intervalos curtos de 30 a 45s.'
         };
 
         function mostrarExplicacaoMetodo(nomeMetodo) {
             document.getElementById('titulo-modal-metodo').innerText = nomeMetodo;
-            document.getElementById('texto-modal-metodo').innerText = explicacoesMetodos[nomeMetodo] || 'Série configurada pelo personal.';
+            document.getElementById('texto-modal-metodo').innerText = explicacoesMetodos[nomeMetodo] || 'Série especial.';
             document.getElementById('modal-explicacao-metodo').classList.remove('hidden');
         }
         function fecharModalMetodo() { document.getElementById('modal-explicacao-metodo').classList.add('hidden'); }
@@ -168,23 +167,6 @@
                 document.getElementById('tab-atleta-relatorios').className = 'flex-1 py-1.5 px-3 rounded-xl font-bold bg-af-orange text-black';
                 document.getElementById('tab-atleta-treinos').className = 'flex-1 py-1.5 px-3 rounded-xl font-bold bg-black text-slate-400 border border-slate-800';
             }
-        }
-
-        function mudarPeriodoRelatorio(per) {
-            if (per === 'semana') {
-                document.getElementById('btn-per-semana').className = 'flex-1 py-1.5 rounded-lg bg-af-orange text-black font-bold';
-                document.getElementById('btn-per-mes').className = 'flex-1 py-1.5 rounded-lg text-slate-400 font-bold';
-            } else {
-                document.getElementById('btn-per-mes').className = 'flex-1 py-1.5 rounded-lg bg-af-orange text-black font-bold';
-                document.getElementById('btn-per-semana').className = 'flex-1 py-1.5 rounded-lg text-slate-400 font-bold';
-            }
-        }
-
-        function mudarSubAbaRelatorio(sub) {
-            ['volume', 'series', 'grupos'].forEach(s => {
-                document.getElementById(`relatorio-box-${s}`).classList.add('hidden');
-            });
-            document.getElementById(`relatorio-box-${sub}`).classList.remove('hidden');
         }
 
         function validarApenasNumeros(input) {
@@ -248,29 +230,46 @@
             const container = document.getElementById('lista-exercicios-aluno');
             container.innerHTML = exercicios.map((ex, index) => {
                 const htmlSeries = ex.seriesConfig.map(s => {
-                    const possuiExplicacao = s.metodo !== 'Série Normal';
+                    const metodoExibicao = (s.metodo === 'Nulo' || !s.metodo) ? 'Normal' : s.metodo;
+                    const possuiExplicacao = metodoExibicao !== 'Normal';
+
+                    let htmlDetalheMetodo = '';
+                    if (metodoExibicao === 'Drop Set' && s.detalhe > 0) {
+                        for (let d = 1; d <= s.detalhe; d++) {
+                            htmlDetalheMetodo += `
+                                <div class="grid grid-cols-4 gap-1 pt-1 border-t border-slate-800 mt-1 items-center">
+                                    <span class="text-[8px] text-emerald-400 font-bold">Drop ${d}</span>
+                                    <input type="number" step="0.5" oninput="validarApenasNumeros(this)" class="w-full bg-slate-900 border border-slate-800 rounded p-1 text-center text-[10px] text-white input-carga" placeholder="kg">
+                                    <input type="number" oninput="validarApenasNumeros(this)" class="w-full bg-slate-900 border border-slate-800 rounded p-1 text-center text-[10px] text-white input-reps" placeholder="reps">
+                                    <span class="text-[8px] text-slate-500 text-center">Falha</span>
+                                </div>`;
+                        }
+                    }
+
                     return `
                         <div class="bg-black border border-slate-800 p-2.5 rounded-xl space-y-2 serie-item">
                             <div class="flex items-center gap-1.5">
                                 <span class="w-4 text-center font-bold text-[11px] text-slate-400">${s.num}ª</span>
-                                <div onclick="event.stopPropagation(); ${possuiExplicacao ? `mostrarExplicacaoMetodo('${s.metodo}')` : ''}" class="bg-black border border-slate-800 px-2 py-0.5 rounded-lg text-[9px] text-slate-300 flex items-center gap-1 ${possuiExplicacao ? 'cursor-pointer hover:border-af-orange' : ''}">
+                                ${metodoExibicao !== 'Normal' ? `
+                                <div onclick="event.stopPropagation(); mostrarExplicacaoMetodo('${metodoExibicao}')" class="bg-black border border-slate-800 px-2 py-0.5 rounded-lg text-[9px] text-slate-300 flex items-center gap-1 cursor-pointer hover:border-af-orange">
                                     <span class="text-slate-500 uppercase">Método:</span>
-                                    <strong class="text-af-orange font-bold">${s.metodo}</strong>
-                                    ${possuiExplicacao ? '<span class="text-[9px] text-af-orange">ℹ️</span>' : ''}
-                                </div>
+                                    <strong class="text-af-orange font-bold">${metodoExibicao}</strong>
+                                    <span class="text-[9px] text-af-orange">ℹ️</span>
+                                </div>` : ''}
                                 <button onclick="dispararTimerDescanso(${s.descanso || 90})" class="ml-auto bg-black text-af-orange border border-slate-800 text-[10px] px-2 py-1 rounded-lg font-bold">⏱️ ${s.descanso || 90}s</button>
                             </div>
 
-                            <!-- 4 CAIXINHAS LADO A LADO -->
-                            <div class="grid grid-cols-4 gap-1.5 items-center">
-                                <div class="bg-slate-900 border border-slate-800 rounded-lg p-1.5 text-center">
-                                    <span class="block text-[7px] text-slate-500 uppercase font-bold">Anterior</span>
-                                    <span class="text-[10px] font-bold text-slate-400">-</span>
+                            <!-- 4 CAIXINHAS LADO A LADO COMPACTAS -->
+                            <div class="grid grid-cols-4 gap-1 items-center">
+                                <div class="bg-slate-900 border border-slate-800 rounded-lg p-1 text-center" title="Treino Anterior">
+                                    <span class="block text-[7px] text-slate-500 uppercase font-bold leading-none">Ant.</span>
+                                    <span class="text-[9px] font-bold text-slate-400">-</span>
                                 </div>
-                                <input type="number" step="0.5" oninput="validarApenasNumeros(this)" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-1.5 text-center text-xs font-bold text-white input-carga" placeholder="kg">
-                                <input type="number" oninput="validarApenasNumeros(this)" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-1.5 text-center text-xs font-bold text-white input-reps" placeholder="reps">
-                                <input readonly onclick="abrirRPEFullScreen(this)" type="text" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-1.5 text-center text-xs font-bold text-af-orange cursor-pointer" placeholder="RPE">
+                                <input type="number" step="0.5" oninput="validarApenasNumeros(this)" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-1 text-center text-xs font-bold text-white input-carga" placeholder="kg">
+                                <input type="number" oninput="validarApenasNumeros(this)" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-1 text-center text-xs font-bold text-white input-reps" placeholder="reps">
+                                <input readonly onclick="abrirRPEFullScreen(this)" type="text" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-1 text-center text-xs font-bold text-af-orange cursor-pointer" placeholder="RPE">
                             </div>
+                            ${htmlDetalheMetodo}
                         </div>`;
                 }).join('');
 
@@ -310,19 +309,39 @@
         function fecharRPEFullScreen() { document.getElementById('modal-rpe-fullscreen').classList.add('hidden'); inputRPEAtivo = null; }
         function selecionarRPE(v) { if (inputRPEAtivo) inputRPEAtivo.value = v; fecharRPEFullScreen(); }
         
+        // Bip Sintético Digital Agudo (Web Audio API) ao zerar o relógio
+        function tocarAlarmeDigital() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, ctx.currentTime); // Tom agudo nítido
+                gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.4);
+            } catch (e) {}
+        }
+
         function dispararTimerDescanso(seg) {
             tempoRestante = seg; folegoUtilizado = false;
             document.getElementById('bar-timer-descanso').classList.remove('hidden');
             clearInterval(timerInterval);
             timerInterval = setInterval(() => {
                 tempoRestante--;
-                if (tempoRestante <= 0) { clearInterval(timerInterval); document.getElementById('bar-timer-descanso').classList.add('hidden'); }
-                else {
+                if (tempoRestante <= 0) {
+                    clearInterval(timerInterval);
+                    tocarAlarmeDigital();
+                    document.getElementById('bar-timer-descanso').classList.add('hidden');
+                } else {
                     const m = Math.floor(tempoRestante/60), s = tempoRestante%60;
                     document.getElementById('display-tempo-timer').innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
                 }
             }, 1000);
         }
+
         function adicionarTempoTimer(s) {
             if (folegoUtilizado) return;
             folegoUtilizado = true; tempoRestante += s;
