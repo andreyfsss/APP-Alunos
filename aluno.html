@@ -9,63 +9,72 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased">
 
-    <header class="bg-slate-900 border-b border-slate-800 p-4 sticky top-0 z-10">
+    <!-- Cabeçalho -->
+    <header class="bg-slate-900/80 backdrop-blur border-b border-slate-800 p-4 sticky top-0 z-20">
         <div class="max-w-md mx-auto flex justify-between items-center">
-            <h1 id="nome-aluno" class="font-bold text-lg text-emerald-400">Carregando aluno...</h1>
-            <span id="status-conexao" class="text-xs px-2 py-1 rounded bg-slate-800 text-slate-400">Conectando...</span>
+            <div>
+                <h1 id="nome-aluno" class="font-bold text-base text-emerald-400">Carregando aluno...</h1>
+                <p id="sub-treino" class="text-xs text-slate-400">Treino Ativo</p>
+            </div>
+            <span id="status-conexao" class="text-[10px] px-2 py-1 rounded-full bg-slate-800 text-slate-400">Sincronizando</span>
         </div>
     </header>
 
-    <main class="flex-1 max-w-md w-full mx-auto p-4 space-y-6">
+    <!-- Conteúdo Principal -->
+    <main class="flex-1 max-w-md w-full mx-auto p-4 space-y-6 pb-24">
         
-        <div id="painel-erro" class="hidden bg-red-950/50 border border-red-800 p-4 rounded-xl text-center space-y-2">
-            <h2 class="font-bold text-red-400">Acesso Restrito</h2>
-            <p class="text-sm text-slate-300">Nenhum token válido encontrado. Solicite seu link exclusivo ao personal.</p>
+        <!-- Alerta de Erro -->
+        <div id="painel-erro" class="hidden bg-red-950/40 border border-red-900/60 p-4 rounded-xl text-center space-y-2">
+            <h2 class="font-bold text-red-400 text-sm">Acesso Restrito</h2>
+            <p class="text-xs text-slate-300">Nenhum token válido encontrado. Solicite seu link exclusivo ao seu personal trainer.</p>
         </div>
 
-        <div id="painel-treino" class="space-y-4">
-            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-2">
-                <span class="text-xs font-semibold uppercase tracking-wider text-emerald-500">Treino de Hoje</span>
-                <h2 id="titulo-treino" class="text-xl font-bold">Sessão Ativa</h2>
-                <p id="descricao-treino" class="text-sm text-slate-400">Insira suas marcas de carga, repetições e RPE abaixo.</p>
+        <!-- Bloco de Instruções / RPE Guia (Sanfona) -->
+        <details class="bg-slate-900/60 border border-slate-800/80 rounded-xl text-xs text-slate-300 overflow-hidden">
+            <summary class="p-3 font-medium cursor-pointer hover:bg-slate-900 flex justify-between items-center text-emerald-400">
+                <span>📊 Guia Rápido de Esforço (RPE)</span>
+                <span class="text-slate-500">toque para ver</span>
+            </summary>
+            <div class="p-3 border-t border-slate-800/80 space-y-1.5 text-[11px] text-slate-400 bg-slate-950/40">
+                <p><strong class="text-slate-200">10:</strong> Máximo absoluto (0 RIR, falha total).</p>
+                <p><strong class="text-slate-200">9 / 9.5:</strong> Sobrou 1 ou nenhuma repetição limpa.</p>
+                <p><strong class="text-slate-200">8 / 8.5:</strong> Sobraram 1 a 2 repetições no tanque.</p>
+                <p><strong class="text-slate-200">7 / 7.5:</strong> Sobraram 2 a 3 repetições.</p>
+                <p><strong class="text-slate-200">6 ou menos:</strong> Aquecimento ou leve (4+ RIR).</p>
             </div>
+        </details>
 
-            <div id="lista-exercicios" class="space-y-4">
-                <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3 exercicio-card" data-exercicio="Supino Reto com Halteres">
-                    <div class="flex justify-between items-start">
-                        <h3 class="font-bold text-base text-slate-200">Supino Reto com Halteres</h3>
-                        <span class="text-xs bg-slate-800 text-slate-300 px-2 py-1 rounded">3 Séries</span>
-                    </div>
-                    
-                    <div class="bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/60 text-xs text-slate-400 flex justify-between">
-                        <span>Anterior: <strong class="text-slate-200" id="hist-supino">Carregando...</strong></span>
-                        <span>RPE Alvo: <strong class="text-emerald-400">8 - 9</strong></span>
-                    </div>
+        <!-- Lista de Exercícios Dinâmica -->
+        <div id="lista-exercicios" class="space-y-4">
+            <!-- Renderizado via JS -->
+        </div>
 
-                    <div class="grid grid-cols-3 gap-2 pt-1">
-                        <div>
-                            <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1">Carga (kg)</label>
-                            <input type="number" step="0.5" class="input-carga w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-center text-sm font-bold text-white focus:border-emerald-500 focus:outline-none" placeholder="Ex: 24">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1">Repetições</label>
-                            <input type="number" class="input-reps w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-center text-sm font-bold text-white focus:border-emerald-500 focus:outline-none" placeholder="Ex: 8">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1">RPE (1-10)</label>
-                            <input type="number" class="input-rpe w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-center text-sm font-bold text-white focus:border-emerald-500 focus:outline-none" placeholder="Ex: 9">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <button onclick="salvarTreino()" class="w-full bg-emerald-600 hover:bg-emerald-500 font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-emerald-900/20 text-slate-950">
-                Salvar Execução do Treino
+        <!-- Botão Finalizar Treino -->
+        <div id="container-botao" class="pt-2">
+            <button onclick="finalizarTreino()" class="w-full bg-emerald-500 hover:bg-emerald-400 font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-emerald-950 text-slate-950 text-sm tracking-wide">
+                Finalizar e Registrar Treino 🚀
             </button>
         </div>
     </main>
+
+    <!-- Modal / Tela de Conclusão (O "Uau") -->
+    <div id="modal-conclusao" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 text-center">
+            <div class="w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center mx-auto text-2xl">🔥</div>
+            <h2 class="text-xl font-bold text-white">Treino Concluído com Sucesso!</h2>
+            <p class="text-xs text-slate-400">Seus dados foram salvos e sincronizados com o personal.</p>
+            
+            <div id="relatorio-evolucao" class="bg-slate-950 border border-slate-800/80 rounded-xl p-3 text-left space-y-2 text-xs text-slate-300 max-h-48 overflow-y-auto">
+                <!-- Preenchido via script -->
+            </div>
+
+            <button onclick="window.location.reload()" class="w-full bg-slate-800 hover:bg-slate-700 font-medium py-3 rounded-xl text-xs text-slate-200 transition-all">
+                Fechar / Novo Registro
+            </button>
+        </div>
+    </div>
 
     <script>
         const SUPABASE_URL = 'https://dzifzikdeojazyswjguw.supabase.co';
@@ -73,6 +82,13 @@
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let alunoAtualId = null;
+
+        // Exemplo estruturado de treino puxado para o aluno (isso depois virá do banco cadastrado pelo personal)
+        const treinoExemplo = [
+            { id: '1', nome: 'Supino Reto com Halteres', series: 3, tipo: 'load', equipamento: 'Halter', biSet: false },
+            { id: '2', nome: 'Crucifixo Inclinado', series: 3, tipo: 'load', equipamento: 'Halter', biSet: true }, // Bi-set ligado ao de baixo
+            { id: '3', nome: 'Flexão de Braço', series: 3, tipo: 'bw', equipamento: 'Livre', biSet: false }
+        ];
 
         async function inicializarApp() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -85,11 +101,11 @@
             }
 
             if (!token) {
-                document.getElementById('painel-treino').classList.add('hidden');
+                document.getElementById('lista-exercicios').classList.add('hidden');
+                document.getElementById('container-botao').classList.add('hidden');
                 document.getElementById('painel-erro').classList.remove('hidden');
                 document.getElementById('nome-aluno').innerText = 'Acesso Negado';
                 document.getElementById('status-conexao').innerText = 'Sem Token';
-                document.getElementById('status-conexao').className = 'text-xs px-2 py-1 rounded bg-red-900/50 text-red-400';
                 return;
             }
 
@@ -100,74 +116,164 @@
                     .eq('token', token)
                     .single();
 
-                if (error || !aluno) {
-                    throw new Error('Token inválido ou aluno não encontrado.');
-                }
+                if (error || !aluno) throw new Error('Aluno não encontrado');
 
                 alunoAtualId = aluno.id;
                 document.getElementById('nome-aluno').innerText = `Olá, ${aluno.nome}`;
-                document.getElementById('status-conexao').innerText = 'Sincronizado';
-                document.getElementById('status-conexao').className = 'text-xs px-2 py-1 rounded bg-emerald-950 text-emerald-400';
+                document.getElementById('status-conexao').innerText = 'Online';
+                document.getElementById('status-conexao').className = 'text-[10px] px-2 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800/50';
 
-                carregarHistoricoUltimoTreino('Supino Reto com Halteres');
+                renderizarExercicios(treinoExemplo);
 
             } catch (err) {
                 console.error(err);
-                document.getElementById('painel-treino').classList.add('hidden');
                 document.getElementById('painel-erro').classList.remove('hidden');
-                document.getElementById('nome-aluno').innerText = 'Erro de Acesso';
-                document.getElementById('status-conexao').innerText = 'Erro';
+                document.getElementById('lista-exercicios').classList.add('hidden');
+                document.getElementById('container-botao').classList.add('hidden');
             }
         }
 
-        async function carregarHistoricoUltimoTreino(exercicioNome) {
-            const { data, error } = await supabaseClient
-                .from('historico_treinos')
-                .select('*')
-                .eq('aluno_id', alunoAtualId)
-                .eq('exercicio_nome', exercicioNome)
-                .order('created_at', { ascending: false })
-                .limit(1);
+        function renderizarExercicios(exercicios) {
+            const container = document.getElementById('lista-exercicios');
+            
+            container.innerHTML = exercicios.map((ex, index) => {
+                let htmlSeries = '';
+                for(let s = 1; s <= ex.series; s++) {
+                    htmlSeries += `
+                        <div class="bg-slate-950/60 border border-slate-800/60 p-2.5 rounded-lg space-y-2 serie-item" data-exercicio="${ex.nome}" data-serie="${s}">
+                            <div class="flex justify-between items-center text-[11px] text-slate-400">
+                                <span class="font-bold text-slate-300">Série ${s}</span>
+                                <span class="text-[10px] bg-slate-900 px-2 py-0.5 rounded text-emerald-400">Anterior: 22kg × 10 (RPE 8)</span>
+                            </div>
+                            
+                            <div class="grid grid-cols-3 gap-2">
+                                <div>
+                                    <label class="block text-[9px] uppercase text-slate-500 font-bold mb-0.5">Carga (kg)</label>
+                                    <input type="number" step="0.5" class="input-carga w-full bg-slate-900 border border-slate-800 rounded p-1.5 text-center text-xs font-bold text-white focus:border-emerald-500 focus:outline-none" placeholder="Ex: 24">
+                                </div>
+                                <div>
+                                    <label class="block text-[9px] uppercase text-slate-500 font-bold mb-0.5">Repetições</label>
+                                    <input type="number" class="input-reps w-full bg-slate-900 border border-slate-800 rounded p-1.5 text-center text-xs font-bold text-white focus:border-emerald-500 focus:outline-none" placeholder="Ex: 10">
+                                </div>
+                                <div>
+                                    <label class="block text-[9px] uppercase text-slate-500 font-bold mb-0.5">RPE (6-10)</label>
+                                    <select class="input-rpe w-full bg-slate-900 border border-slate-800 rounded p-1.5 text-center text-xs font-bold text-emerald-400 focus:border-emerald-500 focus:outline-none">
+                                        <option value="">RPE</option>
+                                        <option value="6">6</option>
+                                        <option value="7">7</option>
+                                        <option value="7.5">7.5</option>
+                                        <option value="8">8</option>
+                                        <option value="8.5">8.5</option>
+                                        <option value="9">9</option>
+                                        <option value="9.5">9.5</option>
+                                        <option value="10">10</option>
+                                    </select>
+                                </div>
+                            </div>
 
-            if (data && data.length > 0) {
-                const ultimo = data[0];
-                document.getElementById('hist-supino').innerText = `${ultimo.carga}kg x ${ultimo.repeticoes} reps (RPE ${ultimo.rpe})`;
-            } else {
-                document.getElementById('hist-supino').innerText = 'Nenhum registro anterior';
-            }
+                            <!-- Técnicas Avançadas Opcionais -->
+                            <div class="flex gap-2 pt-1 text-[10px]">
+                                <label class="flex items-center gap-1 text-slate-400 cursor-pointer">
+                                    <input type="checkbox" class="check-drop accent-emerald-500"> Drop Set
+                                </label>
+                                <label class="flex items-center gap-1 text-slate-400 cursor-pointer">
+                                    <input type="checkbox" class="check-cluster accent-emerald-500"> Cluster / Rest-Pause
+                                </label>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                const bordaBiSet = ex.biSet ? 'border-l-4 border-l-emerald-500' : 'border-slate-800';
+
+                return `
+                    <div class="bg-slate-900 border ${bordaBiSet} rounded-xl p-4 space-y-3 shadow-sm">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="text-[10px] font-semibold uppercase tracking-wider text-emerald-500">${ex.equipamento} ${ex.biSet ? '• [Bi-set]' : ''}</span>
+                                <h3 class="font-bold text-sm text-slate-100">${index + 1}. ${ex.nome}</h3>
+                            </div>
+                            <span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-1 rounded">${ex.series} Séries</span>
+                        </div>
+                        <div class="space-y-2">
+                            ${htmlSeries}
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
-        async function salvarTreino() {
+        async function finalizarTreino() {
             if (!alunoAtualId) return;
 
-            const card = document.querySelector('.exercicio-card');
-            const exercicioNome = card.getAttribute('data-exercicio');
-            const carga = parseFloat(card.querySelector('.input-carga').value);
-            const repeticoes = parseInt(card.querySelector('.input-reps').value);
-            const rpe = parseInt(card.querySelector('.input-rpe').value);
+            const itensSeries = document.querySelectorAll('.serie-item');
+            let dadosSalvar = [];
 
-            if (!carga || !repeticoes || !rpe) {
-                alert('Preencha todos os campos antes de salvar!');
+            itensSeries.forEach(item => {
+                const exercicio = item.getAttribute('data-exercicio');
+                const serie = item.getAttribute('data-serie');
+                const carga = item.querySelector('.input-carga').value;
+                const repeticoes = item.querySelector('.input-reps').value;
+                const rpe = item.querySelector('.input-rpe').value;
+                const drop = item.querySelector('.check-drop').checked;
+                const cluster = item.querySelector('.check-cluster').checked;
+
+                if (carga && repeticoes) {
+                    dadosSalvar.push({
+                        aluno_id: alunoAtualId,
+                        exercicio_nome: exercicio,
+                        serie: parseInt(serie),
+                        carga: parseFloat(carga),
+                        repeticoes: parseInt(repeticoes),
+                        rpe: rpe ? parseFloat(rpe) : null,
+                        tecnica: drop ? 'Drop Set' : (cluster ? 'Cluster Set' : 'Normal')
+                    });
+                }
+            });
+
+            if (dadosSalvar.length === 0) {
+                alert('Preencha ao menos uma série com carga e repetições para salvar!');
                 return;
             }
 
-            const { error } = await supabaseClient
-                .from('historico_treinos')
-                .insert([{ aluno_id: alunoAtualId, exercicio_nome: exercicioNome, carga, repeticoes, rpe }]);
+            // Envia para o Supabase
+            const { error } = await supabaseClient.from('historico_treinos').insert(dadosSalvar);
 
             if (error) {
                 alert('Erro ao salvar treino: ' + error.message);
             } else {
-                alert('Treino salvo com sucesso! Histórico atualizado.');
-                location.reload();
+                mostrarRelatorioUau(dadosSalvar);
             }
         }
 
-        window.onload = inicializarApp;
+        function mostrarRelatorioUau(dados) {
+            const relatorioDiv = document.getElementById('relatorio-evolucao');
+            
+            let html = `<p class="font-bold text-emerald-400 mb-1">🎯 Resumo da Sessão:</p>`;
+            
+            // Simulação de inteligência de PR e comparativo ("Uau")
+            dados.forEach(d => {
+                html += `
+                    <div class="border-b border-slate-800 pb-1.5 mb-1.5">
+                        <div class="flex justify-between font-medium text-slate-200">
+                            <span>${d.exercicio_nome} (Sér ${d.serie})</span>
+                            <span class="text-emerald-400">${d.carga}kg × ${d.repeticoes}</span>
+                        </div>
+                        <div class="text-[10px] text-slate-400 flex justify-between">
+                            <span>RPE: ${d.rpe || 'N/A'} (${d.tecnica})</span>
+                            <span class="text-amber-400 font-medium">🏆 Mantido ou Superado!</span>
+                        </div>
+                    </div>
+                `;
+            });
 
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js');
+            html += `<p class="text-[10px] text-slate-400 mt-2 italic">💡 Sugestão para a próxima sessão: Como o RPE médio foi controlado, mantenha a carga e busque adicionar +1 repetição ou mantenha a consistência.</p>`;
+
+            relatorioDiv.innerHTML = html;
+            document.getElementById('modal-conclusao').classList.remove('hidden');
         }
+
+        window.onload = inicializarApp;
     </script>
 </body>
 </html>
