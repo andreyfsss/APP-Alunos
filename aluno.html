@@ -16,26 +16,23 @@
         <div class="max-w-md mx-auto flex justify-between items-center">
             <div>
                 <h1 id="nome-aluno" class="font-bold text-sm text-emerald-400">Carregando aluno...</h1>
-                <p id="sub-treino-ativo" class="text-xs text-slate-500">Peitoral / Tríceps / Ombro</p>
+                <p id="sub-treino-ativo" class="text-xs text-slate-500">Sessão Ativa</p>
             </div>
             <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800">Online</span>
         </div>
     </header>
 
-    <!-- Barra de Cronômetro Flutuante de Descanso -->
+    <!-- Barra Flutuante de Descanso (Sem botão de pular, apenas +30s e alarme sonoro) -->
     <div id="bar-timer-descanso" class="hidden fixed top-16 left-0 right-0 z-30 bg-emerald-950/95 border-b border-emerald-800 backdrop-blur p-3 shadow-2xl">
         <div class="max-w-md mx-auto flex justify-between items-center text-xs">
             <span class="text-emerald-300 font-bold flex items-center gap-1.5">
-                ⏱️ Descanso: <span id="display-tempo-timer" class="text-sm text-emerald-400 font-black">01:30</span>
+                ⏱️ Descanso Obrigatório: <span id="display-tempo-timer" class="text-sm text-emerald-400 font-black">01:30</span>
             </span>
-            <div class="flex gap-1.5">
-                <button onclick="adicionarTempoTimer(30)" class="bg-slate-900 text-emerald-400 text-[10px] px-2 py-1 rounded-lg font-bold border border-slate-800">+30s</button>
-                <button onclick="fecharTimerDescanso()" class="bg-emerald-500 text-black text-[10px] px-2.5 py-1 rounded-lg font-bold">Pular</button>
-            </div>
+            <button onclick="adicionarTempoTimer(30)" class="bg-slate-900 text-emerald-400 text-[10px] px-2.5 py-1 rounded-lg font-bold border border-slate-800">+30s Fôlego</button>
         </div>
     </div>
 
-    <!-- TELA CHEIA INTERATIVA DE RPE (MODAL GIGANTE) -->
+    <!-- TELA CHEIA INTERATIVA DE RPE -->
     <div id="modal-rpe-fullscreen" class="fixed inset-0 bg-black/95 backdrop-blur-md hidden z-50 flex flex-col justify-between p-5">
         <div class="flex justify-between items-center border-b border-slate-900 pb-3">
             <div>
@@ -80,27 +77,26 @@
         
         <div id="painel-erro" class="hidden bg-red-950/40 border border-red-900/60 p-4 rounded-2xl text-center space-y-2">
             <h2 class="font-bold text-red-400 text-xs">Acesso Restrito</h2>
-            <p class="text-xs text-slate-300">Nenhum token válido encontrado. Solicite seu link exclusivo ao personal.</p>
+            <p class="text-xs text-slate-300">Nenhum token válido encontrado.</p>
         </div>
 
         <!-- Volume do Dia -->
         <div class="bg-slate-950 border border-slate-900 rounded-2xl p-4 space-y-1 shadow-lg">
             <span class="text-[10px] uppercase font-bold text-slate-500">Volume do treino de hoje</span>
             <div class="text-2xl font-black text-emerald-400" id="volume-total-aluno">0 kg</div>
-            <p class="text-[11px] text-slate-400">Sessão Ativa: Peitoral, Tríceps e Ombro</p>
+            <p class="text-[11px] text-slate-400">Sessão Ativa</p>
         </div>
 
-        <!-- Lista de Exercícios -->
         <div id="lista-exercicios-aluno" class="space-y-4"></div>
 
-        <button onclick="finalizarTreinoAluno()" class="w-full bg-emerald-500 hover:bg-emerald-400 font-bold py-3.5 rounded-2xl transition-all shadow-lg shadow-emerald-950 text-black text-xs tracking-wide">
+        <button onclick="finalizarTreinoAluno()" class="w-full bg-emerald-500 hover:bg-emerald-400 font-bold py-3.5 rounded-2xl transition-all shadow-lg text-black text-xs tracking-wide">
             Finalizar e Registrar Treino 🚀
         </button>
     </main>
 
     <script>
         const SUPABASE_URL = 'https://dzifzikdeojazyswjguw.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6aWZ6aWtkZW9qYXp5c3dqZ3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MTg3NjgsImV4cCI6MjEwODk5NDc2OH0.Y3rycAN_O1IL99OdMJsC_TRMrSEKJp4vQJho2P4D_W0';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5cHNjY25mcmpma3h0Y3J1ZXh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MTg3NjgsImV4cCI6MjEwODk5NDc2OH0.Y3rycAN_O1IL99OdMJsC_TRMrSEKJp4vQJho2P4D_W0';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let alunoAtualId = null;
@@ -115,21 +111,10 @@
                 equipamento: 'Halter',
                 descanso: 90,
                 series: [
-                    { num: 1, anterior: '24kg × 12 @7' },
-                    { num: 2, anterior: '26kg × 10 @8' },
-                    { num: 3, anterior: '28kg × 8 @8.5' },
-                    { num: 4, anterior: '28kg × 8 @9' }
-                ]
-            },
-            {
-                nome: 'Tríceps Pulley Crossover',
-                grupo: 'Tríceps',
-                equipamento: 'Crossover',
-                descanso: 60,
-                series: [
-                    { num: 1, anterior: '15kg × 12 @8' },
-                    { num: 2, anterior: '15kg × 12 @8.5' },
-                    { num: 3, anterior: '17.5kg × 10 @9.5' }
+                    { num: 1, anterior: '24kg × 12 @7', metodo: 'Normal' },
+                    { num: 2, anterior: '26kg × 10 @8', metodo: 'Normal' },
+                    { num: 3, anterior: '28kg × 8 @8.5', metodo: 'Normal' },
+                    { num: 4, anterior: '28kg × 8 @9', metodo: 'Drop Set', detalhe: 2 }
                 ]
             }
         ];
@@ -166,34 +151,43 @@
             const container = document.getElementById('lista-exercicios-aluno');
 
             container.innerHTML = exercicios.map((ex, index) => {
-                const htmlSeries = ex.series.map(s => `
-                    <div class="bg-black border border-slate-800 p-2 rounded-xl space-y-1.5 serie-item" data-exercicio="${ex.nome}" data-serie="${s.num}">
-                        <div class="flex items-center gap-1.5">
-                            <span class="w-4 text-center font-bold text-[11px] text-slate-400">${s.num}</span>
-                            
-                            <div class="bg-slate-900 border border-slate-800/80 px-2 py-1 rounded-lg text-[9px] text-slate-300 flex items-center gap-1">
-                                <span class="text-slate-500 uppercase">Ant:</span>
-                                <strong class="text-emerald-400 font-bold">${s.anterior}</strong>
+                const htmlSeries = ex.series.map(s => {
+                    let htmlDrops = '';
+                    if (s.metodo === 'Drop Set' && s.detalhe > 0) {
+                        for (let d = 1; d <= s.detalhe; d++) {
+                            htmlDrops += `
+                                <div class="grid grid-cols-3 gap-1 pt-1 border-t border-slate-900 mt-1">
+                                    <span class="col-span-3 text-[9px] text-emerald-400 font-bold uppercase">↳ Drop ${d}</span>
+                                    <input type="number" step="0.5" class="w-full bg-slate-900 border border-slate-800 rounded p-1 text-center text-xs text-white" placeholder="kg">
+                                    <input type="number" class="w-full bg-slate-900 border border-slate-800 rounded p-1 text-center text-xs text-white" placeholder="reps">
+                                    <div class="text-[9px] text-slate-500 flex items-center justify-center font-bold">Sem pausa</div>
+                                </div>
+                            `;
+                        }
+                    }
+
+                    return `
+                        <div class="bg-black border border-slate-800 p-2 rounded-xl space-y-1.5 serie-item">
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-4 text-center font-bold text-[11px] text-slate-400">${s.num}</span>
+                                <div class="bg-slate-900 border border-slate-800/80 px-2 py-0.5 rounded-lg text-[9px] text-slate-300 flex items-center gap-1">
+                                    <span class="text-slate-500 uppercase">Ant:</span>
+                                    <strong class="text-emerald-400 font-bold">${s.anterior}</strong>
+                                </div>
+                                <button onclick="dispararTimerDescanso(${ex.descanso})" class="ml-auto bg-slate-900 hover:bg-emerald-950 text-emerald-400 border border-slate-800 text-[9px] px-2 py-1 rounded-lg font-bold flex items-center gap-1">
+                                    ⏱️ ${ex.descanso}s
+                                </button>
                             </div>
 
-                            <button onclick="dispararTimerDescanso(${ex.descanso})" class="ml-auto bg-slate-900 hover:bg-emerald-950 text-emerald-400 border border-slate-800 text-[9px] px-2 py-1 rounded-lg font-bold flex items-center gap-1">
-                                ⏱️ ${ex.descanso}s
-                            </button>
+                            <div class="grid grid-cols-3 gap-1.5">
+                                <input type="number" step="0.5" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-1.5 text-center text-xs font-bold text-white focus:border-emerald-500 focus:outline-none" placeholder="kg">
+                                <input type="number" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-1.5 text-center text-xs font-bold text-white focus:border-emerald-500 focus:outline-none" placeholder="reps">
+                                <input readonly onclick="abrirRPEFullScreen(this)" type="text" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-1.5 text-center text-xs font-bold text-emerald-400 cursor-pointer focus:outline-none" placeholder="RPE">
+                            </div>
+                            ${htmlDrops}
                         </div>
-
-                        <div class="grid grid-cols-3 gap-1.5">
-                            <div>
-                                <input type="number" step="0.5" class="input-carga w-full bg-slate-900 border border-slate-800 rounded-lg p-1.5 text-center text-xs font-bold text-white focus:border-emerald-500 focus:outline-none" placeholder="kg">
-                            </div>
-                            <div>
-                                <input type="number" class="input-reps w-full bg-slate-900 border border-slate-800 rounded-lg p-1.5 text-center text-xs font-bold text-white focus:border-emerald-500 focus:outline-none" placeholder="reps">
-                            </div>
-                            <div>
-                                <input readonly onclick="abrirRPEFullScreen(this)" type="text" class="input-rpe-display w-full bg-slate-900 border border-slate-800 rounded-lg p-1.5 text-center text-xs font-bold text-emerald-400 cursor-pointer focus:outline-none" placeholder="RPE">
-                            </div>
-                        </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
 
                 return `
                     <div class="bg-slate-950 border border-slate-900 rounded-2xl overflow-hidden shadow-md">
@@ -223,10 +217,24 @@
         }
 
         function selecionarRPE(valor) {
-            if (inputRPEAtivo) {
-                inputRPEAtivo.value = valor;
-            }
+            if (inputRPEAtivo) inputRPEAtivo.value = valor;
             fecharRPEFullScreen();
+        }
+
+        // Sistema de Alarme Sonoro via Web Audio API (Faz um "Beep" ao zerar)
+        function tocarAlarmeSonoro() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // Nota D5
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.5);
+            } catch (e) { console.log('Áudio bloqueado pelo navegador até interagir'); }
         }
 
         function dispararTimerDescanso(segundos) {
@@ -239,6 +247,7 @@
                 tempoRestante--;
                 if (tempoRestante <= 0) {
                     clearInterval(timerInterval);
+                    tocarAlarmeSonoro();
                     fecharTimerDescanso();
                 } else {
                     atualizarDisplayTimer();
@@ -263,7 +272,7 @@
         }
 
         async function finalizarTreinoAluno() {
-            alert('Treino finalizado e salvo com sucesso!');
+            alert('Treino registrado com sucesso!');
             window.location.reload();
         }
 
