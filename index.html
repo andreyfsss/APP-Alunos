@@ -6,96 +6,193 @@
     <title>AF Pro - Painel do Personal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { background-color: #050505; }
+        .bg-af-card { background-color: #151515; }
+        .text-af-orange { color: #FF6A00; }
+        .bg-af-orange { background-color: #FF6A00; }
+        .border-af-orange { border-color: #FF6A00; }
+    </style>
 </head>
-<body class="bg-black text-slate-100 min-h-screen p-3 md:p-6 flex flex-col items-center antialiased">
+<body class="text-slate-100 min-h-screen p-3 md:p-6 flex flex-col items-center antialiased">
 
     <div class="max-w-md w-full space-y-5">
-        <!-- Topo com Status de Sincronização -->
-        <div class="flex justify-between items-center bg-slate-950 border border-slate-900 rounded-2xl p-4 shadow-xl">
+        <!-- Topo com Logo Andrey Franco Personal -->
+        <div class="flex justify-between items-center bg-af-card border border-slate-800 rounded-2xl p-4 shadow-xl">
             <div>
-                <h1 class="font-black text-lg text-emerald-400 tracking-wider">AF PRO</h1>
-                <p id="label-ultima-sync" class="text-[10px] text-slate-500">Última sync: Agora</p>
+                <div class="flex items-center gap-1.5">
+                    <span class="font-black text-xl text-white tracking-tighter">ANDREY FRANCO</span>
+                    <span class="font-black text-xs text-af-orange tracking-widest bg-orange-950/60 px-1.5 py-0.5 rounded border border-orange-600/40">PERSONAL</span>
+                </div>
+                <p id="label-ultima-sync" class="text-[10px] text-slate-400 mt-0.5">Painel de Gestão de Atletas</p>
             </div>
             <div class="flex items-center gap-2">
-                <span id="badge-status" class="flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-full bg-emerald-950/60 text-emerald-400 border border-emerald-800/40 font-medium">
-                    <span id="dot-status" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span id="texto-status">Sincronizado</span>
-                </span>
-                <button onclick="carregarAlunos()" class="bg-slate-900 hover:bg-slate-800 text-slate-300 p-2 rounded-lg border border-slate-800 text-xs transition-all" title="Sincronizar Dados">🔄</button>
+                <button onclick="carregarAlunos()" class="bg-black hover:bg-slate-900 text-slate-300 p-2.5 rounded-xl border border-slate-800 text-xs transition-all" title="Sincronizar">🔄</button>
             </div>
         </div>
 
         <!-- TELA 1: LISTA DE ALUNOS -->
         <div id="view-lista-alunos" class="space-y-4">
-            <div class="bg-slate-950 border border-slate-900 rounded-2xl p-4 space-y-3 shadow-lg">
-                <h2 class="font-bold text-xs uppercase tracking-wider text-slate-400">Cadastrar Novo Aluno</h2>
+            <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3 shadow-lg">
+                <h2 class="font-bold text-xs uppercase tracking-wider text-af-orange">Cadastrar Novo Aluno</h2>
                 <div class="flex gap-2">
-                    <input type="text" id="nome-novo-aluno" placeholder="Nome do aluno..." class="flex-1 bg-black border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:border-emerald-500 focus:outline-none">
-                    <button onclick="cadastrarAluno()" class="bg-emerald-500 hover:bg-emerald-400 font-bold px-4 py-2.5 rounded-xl text-black text-xs transition-all shadow-md">Cadastrar</button>
+                    <input type="text" id="nome-novo-aluno" placeholder="Nome completo do aluno..." class="flex-1 bg-black border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:border-af-orange focus:outline-none">
+                    <button onclick="cadastrarAluno()" class="bg-af-orange hover:bg-orange-600 font-black px-4 py-2.5 rounded-xl text-black text-xs transition-all shadow-md">Cadastrar</button>
                 </div>
             </div>
 
             <div class="space-y-2">
-                <h2 class="font-bold text-xs uppercase tracking-wider text-slate-400 px-1">Alunos Ativos</h2>
+                <h2 class="font-bold text-xs uppercase tracking-wider text-slate-400 px-1">Seus Alunos</h2>
                 <div id="container-alunos" class="space-y-2">
-                    <p class="text-xs text-slate-600 text-center py-8">Carregando alunos...</p>
+                    <p class="text-xs text-slate-500 text-center py-8">Carregando lista...</p>
                 </div>
             </div>
         </div>
 
-        <!-- TELA 2: VISÃO DO ALUNO (DIVISÕES DE TREINO) -->
+        <!-- TELA 2: VISÃO GERAL DO ALUNO (PERFIL, EVOLUÇÃO E TREINOS) -->
         <div id="view-detalhe-aluno" class="hidden space-y-4">
-            <div class="flex items-center justify-between bg-slate-950 border border-slate-900 rounded-2xl p-4">
+            <!-- Cabeçalho do Aluno -->
+            <div class="flex items-center justify-between bg-af-card border border-slate-800 rounded-2xl p-4">
                 <div class="flex items-center gap-3">
-                    <button onclick="voltarParaLista()" class="bg-slate-900 hover:bg-slate-800 text-slate-400 px-2.5 py-1.5 rounded-xl text-xs font-bold border border-slate-800">← Voltar</button>
+                    <button onclick="voltarParaLista()" class="bg-black hover:bg-slate-900 text-slate-400 px-3 py-2 rounded-xl text-xs font-bold border border-slate-800">← Voltar</button>
                     <div>
-                        <h2 id="detalhe-nome-aluno" class="font-bold text-sm text-emerald-400">Aluno</h2>
-                        <p class="text-[10px] text-slate-500">Gerenciar Divisões</p>
+                        <h2 id="detalhe-nome-aluno" class="font-bold text-base text-white">Aluno</h2>
+                        <p class="text-[10px] text-af-orange font-bold uppercase tracking-wider">Perfil do Atleta</p>
                     </div>
                 </div>
                 <div class="flex gap-1.5">
-                    <button id="btn-testar-link-aluno" class="text-xs bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-slate-800 px-3 py-1.5 rounded-xl font-medium transition-all" title="Testar visão do aluno">👁️ Ver</button>
-                    <button id="btn-copiar-link-aluno" class="text-xs bg-emerald-950/80 hover:bg-emerald-900/80 text-emerald-400 border border-emerald-800/50 px-3 py-1.5 rounded-xl font-medium transition-all">Copiar</button>
+                    <button id="btn-testar-link-aluno" class="text-xs bg-black hover:bg-slate-900 text-af-orange border border-slate-800 px-3 py-2 rounded-xl font-bold transition-all">👁️ Testar Visão</button>
+                    <button id="btn-copiar-link-aluno" class="text-xs bg-af-orange text-black font-black px-3 py-2 rounded-xl transition-all">Copiar Link</button>
                 </div>
             </div>
 
-            <div class="bg-slate-950 border border-slate-900 rounded-2xl p-4 space-y-3">
-                <h3 class="font-bold text-xs uppercase text-slate-300">Nova Divisão de Treino</h3>
-                <div class="flex gap-2">
-                    <input type="text" id="input-nome-treino" placeholder="Ex: Peitoral / Tríceps / Ombro" class="flex-1 bg-black border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:border-emerald-500 focus:outline-none">
-                    <button onclick="criarTreinoDivisao()" class="bg-emerald-500 hover:bg-emerald-400 font-bold px-4 py-2.5 rounded-xl text-black text-xs">Criar Divisão</button>
+            <!-- Navegação de Abas Internas do Aluno -->
+            <div class="flex gap-1 bg-af-card p-1.5 rounded-2xl border border-slate-800 text-[11px] font-bold text-center">
+                <button onclick="mudarAbaAdminAluno('treinos')" id="tab-admin-treinos" class="flex-1 py-2 rounded-xl bg-af-orange text-black">🏋️ Treinos</button>
+                <button onclick="mudarAbaAdminAluno('relatorios')" id="tab-admin-relatorios" class="flex-1 py-2 rounded-xl text-slate-400 hover:text-white">📊 Relatórios & Evolução</button>
+            </div>
+
+            <!-- CONTEÚDO DA ABA TREINOS (ADMIN) -->
+            <div id="sec-admin-treinos" class="space-y-4">
+                <!-- Evolução Recente -->
+                <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3 shadow-lg">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-black text-xs uppercase tracking-wider text-af-orange">EVOLUÇÃO RECENTE</h3>
+                        <span class="text-[9px] text-slate-500">Último treino x Anterior</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="filtrarExerciciosEvolucao('mais')" class="bg-black border border-slate-800 hover:border-emerald-500 p-3 rounded-xl text-left transition-all">
+                            <div class="text-lg font-black text-emerald-400" id="qtd-mais-peso">10</div>
+                            <div class="text-[9px] font-bold text-slate-400 uppercase">MAIS PESO</div>
+                        </button>
+                        <button onclick="filtrarExerciciosEvolucao('mesmo')" class="bg-black border border-slate-800 hover:border-af-orange p-3 rounded-xl text-left transition-all">
+                            <div class="text-lg font-black text-af-orange" id="qtd-mesmo-peso">3</div>
+                            <div class="text-[9px] font-bold text-slate-400 uppercase">MESMO PESO</div>
+                        </button>
+                        <button onclick="filtrarExerciciosEvolucao('menos')" class="bg-black border border-slate-800 hover:border-rose-500 p-3 rounded-xl text-left transition-all">
+                            <div class="text-lg font-black text-rose-400" id="qtd-menos-peso">1</div>
+                            <div class="text-[9px] font-bold text-slate-400 uppercase">MENOS PESO</div>
+                        </button>
+                    </div>
+
+                    <div id="box-detalhe-filtro-peso" class="bg-black border border-slate-800 p-3 rounded-xl text-xs hidden text-slate-300"></div>
+
+                    <!-- Gráfico Visual de Carga por Sessão -->
+                    <div class="space-y-2 pt-2 border-t border-slate-800/80">
+                        <span class="text-[10px] font-bold uppercase text-slate-400">Volume das últimas 6 sessões (kg)</span>
+                        <div class="h-28 flex items-end gap-2 justify-between pt-4 px-2">
+                            <div class="flex-1 flex flex-col items-center gap-1"><span class="text-[9px] font-bold text-slate-400">3.280</span><div class="w-full bg-rose-500/80 rounded-t-md h-16"></div><span class="text-[8px] text-slate-500">22/10</span></div>
+                            <div class="flex-1 flex flex-col items-center gap-1"><span class="text-[9px] font-bold text-slate-400">1.200</span><div class="w-full bg-amber-500/80 rounded-t-md h-8"></div><span class="text-[8px] text-slate-500">25/10</span></div>
+                            <div class="flex-1 flex flex-col items-center gap-1"><span class="text-[9px] font-bold text-slate-400">2.723</span><div class="w-full bg-amber-500/80 rounded-t-md h-14"></div><span class="text-[8px] text-slate-500">26/10</span></div>
+                            <div class="flex-1 flex flex-col items-center gap-1"><span class="text-[9px] font-bold text-slate-400">2.609</span><div class="w-full bg-blue-500/80 rounded-t-md h-13"></div><span class="text-[8px] text-slate-500">27/10</span></div>
+                            <div class="flex-1 flex flex-col items-center gap-1"><span class="text-[9px] font-bold text-slate-400">2.341</span><div class="w-full bg-emerald-500/80 rounded-t-md h-11"></div><span class="text-[8px] text-slate-500">28/10</span></div>
+                            <div class="flex-1 flex flex-col items-center gap-1"><span class="text-[9px] font-bold text-slate-400">6.284</span><div class="w-full bg-af-orange rounded-t-md h-24"></div><span class="text-[8px] text-slate-500">30/10</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nova Divisão -->
+                <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3">
+                    <h3 class="font-bold text-xs uppercase text-slate-300">Criar Nova Divisão de Treino</h3>
+                    <div class="flex gap-2">
+                        <input type="text" id="input-nome-treino" placeholder="Ex: Treino A - Peito & Tríceps" class="flex-1 bg-black border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:border-af-orange focus:outline-none">
+                        <button onclick="criarTreinoDivisao()" class="bg-af-orange font-bold px-4 py-2.5 rounded-xl text-black text-xs">Criar</button>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <h2 class="font-bold text-xs uppercase tracking-wider text-slate-400 px-1">Divisões Prescritas</h2>
+                    <div id="container-treinos-aluno" class="space-y-3"></div>
                 </div>
             </div>
 
-            <div class="space-y-2">
-                <h2 class="font-bold text-xs uppercase tracking-wider text-slate-400 px-1">Treinos Prescritos</h2>
-                <div id="container-treinos-aluno" class="space-y-3">
-                    <p class="text-xs text-slate-600 text-center py-6">Nenhuma divisão criada.</p>
+            <!-- CONTEÚDO DA ABA RELATÓRIOS (ADMIN) -->
+            <div id="sec-admin-relatorios" class="hidden space-y-4">
+                <div class="flex gap-1.5 bg-black p-1.5 rounded-xl border border-slate-800 text-xs font-bold text-center">
+                    <button onclick="mudarSubTabRelatorio('volume')" id="subtab-vol" class="flex-1 py-1.5 rounded-lg bg-af-orange text-black">Volume</button>
+                    <button onclick="mudarSubTabRelatorio('series')" id="subtab-ser" class="flex-1 py-1.5 rounded-lg text-slate-400">Séries</button>
+                    <button onclick="mudarSubTabRelatorio('grupos')" id="subtab-grp" class="flex-1 py-1.5 rounded-lg text-slate-400">Grupos</button>
+                </div>
+
+                <div id="subbox-volume" class="space-y-3">
+                    <div class="bg-af-card border border-slate-800 rounded-2xl p-4">
+                        <span class="text-[10px] uppercase font-bold text-slate-400">Volume Total Semanal</span>
+                        <div class="text-2xl font-black text-af-orange">13.957 kg</div>
+                    </div>
+                    <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-2">
+                        <h4 class="font-bold text-xs text-slate-300 uppercase">Volume por Exercício</h4>
+                        <div class="space-y-2 text-xs">
+                            <div class="flex justify-between"><span>Cadeira Abdutora</span><strong class="text-af-orange">2.325 kg</strong></div>
+                            <div class="w-full bg-black h-2 rounded-full"><div class="bg-af-orange h-full rounded-full" style="width: 75%"></div></div>
+                            <div class="flex justify-between"><span>Cadeira Adutora</span><strong class="text-af-orange">1.590 kg</strong></div>
+                            <div class="w-full bg-black h-2 rounded-full"><div class="bg-af-orange h-full rounded-full" style="width: 50%"></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="subbox-series" class="hidden space-y-3">
+                    <div class="bg-af-card border border-slate-800 rounded-2xl p-4">
+                        <span class="text-[10px] uppercase font-bold text-slate-400">Total de Séries Efetivas</span>
+                        <div class="text-2xl font-black text-emerald-400">53 Séries</div>
+                    </div>
+                </div>
+
+                <div id="subbox-grupos" class="hidden space-y-3">
+                    <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3">
+                        <h4 class="font-bold text-xs text-slate-300 uppercase">Distribuição por Grupo Muscular</h4>
+                        <div class="space-y-2 text-xs">
+                            <div class="flex justify-between"><span>Quadríceps (21%)</span><strong class="text-emerald-400">11 séries</strong></div>
+                            <div class="flex justify-between"><span>Tríceps (17%)</span><strong class="text-emerald-400">9 séries</strong></div>
+                            <div class="flex justify-between"><span>Costas (17%)</span><strong class="text-emerald-400">9 séries</strong></div>
+                            <div class="flex justify-between"><span>Glúteos (17%)</span><strong class="text-emerald-400">9 séries</strong></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- TELA 3: MONTAGEM DE EXERCÍCIOS DENTRO DA DIVISÃO -->
+        <!-- TELA 3: MONTAGEM DE EXERCÍCIOS -->
         <div id="view-montar-exercicios" class="hidden space-y-4">
-            <div class="flex items-center justify-between bg-slate-950 border border-slate-900 rounded-2xl p-4">
-                <button onclick="voltarParaTreinos()" class="bg-slate-900 hover:bg-slate-800 text-slate-400 px-2.5 py-1.5 rounded-xl text-xs font-bold border border-slate-800">← Voltar</button>
-                <h2 id="titulo-treino-ativo" class="font-bold text-xs text-emerald-400 uppercase tracking-wider">Treino Ativo</h2>
+            <div class="flex items-center justify-between bg-af-card border border-slate-800 rounded-2xl p-4">
+                <button onclick="voltarParaTreinos()" class="bg-black hover:bg-slate-900 text-slate-400 px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-800">← Voltar</button>
+                <h2 id="titulo-treino-ativo" class="font-bold text-xs text-af-orange uppercase tracking-wider">Treino Ativo</h2>
             </div>
 
-            <div class="bg-slate-950 border border-slate-900 rounded-2xl p-4 space-y-3 relative">
+            <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3 relative">
                 <h3 class="font-bold text-xs uppercase text-slate-300">Adicionar Exercício</h3>
                 
                 <div class="space-y-2.5">
                     <div class="relative">
-                        <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Nome do Exercício</label>
-                        <input type="text" id="input-busca-ex" oninput="filtrarSugestoesExercicios(this.value)" placeholder="Digite ou busque..." class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:border-emerald-500 focus:outline-none" autocomplete="off">
+                        <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Nome do Exercício</label>
+                        <input type="text" id="input-busca-ex" oninput="filtrarSugestoesExercicios(this.value)" placeholder="Digite ou busque..." class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:border-af-orange focus:outline-none" autocomplete="off">
                         <div id="sugestoes-autocomplete" class="hidden absolute left-0 right-0 top-16 bg-slate-900 border border-slate-800 rounded-xl max-h-40 overflow-y-auto z-30 shadow-2xl"></div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-2">
                         <div>
-                            <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Músculo Alvo</label>
-                            <select id="select-musculo-ex" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-xs text-slate-200 focus:border-emerald-500 focus:outline-none">
+                            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Músculo Alvo</label>
+                            <select id="select-musculo-ex" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-xs text-slate-200 focus:border-af-orange focus:outline-none">
                                 <option value="Peitoral">Peitoral</option>
                                 <option value="Costas">Costas</option>
                                 <option value="Quadríceps">Quadríceps</option>
@@ -109,8 +206,8 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Equipamento</label>
-                            <select id="select-equipamento-ex" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-xs text-slate-200 focus:border-emerald-500 focus:outline-none">
+                            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Equipamento</label>
+                            <select id="select-equipamento-ex" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-xs text-slate-200 focus:border-af-orange focus:outline-none">
                                 <option value="Halter">Halter</option>
                                 <option value="Barra">Barra</option>
                                 <option value="Máquina">Máquina</option>
@@ -123,16 +220,16 @@
                     </div>
 
                     <div>
-                        <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Quantidade de Séries</label>
-                        <input type="number" id="input-qtd-series-ex" value="4" oninput="validarApenasNumeros(this)" onchange="gerarCamposSeriesAdmin(this.value)" min="1" max="10" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-xs text-white text-center font-bold focus:border-emerald-500 focus:outline-none">
+                        <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Quantidade de Séries</label>
+                        <input type="number" id="input-qtd-series-ex" value="4" oninput="validarApenasNumeros(this)" onchange="gerarCamposSeriesAdmin(this.value)" min="1" max="10" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-xs text-white text-center font-bold focus:border-af-orange focus:outline-none">
                     </div>
 
-                    <div class="space-y-2 pt-2 border-t border-slate-900">
+                    <div class="space-y-2 pt-2 border-t border-slate-800">
                         <label class="block text-[11px] font-bold text-slate-300">Configuração Modular por Série & Descanso</label>
                         <div id="container-config-series-admin" class="space-y-2"></div>
                     </div>
 
-                    <button onclick="salvarExercicioDefinitivo()" class="w-full bg-emerald-500 hover:bg-emerald-400 font-bold py-3 rounded-xl text-black text-xs transition-all shadow-md mt-2">
+                    <button onclick="salvarExercicioDefinitivo()" class="w-full bg-af-orange font-black py-3 rounded-xl text-black text-xs transition-all shadow-md mt-2">
                         Salvar Exercício na Divisão
                     </button>
                 </div>
@@ -164,70 +261,40 @@
         async function carregarAlunos() {
             try {
                 const { data, error } = await supabaseClient.from('alunos').select('*').order('created_at', { ascending: false });
-                
-                if (error) {
-                    atualizarStatusSync(false);
-                    return;
-                }
-
-                atualizarStatusSync(true);
+                if (error) return;
                 const container = document.getElementById('container-alunos');
-
                 if (!data || data.length === 0) {
                     container.innerHTML = `<p class="text-xs text-slate-600 text-center py-6">Nenhum aluno cadastrado.</p>`;
                     return;
                 }
-
                 const baseURL = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
                 container.innerHTML = data.map(aluno => {
                     const linkAluno = `${baseURL}aluno.html?token=${aluno.token}`;
                     const iniciais = (aluno.nome || 'Aluno').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 
                     return `
-                        <div onclick="abrirPainelAluno('${aluno.id}', '${aluno.nome.replace(/'/g, "\\'")}', '${aluno.token}', '${linkAluno}')" class="bg-slate-950 border border-slate-900 hover:border-emerald-500/50 p-3.5 rounded-2xl flex items-center justify-between cursor-pointer transition-all shadow-sm group">
+                        <div onclick="abrirPainelAluno('${aluno.id}', '${aluno.nome.replace(/'/g, "\\'")}', '${aluno.token}', '${linkAluno}')" class="bg-af-card border border-slate-800 hover:border-af-orange/50 p-3.5 rounded-2xl flex items-center justify-between cursor-pointer transition-all shadow-sm group">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl bg-black text-emerald-400 font-bold flex items-center justify-center text-xs border border-slate-800 group-hover:border-emerald-500/40">
+                                <div class="w-10 h-10 rounded-xl bg-black text-af-orange font-black flex items-center justify-center text-xs border border-slate-800">
                                     ${iniciais}
                                 </div>
                                 <div>
-                                    <h3 class="font-bold text-sm text-slate-200 group-hover:text-emerald-400 transition-colors">${aluno.nome}</h3>
-                                    <p class="text-[10px] text-slate-500">Toque para gerenciar treinos</p>
+                                    <h3 class="font-bold text-sm text-slate-200 group-hover:text-af-orange transition-colors">${aluno.nome}</h3>
+                                    <p class="text-[10px] text-slate-500">Toque para gerenciar perfil e treinos</p>
                                 </div>
                             </div>
                             <div class="flex items-center gap-1.5" onclick="event.stopPropagation()">
-                                <button onclick="window.open('${linkAluno}', '_blank')" class="text-xs bg-emerald-950/80 hover:bg-emerald-900 text-emerald-400 border border-emerald-800/50 px-2.5 py-1.5 rounded-xl font-medium transition-all" title="Testar visão do aluno">
+                                <button onclick="window.open('${linkAluno}', '_blank')" class="text-xs bg-black hover:bg-slate-900 text-af-orange border border-slate-800 px-2.5 py-1.5 rounded-xl font-bold transition-all">
                                     👁️ Testar
                                 </button>
-                                <button onclick="copiarLinkDirect('${linkAluno}')" class="text-xs bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-emerald-400 border border-slate-800 px-3 py-1.5 rounded-xl font-medium transition-all">
+                                <button onclick="copiarLinkDirect('${linkAluno}')" class="text-xs bg-af-orange text-black px-3 py-1.5 rounded-xl font-black transition-all">
                                     Copiar
                                 </button>
                             </div>
                         </div>
                     `;
                 }).join('');
-            } catch (err) {
-                atualizarStatusSync(false);
-            }
-        }
-
-        function atualizarStatusSync(sucesso) {
-            const dot = document.getElementById('dot-status');
-            const texto = document.getElementById('texto-status');
-            const badge = document.getElementById('badge-status');
-            const labelSync = document.getElementById('label-ultima-sync');
-
-            const agora = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            labelSync.innerText = `Última sync: ${agora}`;
-
-            if (sucesso) {
-                dot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
-                texto.innerText = 'Sincronizado';
-                badge.className = 'flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-full bg-emerald-950/60 text-emerald-400 border border-emerald-800/40 font-medium';
-            } else {
-                dot.className = 'w-2 h-2 rounded-full bg-red-500';
-                texto.innerText = 'Erro Sync';
-                badge.className = 'flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-full bg-red-950/60 text-red-400 border border-red-800/40 font-medium';
-            }
+            } catch (err) { }
         }
 
         async function abrirPainelAluno(id, nome, token, link) {
@@ -243,10 +310,37 @@
                 const { data, error } = await supabaseClient.from('alunos').select('treinos').eq('id', id).single();
                 if (error) throw error;
                 treinosDoAluno = (data && data.treinos) ? data.treinos : [];
-            } catch (e) {
-                treinosDoAluno = [];
-            }
+            } catch (e) { treinosDoAluno = []; }
             renderizarTreinosAluno();
+        }
+
+        function mudarAbaAdminAluno(aba) {
+            if (aba === 'treinos') {
+                document.getElementById('sec-admin-treinos').classList.remove('hidden');
+                document.getElementById('sec-admin-relatorios').classList.add('hidden');
+                document.getElementById('tab-admin-treinos').className = 'flex-1 py-2 rounded-xl bg-af-orange text-black font-bold';
+                document.getElementById('tab-admin-relatorios').className = 'flex-1 py-2 rounded-xl text-slate-400 hover:text-white font-bold';
+            } else {
+                document.getElementById('sec-admin-relatorios').classList.remove('hidden');
+                document.getElementById('sec-admin-treinos').classList.add('hidden');
+                document.getElementById('tab-admin-relatorios').className = 'flex-1 py-2 rounded-xl bg-af-orange text-black font-bold';
+                document.getElementById('tab-admin-treinos').className = 'flex-1 py-2 rounded-xl text-slate-400 hover:text-white font-bold';
+            }
+        }
+
+        function mudarSubTabRelatorio(sub) {
+            ['volume', 'series', 'grupos'].forEach(s => {
+                document.getElementById(`subbox-${s}`).classList.add('hidden');
+            });
+            document.getElementById(`subbox-${sub}`).classList.remove('hidden');
+        }
+
+        function filtrarExerciciosEvolucao(tipo) {
+            const box = document.getElementById('box-detalhe-filtro-peso');
+            box.classList.remove('hidden');
+            if (tipo === 'menos') box.innerHTML = `<strong>Com menos peso que no treino anterior:</strong> Supino Vertical (10kg → 8kg)`;
+            else if (tipo === 'mesmo') box.innerHTML = `<strong>Com o mesmo peso:</strong> Rosca Martelo (12kg), Tríceps Pulley (35kg), Leg Press (180kg)`;
+            else box.innerHTML = `<strong>Com mais peso (Evolução!):</strong> Supino Reto, Agachamento, Remada Curvada, Desenvolvimento, Cadeira Extensora, Puxada Alta, Stiff, Elevação Lateral, Tríceps Corda, Abdominal`;
         }
 
         function voltarParaLista() {
@@ -260,7 +354,6 @@
             const input = document.getElementById('input-nome-treino');
             const nome = input.value.trim();
             if (!nome) return;
-
             treinosDoAluno.push({ id: 't_' + Date.now(), nome, exercicios: [] });
             input.value = '';
             await salvarTreinosNoSupabase();
@@ -269,11 +362,7 @@
 
         async function salvarTreinosNoSupabase() {
             if (!alunoSelecionado) return;
-            try {
-                await supabaseClient.from('alunos').update({ treinos: treinosDoAluno }).eq('id', alunoSelecionado.id);
-            } catch (err) {
-                console.error(err);
-            }
+            try { await supabaseClient.from('alunos').update({ treinos: treinosDoAluno }).eq('id', alunoSelecionado.id); } catch (err) {}
         }
 
         function renderizarTreinosAluno() {
@@ -282,14 +371,13 @@
                 container.innerHTML = `<p class="text-xs text-slate-600 text-center py-6">Nenhuma divisão criada.</p>`;
                 return;
             }
-
             container.innerHTML = treinosDoAluno.map(t => `
-                <div onclick="abrirMontagemTreino('${t.id}')" class="bg-slate-950 border border-slate-900 hover:border-emerald-500/50 rounded-2xl p-4 flex justify-between items-center cursor-pointer transition-all shadow-sm">
+                <div onclick="abrirMontagemTreino('${t.id}')" class="bg-af-card border border-slate-800 hover:border-af-orange/50 rounded-2xl p-4 flex justify-between items-center cursor-pointer transition-all shadow-sm">
                     <div>
-                        <h3 class="font-bold text-xs text-emerald-400 uppercase tracking-wider">${t.nome}</h3>
-                        <p class="text-[10px] text-slate-500">${t.exercicios ? t.exercicios.length : 0} exercício(s) prescrito(s)</p>
+                        <h3 class="font-bold text-xs text-af-orange uppercase tracking-wider">${t.nome}</h3>
+                        <p class="text-[10px] text-slate-500">${t.exercicios ? t.exercicios.length : 0} exercício(s)</p>
                     </div>
-                    <span class="text-xs text-slate-400 font-bold">Abrir →</span>
+                    <span class="text-xs text-slate-400 font-bold">Gerenciar →</span>
                 </div>
             `).join('');
         }
@@ -299,7 +387,6 @@
             const treino = treinosDoAluno.find(t => t.id === treinoId);
             if (!treino) return;
             document.getElementById('titulo-treino-ativo').innerText = treino.nome;
-            
             document.getElementById('view-detalhe-aluno').classList.add('hidden');
             document.getElementById('view-montar-exercicios').classList.remove('hidden');
             gerarCamposSeriesAdmin(4);
@@ -315,22 +402,10 @@
 
         function filtrarSugestoesExercicios(texto) {
             const box = document.getElementById('sugestoes-autocomplete');
-            if (!texto.trim()) {
-                box.classList.add('hidden');
-                return;
-            }
-
+            if (!texto.trim()) { box.classList.add('hidden'); return; }
             const filtrados = baseExerciciosGlobais.filter(e => e.toLowerCase().includes(texto.toLowerCase()));
-            if (filtrados.length === 0) {
-                box.classList.add('hidden');
-                return;
-            }
-
-            box.innerHTML = filtrados.map(f => `
-                <div onclick="selecionarSugestaoExercicio('${f}')" class="p-2.5 hover:bg-slate-800 cursor-pointer text-xs text-slate-200 border-b border-slate-800/50">
-                    ${f}
-                </div>
-            `).join('');
+            if (filtrados.length === 0) { box.classList.add('hidden'); return; }
+            box.innerHTML = filtrados.map(f => `<div onclick="selecionarSugestaoExercicio('${f}')" class="p-2.5 hover:bg-slate-800 cursor-pointer text-xs text-slate-200 border-b border-slate-800/50">${f}</div>`).join('');
             box.classList.remove('hidden');
         }
 
@@ -357,7 +432,7 @@
                                 <option value="FST-7">FST-7</option>
                             </select>
                             <div class="flex items-center gap-1">
-                                <input type="number" value="90" oninput="validarApenasNumeros(this)" class="input-descanso-serie w-12 bg-slate-900 border border-slate-800 rounded p-1 text-center text-xs text-emerald-400 font-bold" title="Descanso em segundos">
+                                <input type="number" value="90" oninput="validarApenasNumeros(this)" class="input-descanso-serie w-12 bg-slate-900 border border-slate-800 rounded p-1 text-center text-xs text-af-orange font-bold">
                                 <span class="text-[9px] text-slate-500">s</span>
                             </div>
                         </div>
@@ -373,17 +448,14 @@
             const val = select.value;
             if (val === 'Drop Set') {
                 box.classList.remove('hidden');
-                box.innerHTML = `Qtd de Blocos/Drops: <input type="number" min="1" max="5" value="2" oninput="validarApenasNumeros(this)" class="input-qtd-drops w-12 bg-black border border-slate-800 rounded p-0.5 text-center text-white ml-1">`;
+                box.innerHTML = `Qtd de Drops: <input type="number" min="1" max="5" value="2" oninput="validarApenasNumeros(this)" class="input-qtd-drops w-12 bg-black border border-slate-800 rounded p-0.5 text-center text-white ml-1">`;
             } else if (val === 'Rest Pause' || val === 'Cluster Set') {
                 box.classList.remove('hidden');
-                box.innerHTML = `Qtd de Mini-Blocos: <input type="number" min="2" max="4" value="2" oninput="validarApenasNumeros(this)" class="input-qtd-blocos w-12 bg-black border border-slate-800 rounded p-0.5 text-center text-white ml-1">`;
+                box.innerHTML = `Qtd Mini-Blocos: <input type="number" min="2" max="4" value="2" oninput="validarApenasNumeros(this)" class="input-qtd-blocos w-12 bg-black border border-slate-800 rounded p-0.5 text-center text-white ml-1">`;
             } else if (val === 'FST-7') {
                 box.classList.remove('hidden');
-                box.innerHTML = `Qtd Séries FST-7 (Ex: 3 a 7): <input type="number" min="3" max="7" value="7" oninput="validarApenasNumeros(this)" class="input-qtd-fst7 w-12 bg-black border border-slate-800 rounded p-0.5 text-center text-white ml-1">`;
-            } else {
-                box.classList.add('hidden');
-                box.innerHTML = '';
-            }
+                box.innerHTML = `Qtd Séries (3 a 7): <input type="number" min="3" max="7" value="7" oninput="validarApenasNumeros(this)" class="input-qtd-fst7 w-12 bg-black border border-slate-800 rounded p-0.5 text-center text-white ml-1">`;
+            } else { box.classList.add('hidden'); box.innerHTML = ''; }
         }
 
         async function salvarExercicioDefinitivo() {
@@ -391,12 +463,7 @@
             const musculo = document.getElementById('select-musculo-ex').value;
             const equipamento = document.getElementById('select-equipamento-ex').value;
             const qtdSeries = parseInt(document.getElementById('input-qtd-series-ex').value) || 4;
-
-            if (!nome) {
-                alert('Digite ou selecione o nome do exercício!');
-                return;
-            }
-
+            if (!nome) { alert('Digite o nome!'); return; }
             if (!baseExerciciosGlobais.includes(nome)) baseExerciciosGlobais.push(nome);
 
             const seriesConfig = [];
@@ -405,13 +472,9 @@
                 const metodo = item.querySelector('.select-metodo-serie').value;
                 const descanso = parseInt(item.querySelector('.input-descanso-serie').value) || 90;
                 let detalhe = 0;
-                if (metodo === 'Drop Set') {
-                    detalhe = parseInt(item.querySelector('.input-qtd-drops')?.value) || 2;
-                } else if (metodo === 'Rest Pause' || metodo === 'Cluster Set') {
-                    detalhe = parseInt(item.querySelector('.input-qtd-blocos')?.value) || 2;
-                } else if (metodo === 'FST-7') {
-                    detalhe = parseInt(item.querySelector('.input-qtd-fst7')?.value) || 7;
-                }
+                if (metodo === 'Drop Set') detalhe = parseInt(item.querySelector('.input-qtd-drops')?.value) || 2;
+                else if (metodo === 'Rest Pause' || metodo === 'Cluster Set') detalhe = parseInt(item.querySelector('.input-qtd-blocos')?.value) || 2;
+                else if (metodo === 'FST-7') detalhe = parseInt(item.querySelector('.input-qtd-fst7')?.value) || 7;
                 seriesConfig.push({ num, metodo, descanso, detalhe });
             });
 
@@ -432,14 +495,13 @@
                 container.innerHTML = `<p class="text-xs text-slate-600 text-center py-4">Nenhum exercício adicionado ainda.</p>`;
                 return;
             }
-
             container.innerHTML = treino.exercicios.map((ex, idx) => `
                 <div class="bg-black border border-slate-900 p-3 rounded-xl flex justify-between items-center text-xs">
                     <div>
-                        <span class="text-[10px] text-emerald-400 font-bold uppercase">${ex.musculo} • ${ex.equipamento}</span>
+                        <span class="text-[10px] text-af-orange font-bold uppercase">${ex.musculo} • ${ex.equipamento}</span>
                         <div class="font-bold text-slate-200">${idx + 1}. ${ex.nome} (${ex.qtdSeries} Séries)</div>
                     </div>
-                    <button onclick="removerExercicioDivisao(${idx})" class="text-xs text-red-400 font-bold">✕</button>
+                    <button onclick="removerExercicioDivisao(${idx})" class="text-xs text-rose-400 font-bold">✕</button>
                 </div>
             `).join('');
         }
@@ -457,7 +519,6 @@
             const input = document.getElementById('nome-novo-aluno');
             const nome = input.value.trim();
             if (!nome) return;
-
             const { error } = await supabaseClient.from('alunos').insert([{ nome, treinos: [] }]);
             if (error) alert('Erro: ' + error.message);
             else { input.value = ''; carregarAlunos(); }
