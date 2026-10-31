@@ -15,10 +15,10 @@
     <header class="bg-slate-950/90 backdrop-blur border-b border-slate-900 p-4 sticky top-0 z-20">
         <div class="max-w-md mx-auto flex justify-between items-center">
             <div>
-                <h1 id="nome-aluno" class="font-bold text-sm text-emerald-400">Carregando aluno...</h1>
+                <h1 id="nome-aluno" class="font-bold text-sm text-emerald-400">Aluno (Modo de Visualização)</h1>
                 <p id="sub-treino-ativo" class="text-xs text-slate-500">Sessão Ativa</p>
             </div>
-            <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800">Online</span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800">Visualização</span>
         </div>
     </header>
 
@@ -75,16 +75,11 @@
     <!-- Conteúdo Principal -->
     <main class="flex-1 max-w-md w-full mx-auto p-3 md:p-4 space-y-4 pb-24">
         
-        <div id="painel-erro" class="hidden bg-red-950/40 border border-red-900/60 p-4 rounded-2xl text-center space-y-2">
-            <h2 class="font-bold text-red-400 text-xs">Acesso Restrito</h2>
-            <p class="text-xs text-slate-300">Nenhum token válido encontrado na URL. Copie o link correto gerado no painel do personal.</p>
-        </div>
-
         <!-- Volume do Dia -->
         <div class="bg-slate-950 border border-slate-900 rounded-2xl p-4 space-y-1 shadow-lg">
             <span class="text-[10px] uppercase font-bold text-slate-500">Volume do treino de hoje</span>
             <div class="text-2xl font-black text-emerald-400" id="volume-total-aluno">0 kg</div>
-            <p class="text-[11px] text-slate-400">Sessão Ativa</p>
+            <p class="text-[11px] text-slate-400">Sessão Ativa: Peitoral / Tríceps / Ombro</p>
         </div>
 
         <div id="lista-exercicios-aluno" class="space-y-4"></div>
@@ -99,50 +94,49 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5cHNjY25mcmpma3h0Y3J1ZXh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MTg3NjgsImV4cCI6MjEwODk5NDc2OH0.Y3rycAN_O1IL99OdMJsC_TRMrSEKJp4vQJho2P4D_W0';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let alunoAtualId = null;
         let inputRPEAtivo = null;
         let timerInterval = null;
         let tempoRestante = 0;
+
+        // Ficha de exemplo para você testar a visualização imediatamente
+        const treinoExemploVisualizacao = [
+            {
+                nome: 'Supino Reto com Halteres',
+                grupo: 'Peitoral',
+                equipamento: 'Halter',
+                series: [
+                    { num: 1, anterior: '24kg × 12 @7', metodo: 'Normal', descanso: 90 },
+                    { num: 2, anterior: '26kg × 10 @8', metodo: 'Normal', descanso: 90 },
+                    { num: 3, anterior: '28kg × 8 @8.5', metodo: 'Normal', descanso: 120 },
+                    { num: 4, anterior: '28kg × 8 @9', metodo: 'Drop Set', detalhe: 2, descanso: 120 }
+                ]
+            },
+            {
+                nome: 'Tríceps Pulley Crossover',
+                grupo: 'Tríceps',
+                equipamento: 'Crossover',
+                series: [
+                    { num: 1, anterior: '15kg × 12 @8', metodo: 'Normal', descanso: 60 },
+                    { num: 2, anterior: '15kg × 12 @8.5', metodo: 'Normal', descanso: 60 }
+                ]
+            }
+        ];
 
         async function inicializarAppAluno() {
             const urlParams = new URLSearchParams(window.location.search);
             const token = urlParams.get('token');
 
-            if (!token) {
-                document.getElementById('lista-exercicios-aluno').classList.add('hidden');
-                document.getElementById('painel-erro').classList.remove('hidden');
-                document.getElementById('nome-aluno').innerText = 'Acesso Negado';
-                return;
-            }
-
-            try {
-                const { data: aluno, error } = await supabaseClient.from('alunos').select('*').eq('token', token).single();
-                if (error || !aluno) throw new Error('Aluno não encontrado');
-
-                alunoAtualId = aluno.id;
-                document.getElementById('nome-aluno').innerText = aluno.nome;
-                
-                // Simulação de ficha padrão caso o aluno não tenha exercícios salvos no banco ainda
-                const treinoExemplo = [
-                    {
-                        nome: 'Supino Reto com Halteres',
-                        grupo: 'Peitoral',
-                        equipamento: 'Halter',
-                        series: [
-                            { num: 1, anterior: '24kg × 12 @7', metodo: 'Normal', descanso: 90 },
-                            { num: 2, anterior: '26kg × 10 @8', metodo: 'Normal', descanso: 90 },
-                            { num: 3, anterior: '28kg × 8 @8.5', metodo: 'Normal', descanso: 120 },
-                            { num: 4, anterior: '28kg × 8 @9', metodo: 'Drop Set', detalhe: 2, descanso: 120 }
-                        ]
+            if (token) {
+                try {
+                    const { data: aluno, error } = await supabaseClient.from('alunos').select('*').eq('token', token).single();
+                    if (aluno) {
+                        document.getElementById('nome-aluno').innerText = aluno.nome;
                     }
-                ];
-
-                renderizarExerciciosAluno(treinoExemplo);
-            } catch (err) {
-                console.error(err);
-                document.getElementById('painel-erro').classList.remove('hidden');
-                document.getElementById('lista-exercicios-aluno').classList.add('hidden');
+                } catch (e) { console.log('Modo visualização padrão ativo'); }
             }
+
+            // Sempre carrega a interface de treino para você testar e ajustar o visual livremente
+            renderizarExerciciosAluno(treinoExemploVisualizacao);
         }
 
         function renderizarExerciciosAluno(exercicios) {
