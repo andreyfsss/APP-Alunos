@@ -15,10 +15,10 @@
     <header class="bg-slate-950/90 backdrop-blur border-b border-slate-900 p-4 sticky top-0 z-20">
         <div class="max-w-md mx-auto flex justify-between items-center">
             <div>
-                <h1 id="nome-aluno" class="font-bold text-sm text-emerald-400">Aluno (Modo de Visualização)</h1>
+                <h1 id="nome-aluno" class="font-bold text-sm text-emerald-400">Carregando painel...</h1>
                 <p id="sub-treino-ativo" class="text-xs text-slate-500">Sessão Ativa</p>
             </div>
-            <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800">Visualização</span>
+            <span id="badge-modo" class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800">Online</span>
         </div>
     </header>
 
@@ -98,8 +98,7 @@
         let timerInterval = null;
         let tempoRestante = 0;
 
-        // Ficha de exemplo para você testar a visualização imediatamente
-        const treinoExemploVisualizacao = [
+        const treinoFichaTeste = [
             {
                 nome: 'Supino Reto com Halteres',
                 grupo: 'Peitoral',
@@ -125,18 +124,27 @@
         async function inicializarAppAluno() {
             const urlParams = new URLSearchParams(window.location.search);
             const token = urlParams.get('token');
+            const modoTeste = urlParams.get('teste');
 
-            if (token) {
-                try {
-                    const { data: aluno, error } = await supabaseClient.from('alunos').select('*').eq('token', token).single();
-                    if (aluno) {
-                        document.getElementById('nome-aluno').innerText = aluno.nome;
-                    }
-                } catch (e) { console.log('Modo visualização padrão ativo'); }
+            // Se abrir direto com ?teste=true ou sem token, entra no modo de visualização livre para você testar
+            if (!token || modoTeste === 'true') {
+                document.getElementById('nome-aluno').innerText = 'Painel de Teste (Personal)';
+                document.getElementById('badge-modo').innerText = 'Modo Teste';
+                renderizarExerciciosAluno(treinoFichaTeste);
+                return;
             }
 
-            // Sempre carrega a interface de treino para você testar e ajustar o visual livremente
-            renderizarExerciciosAluno(treinoExemploVisualizacao);
+            try {
+                const { data: aluno, error } = await supabaseClient.from('alunos').select('*').eq('token', token).single();
+                if (error || !aluno) throw new Error('Aluno não encontrado');
+
+                document.getElementById('nome-aluno').innerText = aluno.nome;
+                document.getElementById('badge-modo').innerText = 'Online';
+                renderizarExerciciosAluno(treinoFichaTeste);
+            } catch (err) {
+                console.error(err);
+                document.getElementById('nome-aluno').innerText = 'Erro ao carregar';
+            }
         }
 
         function renderizarExerciciosAluno(exercicios) {
