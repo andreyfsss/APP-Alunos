@@ -125,11 +125,11 @@
                 <div class="grid grid-cols-2 gap-2 pt-2">
                     <div class="bg-black p-3 rounded-xl border border-slate-800">
                         <span class="text-[10px] uppercase text-slate-500 font-bold block">Treinos Realizados</span>
-                        <strong class="text-lg text-white">0</strong>
+                        <strong class="text-lg text-white" id="stat-qtd-treinos">0</strong>
                     </div>
                     <div class="bg-black p-3 rounded-xl border border-slate-800">
                         <span class="text-[10px] uppercase text-slate-500 font-bold block">Volume Total (Mês)</span>
-                        <strong class="text-lg text-af-orange">0 kg</strong>
+                        <strong class="text-lg text-af-orange" id="stat-vol-treinos">0 kg</strong>
                     </div>
                 </div>
             </div>
@@ -141,11 +141,13 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6aWZ6aWtkZW9qYXp5c3dqZ3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MTg3NjgsImV4cCI6MjEwODk5NDc2OH0.Y3rycAN_O1IL99OdMJsC_TRMrSEKJp4vQJho2P4D_W0';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        let alunoAtualId = null;
         let inputRPEAtivo = null;
         let timerInterval = null;
         let tempoRestante = 0;
         let folegoUtilizado = false;
         let treinosDoAlunoCarregados = [];
+        let historicoTreinosAluno = [];
 
         const explicacoesMetodos = {
             'Série Normal': 'Realizar a quantidade estipulada de repetições com controle total do movimento.',
@@ -175,6 +177,7 @@
                 document.getElementById('aba-atleta-treinos').classList.add('hidden');
                 document.getElementById('tab-atleta-relatorios').className = 'flex-1 py-1.5 px-3 rounded-xl font-bold bg-af-orange text-black';
                 document.getElementById('tab-atleta-treinos').className = 'flex-1 py-1.5 px-3 rounded-xl font-bold bg-black text-slate-400 border border-slate-800';
+                atualizarEstatisticasRelatorio();
             }
         }
 
@@ -190,10 +193,20 @@
             try {
                 const { data: aluno } = await supabaseClient.from('alunos').select('*').eq('token', token).single();
                 if (!aluno) return;
+                alunoAtualId = aluno.id;
                 document.getElementById('nome-aluno').innerText = aluno.nome;
                 treinosDoAlunoCarregados = aluno.treinos || [];
+                historicoTreinosAluno = aluno.historico || [];
                 renderizarDivisoesTreino(treinosDoAlunoCarregados);
+                atualizarEstatisticasRelatorio();
             } catch (err) {}
+        }
+
+        function atualizarEstatisticasRelatorio() {
+            let totalTreinos = historicoTreinosAluno.length;
+            let volumeTotalMes = historicoTreinosAluno.reduce((acc, h) => acc + (h.volume || 0), 0);
+            document.getElementById('stat-qtd-treinos').innerText = totalTreinos;
+            document.getElementById('stat-vol-treinos').innerText = `${volumeTotalMes.toLocaleString('pt-BR')} kg`;
         }
 
         function renderizarDivisoesTreino(treinos) {
@@ -241,9 +254,23 @@
                 const metodoGeral = ex.metodoGeral && ex.metodoGeral !== 'Nulo' ? ex.metodoGeral : null;
 
                 const htmlSeries = ex.seriesConfig.map(s => {
-                    const textoMetodoExibido = metodoGeral ? '-' : ((s.metodo === 'Nulo' || !s.metodo) ? 'Série Normal' : s.metodo);
+                    const textoMetodoExibido = metodoGeral ? '-' : (s.metodo || 'Série Normal');
                     const temExplicacao = textoMetodoExibido !== '-';
-                    const repsMeta = s.repsSugeridas || 'reps';
+                    const repsMeta = s.repsSugeridas || '10 a 12';
+
+                    let htmlSubLinhas = '';
+                    if (!metodoGeral && (s.metodo === 'Drop Set' || s.metodo === 'Rest Pause' || s.metodo === 'Cluster Set')) {
+                        const qtdBlocos = s.detalhe || 2;
+                        for (let b = 1; b <= qtdBlocos; b++) {
+                            htmlSubLinhas += `
+                                <div class="grid grid-cols-4 gap-1.5 items-center pt-1 border-t border-slate-800/60 mt-1 sub-bloco-item">
+                                    <span class="text-[9px] text-af-orange font-bold text-center">Bloco ${b}</span>
+                                    <input type="number" step="0.5" oninput="validarApenasNumeros(this)" class="w-full h-7 bg-slate-900 border border-slate-800 rounded p-1 text-center text-[10px] text-white input-carga-sub" placeholder="kg">
+                                    <input type="number" oninput="validarApenasNumeros(this)" class="w-full h-7 bg-slate-900 border border-slate-800 rounded p-1 text-center text-[10px] text-white input-reps-sub" placeholder="reps">
+                                    <span class="text-[8px] text-slate-500 text-center">Intenso</span>
+                                </div>`;
+                        }
+                    }
 
                     return `
                         <div class="bg-black border border-slate-800 p-2.5 rounded-xl space-y-2 serie-item" data-serie-concluida="false">
@@ -281,6 +308,7 @@
                                 <input type="number" oninput="validarApenasNumeros(this)" class="w-full h-8 bg-slate-900 border border-slate-800 rounded-lg p-1 text-center text-xs font-bold text-white input-reps focus:border-af-orange focus:outline-none" placeholder="${repsMeta}">
                                 <input readonly onclick="abrirRPEFullScreen(this)" type="text" class="w-full h-8 bg-slate-900 border border-slate-800 rounded-lg p-1 text-center text-xs font-bold text-af-orange cursor-pointer focus:outline-none" placeholder="RPE">
                             </div>
+                            ${htmlSubLinhas}
                         </div>`;
                 }).join('');
 
@@ -399,8 +427,28 @@
                 return;
             }
 
-            alert('Treino finalizado e registrado com sucesso! Ótimo trabalho atleta 🚀');
-            window.location.reload();
+            let volumeSessao = 0;
+            document.querySelectorAll('.serie-item').forEach(serie => {
+                const c = parseFloat(serie.querySelector('.input-carga')?.value) || 0;
+                const r = parseFloat(serie.querySelector('.input-reps')?.value) || 0;
+                volumeSessao += c * r;
+            });
+
+            const novoRegistro = {
+                data: new Date().toISOString(),
+                volume: volumeSessao,
+                comparativo: 'mesmo'
+            };
+
+            historicoTreinosAluno.push(novoRegistro);
+
+            try {
+                await supabaseClient.from('alunos').update({ historico: historicoTreinosAluno }).eq('id', alunoAtualId);
+                alert('Treino finalizado e registrado com sucesso! Seus dados foram salvos para o personal acompanhar 🚀');
+                window.location.reload();
+            } catch (e) {
+                alert('Erro ao salvar no banco de dados. Verifique a conexão.');
+            }
         }
 
         window.onload = carregarDadosAluno;

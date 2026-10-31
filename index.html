@@ -73,7 +73,7 @@
                 <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3">
                     <div class="flex justify-between items-center">
                         <h3 class="font-black text-xs uppercase tracking-wider text-af-orange">EVOLUÇÃO RECENTE</h3>
-                        <span class="text-[9px] text-slate-500">Dinâmico por Atleta</span>
+                        <span class="text-[9px] text-slate-500">Histórico Consolidado</span>
                     </div>
                     <div class="grid grid-cols-3 gap-2">
                         <div class="bg-black border border-slate-800 p-3 rounded-xl text-center">
@@ -94,7 +94,7 @@
                 <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3">
                     <h3 class="font-bold text-xs uppercase text-slate-300">Nova Divisão de Treino</h3>
                     <div class="flex gap-2">
-                        <input type="text" id="input-nome-treino" placeholder="Ex: Treino A - Peitoral / Tríceps" class="flex-1 bg-black border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:border-af-orange focus:outline-none">
+                        <input type="text" id="input-nome-treino" placeholder="Ex: Treino A - Costas / Bíceps" class="flex-1 bg-black border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:border-af-orange focus:outline-none">
                         <button onclick="criarTreinoDivisao()" class="bg-af-orange font-bold px-4 py-2.5 rounded-xl text-black text-xs">Criar</button>
                     </div>
                 </div>
@@ -126,12 +126,12 @@
             </div>
 
             <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3 relative">
-                <h3 class="font-bold text-xs uppercase text-slate-300">Adicionar Exercício</h3>
+                <h3 class="font-bold text-xs uppercase text-slate-300">Adicionar / Editar Exercício</h3>
                 
                 <div class="space-y-2.5">
                     <div class="relative">
                         <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Nome do Exercício</label>
-                        <input type="text" id="input-busca-ex" oninput="filtrarSugestoesExercicios(this.value)" placeholder="Ex: Supino declinado com barra" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:border-af-orange focus:outline-none" autocomplete="off">
+                        <input type="text" id="input-busca-ex" oninput="filtrarSugestoesExercicios(this.value)" placeholder="Ex: Puxada Alta na Polia" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:border-af-orange focus:outline-none" autocomplete="off">
                         <div id="sugestoes-autocomplete" class="hidden absolute left-0 right-0 top-16 bg-slate-900 border border-slate-800 rounded-xl max-h-40 overflow-y-auto z-30 shadow-2xl"></div>
                     </div>
 
@@ -139,9 +139,9 @@
                         <div>
                             <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Músculo Alvo</label>
                             <select id="select-musculo-ex" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-xs text-slate-200">
-                                <option value="Peitoral">Peitoral</option>
-                                <option value="Quadríceps">Quadríceps</option>
                                 <option value="Costas">Costas</option>
+                                <option value="Quadríceps">Quadríceps</option>
+                                <option value="Peitoral">Peitoral</option>
                                 <option value="Glúteos">Glúteos</option>
                                 <option value="Tríceps">Tríceps</option>
                                 <option value="Bíceps">Bíceps</option>
@@ -152,16 +152,15 @@
                         <div>
                             <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Equipamento</label>
                             <select id="select-equipamento-ex" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-xs text-slate-200">
+                                <option value="Polia">Polia</option>
                                 <option value="Barra">Barra</option>
                                 <option value="Halter">Halter</option>
                                 <option value="Máquina">Máquina</option>
-                                <option value="Crossover">Crossover</option>
                                 <option value="Livre">Livre</option>
                             </select>
                         </div>
                     </div>
 
-                    <!-- Séries e Método Geral Lado a Lado -->
                     <div class="grid grid-cols-2 gap-2">
                         <div>
                             <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Qtd de Séries</label>
@@ -170,16 +169,15 @@
                         <div>
                             <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Método Geral</label>
                             <select id="select-metodo-geral-ex" onchange="alternarVisibilidadeMetodoMacro(this.value)" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-xs text-af-orange font-bold">
-                                <option value="Nulo">Nulo (Nenhum)</option>
+                                <option value="Nulo">Nulo (Modular por Série)</option>
                                 <option value="Pirâmide Crescente">Pirâmide Crescente</option>
                                 <option value="Pirâmide Decrescente">Pirâmide Decrescente</option>
                             </select>
                         </div>
                     </div>
 
-                    <!-- Configuração Modular por Série -->
                     <div id="bloco-configuracao-modular" class="space-y-2 pt-2 border-t border-slate-800">
-                        <label class="block text-[11px] font-bold text-slate-300">Configuração de Métodos & Repetições por Série</label>
+                        <label class="block text-[11px] font-bold text-slate-300">Configuração por Série (Método & Reps)</label>
                         <div id="container-config-series-admin" class="space-y-2"></div>
                     </div>
 
@@ -205,8 +203,9 @@
 
         let alunoSelecionado = null;
         let treinoAtivoId = null;
-        let baseExerciciosGlobais = ['Supino declinado com barra', 'Agachamento Livre', 'Leg Press 45', 'Cadeira Extensora', 'Puxada Alta'];
+        let baseExerciciosGlobais = ['Puxada Alta', 'Supino Reto', 'Leg Press 45', 'Cadeira Extensora', 'Elevação Lateral'];
         let treinosDoAluno = [];
+        let historicoTreinosAluno = [];
 
         function validarApenasNumeros(input) {
             input.value = input.value.replace(/[^0-9.]/g, '');
@@ -270,10 +269,29 @@
             document.getElementById('view-detalhe-aluno').classList.remove('hidden');
 
             try {
-                const { data } = await supabaseClient.from('alunos').select('treinos').eq('id', id).single();
+                const { data } = await supabaseClient.from('alunos').select('treinos, historico').eq('id', id).single();
                 treinosDoAluno = (data && data.treinos) ? data.treinos : [];
-            } catch (e) { treinosDoAluno = []; }
+                historicoTreinosAluno = (data && data.historico) ? data.historico : [];
+                calcularEvolucaoRecenteAdmin();
+            } catch (e) {
+                treinosDoAluno = [];
+                historicoTreinosAluno = [];
+            }
             renderizarTreinosAluno();
+        }
+
+        function calcularEvolucaoRecenteAdmin() {
+            let mais = 0, mesmo = 0, menos = 0;
+            if (historicoTreinosAluno && historicoTreinosAluno.length > 0) {
+                historicoTreinosAluno.forEach(h => {
+                    if (h.comparativo === 'mais') mais++;
+                    else if (h.comparativo === 'menos') menos++;
+                    else mesmo++;
+                });
+            }
+            document.getElementById('val-mais-peso').innerText = mais;
+            document.getElementById('val-mesmo-peso').innerText = mesmo;
+            document.getElementById('val-menos-peso').innerText = menos;
         }
 
         function mudarAbaAdminAluno(aba) {
@@ -409,13 +427,13 @@
                         <div class="flex items-center gap-2">
                             <span class="font-bold text-slate-400 text-xs w-4">${i}ª</span>
                             <select onchange="atualizarMetodoSerieAdmin(this)" class="select-metodo-serie flex-1 bg-slate-900 border border-slate-800 rounded-lg p-1 text-[11px] text-slate-200 focus:outline-none">
-                                <option value="Nulo">Nulo / Normal</option>
+                                <option value="Nulo">Série Normal</option>
                                 <option value="Drop Set">Drop-Set</option>
                                 <option value="Rest Pause">Rest-Pause</option>
                                 <option value="Cluster Set">Cluster Set</option>
                                 <option value="FST-7">FST-7</option>
                             </select>
-                            <input type="text" placeholder="Reps (ex: 10 a 12)" class="input-reps-sugeridas w-24 bg-slate-900 border border-slate-800 rounded p-1 text-center text-[10px] text-white">
+                            <input type="text" placeholder="Reps (ex: 10 a 12)" class="input-reps-sugeridas w-28 bg-slate-900 border border-slate-800 rounded p-1 text-center text-[10px] text-white">
                             <div class="flex items-center gap-1">
                                 <input type="number" value="90" oninput="validarApenasNumeros(this)" class="input-descanso-serie w-10 bg-slate-900 border border-slate-800 rounded p-1 text-center text-xs text-af-orange font-bold">
                                 <span class="text-[9px] text-slate-500">s</span>
@@ -459,14 +477,14 @@
             const seriesConfig = [];
             if (metodoGeral !== 'Nulo') {
                 for (let i = 1; i <= qtdSeries; i++) {
-                    seriesConfig.push({ num: i, metodo: 'Nulo', descanso: 90, repsSugeridas: '' });
+                    seriesConfig.push({ num: i, metodo: 'Série Normal', descanso: 90, repsSugeridas: '10 a 12' });
                 }
             } else {
                 document.querySelectorAll('.serie-config-item').forEach(item => {
                     const num = item.getAttribute('data-serie');
                     const metodo = item.querySelector('.select-metodo-serie').value;
                     const descanso = parseInt(item.querySelector('.input-descanso-serie').value) || 90;
-                    const repsSugeridas = item.querySelector('.input-reps-sugeridas')?.value || '';
+                    const repsSugeridas = item.querySelector('.input-reps-sugeridas')?.value || '10 a 12';
                     let detalhe = 0;
                     if (metodo === 'Drop Set') detalhe = parseInt(item.querySelector('.input-qtd-drops')?.value) || 2;
                     else if (metodo === 'Rest Pause' || metodo === 'Cluster Set') detalhe = parseInt(item.querySelector('.input-qtd-blocos')?.value) || 2;
@@ -517,7 +535,8 @@
             const input = document.getElementById('nome-novo-aluno');
             const nome = input.value.trim();
             if (!nome) return;
-            const { error } = await supabaseClient.from('alunos').insert([{ nome, treinos: [] }]);
+            const token = 'tok_' + Math.random().toString(36).substring(2, 10);
+            const { error } = await supabaseClient.from('alunos').insert([{ nome, token, treinos: [], historico: [] }]);
             if (error) alert('Erro: ' + error.message);
             else { input.value = ''; carregarAlunos(); }
         }
