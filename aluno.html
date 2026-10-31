@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Treino Online - Aluno</title>
+    <title>AF Pro - Meu Treino</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#000000">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -16,7 +16,7 @@
         <div class="max-w-md mx-auto flex justify-between items-center">
             <div>
                 <h1 id="nome-aluno" class="font-bold text-sm text-emerald-400">Carregando painel...</h1>
-                <p id="sub-treino-ativo" class="text-xs text-slate-500">Sessão Ativa</p>
+                <p id="sub-topo-status" class="text-xs text-slate-500">Selecione seu treino do dia</p>
             </div>
             <span id="badge-modo" class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800">Online</span>
         </div>
@@ -75,18 +75,33 @@
     <!-- Conteúdo Principal -->
     <main class="flex-1 max-w-md w-full mx-auto p-3 md:p-4 space-y-4 pb-24">
         
-        <!-- Volume do Dia -->
-        <div class="bg-slate-950 border border-slate-900 rounded-2xl p-4 space-y-1 shadow-lg">
-            <span class="text-[10px] uppercase font-bold text-slate-500">Volume do treino de hoje</span>
-            <div class="text-2xl font-black text-emerald-400" id="volume-total-aluno">0 kg</div>
-            <p class="text-[11px] text-slate-400">Sessão Ativa: Peitoral / Tríceps / Ombro</p>
+        <!-- TELA 1: LISTA DE DIVISÕES DE TREINO DISPONÍVEIS PARA O ALUNO -->
+        <div id="view-divisoes-aluno" class="space-y-3">
+            <h2 class="font-bold text-xs uppercase tracking-wider text-slate-400 px-1">Selecione o Treino de Hoje</h2>
+            <div id="container-lista-divisoes" class="space-y-2.5">
+                <!-- Preenchido dinamicamente -->
+            </div>
         </div>
 
-        <div id="lista-exercicios-aluno" class="space-y-4"></div>
+        <!-- TELA 2: EXERCÍCIOS DENTRO DA DIVISÃO SELECIONADA -->
+        <div id="view-execucao-treino" class="hidden space-y-4">
+            <div class="flex items-center justify-between bg-slate-950 border border-slate-900 rounded-2xl p-3">
+                <button onclick="voltarParaDivisoes()" class="bg-slate-900 hover:bg-slate-800 text-slate-400 px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-800">← Trocar Treino</button>
+                <h2 id="titulo-divisao-ativa" class="font-bold text-xs text-emerald-400 uppercase tracking-wider">Treino</h2>
+            </div>
 
-        <button onclick="finalizarTreinoAluno()" class="w-full bg-emerald-500 hover:bg-emerald-400 font-bold py-3.5 rounded-2xl transition-all shadow-lg text-black text-xs tracking-wide">
-            Finalizar e Registrar Treino 🚀
-        </button>
+            <div class="bg-slate-950 border border-slate-900 rounded-2xl p-4 space-y-1 shadow-lg">
+                <span class="text-[10px] uppercase font-bold text-slate-500">Volume do treino</span>
+                <div class="text-2xl font-black text-emerald-400" id="volume-total-aluno">0 kg</div>
+                <p class="text-[11px] text-slate-400">Preencha suas cargas e reps</p>
+            </div>
+
+            <div id="lista-exercicios-aluno" class="space-y-4"></div>
+
+            <button onclick="finalizarTreinoAluno()" class="w-full bg-emerald-500 hover:bg-emerald-400 font-bold py-3.5 rounded-2xl transition-all shadow-lg text-black text-xs tracking-wide">
+                Finalizar e Registrar Treino 🚀
+            </button>
+        </div>
     </main>
 
     <script>
@@ -98,25 +113,47 @@
         let timerInterval = null;
         let tempoRestante = 0;
 
-        const treinoFichaTeste = [
+        // Fichas de exemplo (Simulando as divisões criadas pelo personal)
+        const treinosMockAluno = [
             {
-                nome: 'Supino Reto com Halteres',
-                grupo: 'Peitoral',
-                equipamento: 'Halter',
-                series: [
-                    { num: 1, anterior: '24kg × 12 @7', metodo: 'Normal', descanso: 90 },
-                    { num: 2, anterior: '26kg × 10 @8', metodo: 'Normal', descanso: 90 },
-                    { num: 3, anterior: '28kg × 8 @8.5', metodo: 'Normal', descanso: 120 },
-                    { num: 4, anterior: '28kg × 8 @9', metodo: 'Drop Set', detalhe: 2, descanso: 120 }
+                id: 't1',
+                nome: 'Peitoral / Tríceps / Ombro',
+                exercicios: [
+                    {
+                        nome: 'Supino Reto com Halteres',
+                        grupo: 'Peitoral',
+                        equipamento: 'Halter',
+                        series: [
+                            { num: 1, anterior: '24kg × 12 @7', metodo: 'Normal', descanso: 90 },
+                            { num: 2, anterior: '26kg × 10 @8', metodo: 'Normal', descanso: 90 },
+                            { num: 3, anterior: '28kg × 8 @8.5', metodo: 'Normal', descanso: 120 },
+                            { num: 4, anterior: '28kg × 8 @9', metodo: 'Drop Set', detalhe: 2, descanso: 120 }
+                        ]
+                    },
+                    {
+                        nome: 'Tríceps Pulley Crossover',
+                        grupo: 'Tríceps',
+                        equipamento: 'Crossover',
+                        series: [
+                            { num: 1, anterior: '15kg × 12 @8', metodo: 'Normal', descanso: 60 },
+                            { num: 2, anterior: '15kg × 12 @8.5', metodo: 'Normal', descanso: 60 }
+                        ]
+                    }
                 ]
             },
             {
-                nome: 'Tríceps Pulley Crossover',
-                grupo: 'Tríceps',
-                equipamento: 'Crossover',
-                series: [
-                    { num: 1, anterior: '15kg × 12 @8', metodo: 'Normal', descanso: 60 },
-                    { num: 2, anterior: '15kg × 12 @8.5', metodo: 'Normal', descanso: 60 }
+                id: 't2',
+                nome: 'Costas / Bíceps / Abdômen',
+                exercicios: [
+                    {
+                        nome: 'Puxada Alta na Polia',
+                        grupo: 'Costas',
+                        equipamento: 'Crossover',
+                        series: [
+                            { num: 50, anterior: '50kg × 12 @8', metodo: 'Normal', descanso: 90 },
+                            { num: 2, anterior: '55kg × 10 @9', metodo: 'Normal', descanso: 90 }
+                        ]
+                    }
                 ]
             }
         ];
@@ -126,25 +163,48 @@
             const token = urlParams.get('token');
             const modoTeste = urlParams.get('teste');
 
-            // Se abrir direto com ?teste=true ou sem token, entra no modo de visualização livre para você testar
-            if (!token || modoTeste === 'true') {
-                document.getElementById('nome-aluno').innerText = 'Painel de Teste (Personal)';
-                document.getElementById('badge-modo').innerText = 'Modo Teste';
-                renderizarExerciciosAluno(treinoFichaTeste);
-                return;
+            if (token && modoTeste !== 'true') {
+                try {
+                    const { data: aluno } = await supabaseClient.from('alunos').select('*').eq('token', token).single();
+                    if (aluno) {
+                        document.getElementById('nome-aluno').innerText = aluno.nome;
+                    }
+                } catch (e) { }
+            } else {
+                document.getElementById('nome-aluno').innerText = 'Atleta (Modo Teste)';
+                document.getElementById('badge-modo').innerText = 'Teste';
             }
 
-            try {
-                const { data: aluno, error } = await supabaseClient.from('alunos').select('*').eq('token', token).single();
-                if (error || !aluno) throw new Error('Aluno não encontrado');
+            renderizarDivisoesTreino(treinosMockAluno);
+        }
 
-                document.getElementById('nome-aluno').innerText = aluno.nome;
-                document.getElementById('badge-modo').innerText = 'Online';
-                renderizarExerciciosAluno(treinoFichaTeste);
-            } catch (err) {
-                console.error(err);
-                document.getElementById('nome-aluno').innerText = 'Erro ao carregar';
-            }
+        function renderizarDivisoesTreino(treinos) {
+            const container = document.getElementById('container-lista-divisoes');
+            container.innerHTML = treinos.map(t => `
+                <div onclick="abrirExecucaoTreino('${t.id}')" class="bg-slate-950 border border-slate-900 hover:border-emerald-500/50 rounded-2xl p-4 flex justify-between items-center cursor-pointer transition-all shadow-sm">
+                    <div>
+                        <h3 class="font-bold text-sm text-emerald-400 uppercase tracking-wider">${t.nome}</h3>
+                        <p class="text-[10px] text-slate-500 mt-0.5">${t.exercicios.length} exercício(s) prescrito(s)</p>
+                    </div>
+                    <span class="text-xs text-slate-400 font-bold bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800">Iniciar →</span>
+                </div>
+            `).join('');
+        }
+
+        function abrirExecucaoTreino(treinoId) {
+            const treino = treinosMockAluno.find(t => t.id === treinoId);
+            if (!treino) return;
+
+            document.getElementById('titulo-divisao-ativa').innerText = treino.nome;
+            renderizarExerciciosAluno(treino.exercicios);
+
+            document.getElementById('view-divisoes-aluno').classList.add('hidden');
+            document.getElementById('view-execucao-treino').classList.remove('hidden');
+        }
+
+        function voltarParaDivisoes() {
+            document.getElementById('view-execucao-treino').classList.add('hidden');
+            document.getElementById('view-divisoes-aluno').classList.remove('hidden');
         }
 
         function renderizarExerciciosAluno(exercicios) {
@@ -233,7 +293,7 @@
                 gain.connect(audioCtx.destination);
                 osc.start();
                 osc.stop(audioCtx.currentTime + 0.5);
-            } catch (e) { console.log('Áudio aguardando interação'); }
+            } catch (e) { }
         }
 
         function dispararTimerDescanso(segundos) {
