@@ -11,14 +11,17 @@
 </head>
 <body class="bg-black text-slate-100 min-h-screen flex flex-col antialiased">
 
-    <!-- Topo Fixo -->
+    <!-- Topo Fixo com Botão de Sincronizar do Aluno -->
     <header class="bg-slate-950/90 backdrop-blur border-b border-slate-900 p-4 sticky top-0 z-20">
         <div class="max-w-md mx-auto flex justify-between items-center">
             <div>
                 <h1 id="nome-aluno" class="font-bold text-sm text-emerald-400">Carregando painel...</h1>
                 <p id="sub-topo-status" class="text-xs text-slate-500">Selecione seu treino do dia</p>
             </div>
-            <span id="badge-modo" class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800">Online</span>
+            <div class="flex items-center gap-2">
+                <span id="badge-modo" class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800">Online</span>
+                <button onclick="carregarDadosAluno()" class="bg-slate-900 hover:bg-slate-800 text-slate-300 p-2 rounded-lg border border-slate-800 text-xs transition-all" title="Atualizar Treino">🔄</button>
+            </div>
         </div>
     </header>
 
@@ -75,15 +78,15 @@
     <!-- Conteúdo Principal -->
     <main class="flex-1 max-w-md w-full mx-auto p-3 md:p-4 space-y-4 pb-24">
         
-        <!-- TELA 1: LISTA DE DIVISÕES DE TREINO DISPONÍVEIS PARA O ALUNO -->
+        <!-- TELA 1: LISTA DE DIVISÕES DE TREINO -->
         <div id="view-divisoes-aluno" class="space-y-3">
             <h2 class="font-bold text-xs uppercase tracking-wider text-slate-400 px-1">Selecione o Treino de Hoje</h2>
             <div id="container-lista-divisoes" class="space-y-2.5">
-                <!-- Preenchido dinamicamente -->
+                <p class="text-xs text-slate-600 text-center py-6">Carregando treinos prescritos...</p>
             </div>
         </div>
 
-        <!-- TELA 2: EXERCÍCIOS DENTRO DA DIVISÃO SELECIONADA -->
+        <!-- TELA 2: EXERCÍCIOS DENTRO DA DIVISÃO -->
         <div id="view-execucao-treino" class="hidden space-y-4">
             <div class="flex items-center justify-between bg-slate-950 border border-slate-900 rounded-2xl p-3">
                 <button onclick="voltarParaDivisoes()" class="bg-slate-900 hover:bg-slate-800 text-slate-400 px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-800">← Trocar Treino</button>
@@ -112,74 +115,71 @@
         let inputRPEAtivo = null;
         let timerInterval = null;
         let tempoRestante = 0;
+        let treinosDoAlunoCarregados = [];
 
-        // Fichas de exemplo (Simulando as divisões criadas pelo personal)
-        const treinosMockAluno = [
-            {
-                id: 't1',
-                nome: 'Peitoral / Tríceps / Ombro',
-                exercicios: [
-                    {
-                        nome: 'Supino Reto com Halteres',
-                        grupo: 'Peitoral',
-                        equipamento: 'Halter',
-                        series: [
-                            { num: 1, anterior: '24kg × 12 @7', metodo: 'Normal', descanso: 90 },
-                            { num: 2, anterior: '26kg × 10 @8', metodo: 'Normal', descanso: 90 },
-                            { num: 3, anterior: '28kg × 8 @8.5', metodo: 'Normal', descanso: 120 },
-                            { num: 4, anterior: '28kg × 8 @9', metodo: 'Drop Set', detalhe: 2, descanso: 120 }
-                        ]
-                    },
-                    {
-                        nome: 'Tríceps Pulley Crossover',
-                        grupo: 'Tríceps',
-                        equipamento: 'Crossover',
-                        series: [
-                            { num: 1, anterior: '15kg × 12 @8', metodo: 'Normal', descanso: 60 },
-                            { num: 2, anterior: '15kg × 12 @8.5', metodo: 'Normal', descanso: 60 }
-                        ]
-                    }
-                ]
-            },
-            {
-                id: 't2',
-                nome: 'Costas / Bíceps / Abdômen',
-                exercicios: [
-                    {
-                        nome: 'Puxada Alta na Polia',
-                        grupo: 'Costas',
-                        equipamento: 'Crossover',
-                        series: [
-                            { num: 50, anterior: '50kg × 12 @8', metodo: 'Normal', descanso: 90 },
-                            { num: 2, anterior: '55kg × 10 @9', metodo: 'Normal', descanso: 90 }
-                        ]
-                    }
-                ]
-            }
-        ];
-
-        async function inicializarAppAluno() {
+        async function carregarDadosAluno() {
             const urlParams = new URLSearchParams(window.location.search);
             const token = urlParams.get('token');
             const modoTeste = urlParams.get('teste');
 
-            if (token && modoTeste !== 'true') {
-                try {
-                    const { data: aluno } = await supabaseClient.from('alunos').select('*').eq('token', token).single();
-                    if (aluno) {
-                        document.getElementById('nome-aluno').innerText = aluno.nome;
-                    }
-                } catch (e) { }
-            } else {
+            if (!token || modoTeste === 'true') {
                 document.getElementById('nome-aluno').innerText = 'Atleta (Modo Teste)';
                 document.getElementById('badge-modo').innerText = 'Teste';
+                
+                // Puxa do localStorage compartilhado para teste
+                treinosDoAlunoCarregados = JSON.parse(localStorage.getItem('treinos_aluno_teste')) || [
+                    {
+                        id: 't_teste',
+                        nome: 'Peitoral / Tríceps / Ombro (Exemplo)',
+                        exercicios: [
+                            {
+                                nome: 'Supino Reto com Halteres',
+                                musculo: 'Peitoral',
+                                equipamento: 'Halter',
+                                qtdSeries: 4,
+                                seriesConfig: [
+                                    { num: 1, metodo: 'Normal', descanso: 90 },
+                                    { num: 2, metodo: 'Normal', descanso: 90 },
+                                    { num: 3, metodo: 'Normal', descanso: 120 },
+                                    { num: 4, metodo: 'Drop Set', descanso: 120, detalhe: 2 }
+                                ]
+                            }
+                        ]
+                    }
+                ];
+                renderizarDivisoesTreino(treinosDoAlunoCarregados);
+                return;
             }
 
-            renderizarDivisoesTreino(treinosMockAluno);
+            try {
+                const { data: aluno, error } = await supabaseClient.from('alunos').select('*').eq('token', token).single();
+                if (error || !aluno) throw new Error('Aluno não encontrado');
+
+                document.getElementById('nome-aluno').innerText = aluno.nome;
+                document.getElementById('badge-modo').innerText = 'Online';
+
+                // Puxa os treinos criados pelo personal para este ID de aluno exato
+                const treinosSalvos = localStorage.getItem('treinos_aluno_' + aluno.id);
+                if (treinosSalvos) {
+                    treinosDoAlunoCarregados = JSON.parse(treinosSalvos);
+                } else {
+                    treinosDoAlunoCarregados = [];
+                }
+
+                renderizarDivisoesTreino(treinosDoAlunoCarregados);
+            } catch (err) {
+                console.error(err);
+                document.getElementById('container-lista-divisoes').innerHTML = `<p class="text-xs text-red-400 text-center py-6">Erro ao carregar treino. Verifique o link.</p>`;
+            }
         }
 
         function renderizarDivisoesTreino(treinos) {
             const container = document.getElementById('container-lista-divisoes');
+            if (treinos.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">Nenhum treino prescrito pelo personal ainda.</p>`;
+                return;
+            }
+
             container.innerHTML = treinos.map(t => `
                 <div onclick="abrirExecucaoTreino('${t.id}')" class="bg-slate-950 border border-slate-900 hover:border-emerald-500/50 rounded-2xl p-4 flex justify-between items-center cursor-pointer transition-all shadow-sm">
                     <div>
@@ -192,7 +192,7 @@
         }
 
         function abrirExecucaoTreino(treinoId) {
-            const treino = treinosMockAluno.find(t => t.id === treinoId);
+            const treino = treinosDoAlunoCarregados.find(t => t.id === treinoId);
             if (!treino) return;
 
             document.getElementById('titulo-divisao-ativa').innerText = treino.nome;
@@ -211,7 +211,7 @@
             const container = document.getElementById('lista-exercicios-aluno');
 
             container.innerHTML = exercicios.map((ex, index) => {
-                const htmlSeries = ex.series.map(s => {
+                const htmlSeries = ex.seriesConfig.map(s => {
                     let htmlDrops = '';
                     if (s.metodo === 'Drop Set' && s.detalhe > 0) {
                         for (let d = 1; d <= s.detalhe; d++) {
@@ -231,11 +231,11 @@
                             <div class="flex items-center gap-1.5">
                                 <span class="w-4 text-center font-bold text-[11px] text-slate-400">${s.num}</span>
                                 <div class="bg-slate-900 border border-slate-800/80 px-2 py-0.5 rounded-lg text-[9px] text-slate-300 flex items-center gap-1">
-                                    <span class="text-slate-500 uppercase">Ant:</span>
-                                    <strong class="text-emerald-400 font-bold">${s.anterior}</strong>
+                                    <span class="text-slate-500 uppercase">Método:</span>
+                                    <strong class="text-emerald-400 font-bold">${s.metodo}</strong>
                                 </div>
-                                <button onclick="dispararTimerDescanso(${s.descanso})" class="ml-auto bg-slate-900 hover:bg-emerald-950 text-emerald-400 border border-slate-800 text-[9px] px-2 py-1 rounded-lg font-bold flex items-center gap-1">
-                                    ⏱️ ${s.descanso}s
+                                <button onclick="dispararTimerDescanso(${s.descanso || 90})" class="ml-auto bg-slate-900 hover:bg-emerald-950 text-emerald-400 border border-slate-800 text-[9px] px-2 py-1 rounded-lg font-bold flex items-center gap-1">
+                                    ⏱️ ${s.descanso || 90}s
                                 </button>
                             </div>
 
@@ -253,10 +253,10 @@
                     <div class="bg-slate-950 border border-slate-900 rounded-2xl overflow-hidden shadow-md">
                         <div class="p-3.5 bg-slate-950 flex justify-between items-center">
                             <div>
-                                <span class="text-[9px] font-bold uppercase tracking-wider text-emerald-400">${ex.grupo} • ${ex.equipamento}</span>
+                                <span class="text-[9px] font-bold uppercase tracking-wider text-emerald-400">${ex.musculo} • ${ex.equipamento}</span>
                                 <h3 class="font-bold text-xs text-slate-100">${index + 1}. ${ex.nome}</h3>
                             </div>
-                            <span class="text-[9px] bg-black text-slate-400 px-2 py-0.5 rounded border border-slate-800">${ex.series.length} Séries</span>
+                            <span class="text-[9px] bg-black text-slate-400 px-2 py-0.5 rounded border border-slate-800">${ex.qtdSeries} Séries</span>
                         </div>
                         <div class="p-2.5 border-t border-slate-900 space-y-2 bg-slate-950">
                             ${htmlSeries}
@@ -335,7 +335,7 @@
             window.location.reload();
         }
 
-        window.onload = inicializarAppAluno;
+        window.onload = carregarDadosAluno;
     </script>
 </body>
 </html>
