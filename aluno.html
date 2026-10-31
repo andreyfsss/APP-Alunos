@@ -248,6 +248,24 @@
             if (seta) seta.style.transform = cardBody.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
         }
 
+        function buscarDadoAnteriorExercicio(nomeExercicio, numeroSerie) {
+            if (!historicoTreinosAluno || historicoTreinosAluno.length === 0) return '-';
+            // Percorre o histórico do mais recente para o mais antigo
+            for (let i = historicoTreinosAluno.length - 1; i >= 0; i--) {
+                const sessao = historicoTreinosAluno[i];
+                if (sessao.exerciciosRealizados) {
+                    const exRealizado = sessao.exerciciosRealizados.find(e => e.nome.toLowerCase() === nomeExercicio.toLowerCase());
+                    if (exRealizado && exRealizado.series) {
+                        const serieAnt = exRealizado.series.find(s => String(s.num) === String(numeroSerie));
+                        if (serieAnt) {
+                            return `${serieAnt.carga}kgx${serieAnt.reps}`;
+                        }
+                    }
+                }
+            }
+            return '-';
+        }
+
         function renderizarExerciciosAluno(exercicios) {
             const container = document.getElementById('lista-exercicios-aluno');
             container.innerHTML = exercicios.map((ex, index) => {
@@ -257,6 +275,7 @@
                     const textoMetodoExibido = metodoGeral ? '-' : (s.metodo || 'Série Normal');
                     const temExplicacao = textoMetodoExibido !== '-';
                     const repsMeta = s.repsSugeridas || '10 a 12';
+                    const dadoAnterior = buscarDadoAnteriorExercicio(ex.nome, s.num);
 
                     let htmlSubLinhas = '';
                     if (!metodoGeral && (s.metodo === 'Drop Set' || s.metodo === 'Rest Pause' || s.metodo === 'Cluster Set')) {
@@ -285,13 +304,11 @@
 
                                 <button onclick="dispararTimerDescanso(${s.descanso || 90})" class="ml-auto bg-black text-af-orange border border-slate-800 text-[10px] px-2 py-1 rounded-lg font-bold">⏱️ ${s.descanso || 90}s</button>
                                 
-                                <!-- BOTÃO VALIDAR / CHECK DA SÉRIE -->
                                 <button onclick="toggleValidarSerie(this)" class="bg-slate-900 border border-slate-800 hover:border-emerald-500 text-slate-400 px-2 py-1 rounded-lg text-xs font-bold transition-all btn-check-serie" title="Marcar série como feita">
                                     ✔
                                 </button>
                             </div>
 
-                            <!-- RÓTULOS DISCRETOS NO TOPO DAS 4 CAIXINHAS -->
                             <div class="grid grid-cols-4 gap-1.5 text-[8px] font-bold text-slate-500 uppercase text-center">
                                 <div>ANT.</div>
                                 <div>KG</div>
@@ -299,10 +316,9 @@
                                 <div>RPE</div>
                             </div>
 
-                            <!-- 4 CAIXINHAS COMPACTAS -->
                             <div class="grid grid-cols-4 gap-1.5 items-center">
                                 <div class="bg-slate-900 border border-slate-800 rounded-lg p-1.5 text-center flex items-center justify-center h-8" title="Treino Anterior">
-                                    <span class="text-[10px] font-bold text-slate-400">-</span>
+                                    <span class="text-[9px] font-bold text-slate-400">${dadoAnterior}</span>
                                 </div>
                                 <input type="number" step="0.5" oninput="validarApenasNumeros(this)" class="w-full h-8 bg-slate-900 border border-slate-800 rounded-lg p-1 text-center text-xs font-bold text-white input-carga focus:border-af-orange focus:outline-none" placeholder="kg">
                                 <input type="number" oninput="validarApenasNumeros(this)" class="w-full h-8 bg-slate-900 border border-slate-800 rounded-lg p-1 text-center text-xs font-bold text-white input-reps focus:border-af-orange focus:outline-none" placeholder="${repsMeta}">
@@ -313,7 +329,7 @@
                 }).join('');
 
                 return `
-                    <div class="bg-af-card border border-slate-800 rounded-2xl overflow-hidden shadow-md">
+                    <div class="bg-af-card border border-slate-800 rounded-2xl overflow-hidden shadow-md" data-nome-exercicio="${ex.nome}">
                         <div onclick="alternarColapsoExercicio(this)" class="p-3.5 bg-af-card flex justify-between items-center cursor-pointer select-none">
                             <div>
                                 <span class="text-[9px] font-bold uppercase tracking-wider text-af-orange">${ex.musculo} • ${ex.equipamento}</span>
@@ -435,22 +451,36 @@
             }
 
             let volumeSessao = 0;
-            document.querySelectorAll('.serie-item').forEach(serie => {
-                const c = parseFloat(serie.querySelector('.input-carga')?.value) || 0;
-                const r = parseFloat(serie.querySelector('.input-reps')?.value) || 0;
-                volumeSessao += c * r;
+            let exerciciosRealizados = [];
 
-                serie.querySelectorAll('.sub-bloco-item').forEach(sub => {
-                    const cSub = parseFloat(sub.querySelector('.input-carga-sub')?.value) || 0;
-                    const rSub = parseFloat(sub.querySelector('.input-reps-sub')?.value) || 0;
-                    volumeSessao += cSub * rSub;
+            document.querySelectorAll('.bg-af-card.border.border-slate-800.rounded-2xl.overflow-hidden.shadow-md').forEach(cardEx => {
+                const nomeEx = cardEx.getAttribute('data-nome-exercicio');
+                let seriesDoEx = [];
+
+                cardEx.querySelectorAll('.serie-item').forEach(serie => {
+                    const numSerie = serie.querySelector('span').innerText.replace('ª', '').trim();
+                    const carga = parseFloat(serie.querySelector('.input-carga')?.value) || 0;
+                    const reps = parseFloat(serie.querySelector('.input-reps')?.value) || 0;
+                    const rpe = serie.querySelector('input[readonly]')?.value || '';
+
+                    volumeSessao += carga * reps;
+                    seriesDoEx.push({ num: numSerie, carga, reps, rpe });
+
+                    serie.querySelectorAll('.sub-bloco-item').forEach(sub => {
+                        const cSub = parseFloat(sub.querySelector('.input-carga-sub')?.value) || 0;
+                        const rSub = parseFloat(sub.querySelector('.input-reps-sub')?.value) || 0;
+                        volumeSessao += cSub * rSub;
+                    });
                 });
+
+                exerciciosRealizados.push({ nome: nomeEx, series: seriesDoEx });
             });
 
             const novoRegistro = {
                 data: new Date().toISOString(),
                 volume: volumeSessao,
-                comparativo: 'mesmo'
+                comparativo: 'mesmo',
+                exerciciosRealizados: exerciciosRealizados
             };
 
             historicoTreinosAluno.push(novoRegistro);
