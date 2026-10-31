@@ -192,9 +192,14 @@
                                     <p class="text-[10px] text-slate-500">Toque para gerenciar treinos</p>
                                 </div>
                             </div>
-                            <button onclick="event.stopPropagation(); copiarLinkDirect('${linkAluno}')" class="text-xs bg-slate-900 hover:bg-emerald-950 text-slate-300 hover:text-emerald-400 border border-slate-800 px-3 py-1.5 rounded-xl font-medium transition-all">
-                                Copiar Link
-                            </button>
+                            <div class="flex items-center gap-1.5" onclick="event.stopPropagation()">
+                                <button onclick="window.open('${linkAluno}', '_blank')" class="text-xs bg-emerald-950/80 hover:bg-emerald-900 text-emerald-400 border border-emerald-800/50 px-2.5 py-1.5 rounded-xl font-medium transition-all" title="Testar visão do aluno">
+                                    👁️ Testar
+                                </button>
+                                <button onclick="copiarLinkDirect('${linkAluno}')" class="text-xs bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-emerald-400 border border-slate-800 px-3 py-1.5 rounded-xl font-medium transition-all">
+                                    Copiar
+                                </button>
+                            </div>
                         </div>
                     `;
                 }).join('');
