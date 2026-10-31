@@ -10,7 +10,7 @@
 <body class="bg-black text-slate-100 min-h-screen p-3 md:p-6 flex flex-col items-center antialiased">
 
     <div class="max-w-md w-full space-y-5">
-        <!-- Topo com Status de Sincronização, Hora e Botão Recarregar -->
+        <!-- Topo com Status de Sincronização -->
         <div class="flex justify-between items-center bg-slate-950 border border-slate-900 rounded-2xl p-4 shadow-xl">
             <div>
                 <h1 class="font-black text-lg text-emerald-400 tracking-wider">AF PRO</h1>
@@ -53,7 +53,10 @@
                         <p class="text-[10px] text-slate-500">Gerenciar Divisões</p>
                     </div>
                 </div>
-                <button id="btn-copiar-link-aluno" class="text-xs bg-emerald-950/80 hover:bg-emerald-900/80 text-emerald-400 border border-emerald-800/50 px-3 py-1.5 rounded-xl font-medium transition-all">Copiar Link</button>
+                <div class="flex gap-1.5">
+                    <button id="btn-testar-link-aluno" class="text-xs bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-slate-800 px-3 py-1.5 rounded-xl font-medium transition-all" title="Testar visão do aluno">👁️ Ver</button>
+                    <button id="btn-copiar-link-aluno" class="text-xs bg-emerald-950/80 hover:bg-emerald-900/80 text-emerald-400 border border-emerald-800/50 px-3 py-1.5 rounded-xl font-medium transition-all">Copiar</button>
+                </div>
             </div>
 
             <div class="bg-slate-950 border border-slate-900 rounded-2xl p-4 space-y-3">
@@ -75,7 +78,7 @@
         <!-- TELA 3: MONTAGEM DE EXERCÍCIOS DENTRO DA DIVISÃO -->
         <div id="view-montar-exercicios" class="hidden space-y-4">
             <div class="flex items-center justify-between bg-slate-950 border border-slate-900 rounded-2xl p-4">
-                <button onclick="voltarParaTreinos()" class="bg-slate-900 hover:bg-slate-800 text-slate-400 px-2.5 py-1.5 rounded-xl text-xs font-bold border border-slate-800">← Voltar ao Aluno</button>
+                <button onclick="voltarParaTreinos()" class="bg-slate-900 hover:bg-slate-800 text-slate-400 px-2.5 py-1.5 rounded-xl text-xs font-bold border border-slate-800">← Voltar</button>
                 <h2 id="titulo-treino-ativo" class="font-bold text-xs text-emerald-400 uppercase tracking-wider">Treino Ativo</h2>
             </div>
 
@@ -146,7 +149,7 @@
 
     <script>
         const SUPABASE_URL = 'https://dzifzikdeojazyswjguw.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6aWZ6aWtkZW9qYXp5c3dqZ3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MTg3NjgsImV4cCI6MjEwODk5NDc2OH0.Y3rycAN_O1IL99OdMJsC_TRMrSEKJp4vQJho2P4D_W0';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5cHNjY25mcmpma3h0Y3J1ZXh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MTg3NjgsImV4cCI6MjEwODk5NDc2OH0.Y3rycAN_O1IL99OdMJsC_TRMrSEKJp4vQJho2P4D_W0';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let alunoSelecionado = null;
@@ -160,7 +163,6 @@
                 
                 if (error) {
                     atualizarStatusSync(false);
-                    document.getElementById('container-alunos').innerHTML = `<p class="text-xs text-red-400 text-center py-4">Erro: ${error.message}</p>`;
                     return;
                 }
 
@@ -178,7 +180,7 @@
                     const iniciais = (aluno.nome || 'Aluno').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 
                     return `
-                        <div onclick="abrirPainelAluno('${aluno.id}', '${aluno.nome}', '${linkAluno}')" class="bg-slate-950 border border-slate-900 hover:border-emerald-500/50 p-3.5 rounded-2xl flex items-center justify-between cursor-pointer transition-all shadow-sm group">
+                        <div onclick="abrirPainelAluno('${aluno.id}', '${aluno.nome}', '${aluno.token}', '${linkAluno}')" class="bg-slate-950 border border-slate-900 hover:border-emerald-500/50 p-3.5 rounded-2xl flex items-center justify-between cursor-pointer transition-all shadow-sm group">
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 rounded-xl bg-black text-emerald-400 font-bold flex items-center justify-center text-xs border border-slate-800 group-hover:border-emerald-500/40">
                                     ${iniciais}
@@ -196,7 +198,6 @@
                 }).join('');
             } catch (err) {
                 atualizarStatusSync(false);
-                console.error(err);
             }
         }
 
@@ -220,19 +221,25 @@
             }
         }
 
-        async function abrirPainelAluno(id, nome, link) {
-            alunoSelecionado = { id, nome, link };
+        async function abrirPainelAluno(id, nome, token, link) {
+            alunoSelecionado = { id, nome, token, link };
             document.getElementById('detalhe-nome-aluno').innerText = nome;
             document.getElementById('btn-copiar-link-aluno').onclick = () => copiarLinkDirect(link);
+            document.getElementById('btn-testar-link-aluno').onclick = () => window.open(link, '_blank');
             
             document.getElementById('view-lista-alunos').classList.add('hidden');
             document.getElementById('view-detalhe-aluno').classList.remove('hidden');
 
-            const salvo = localStorage.getItem('treinos_aluno_' + id);
-            if (salvo) {
-                treinosDoAluno = JSON.parse(salvo);
-            } else {
-                treinosDoAluno = [{ id: 't1', nome: 'Peitoral / Tríceps / Ombro', exercicios: [] }];
+            // Busca os treinos salvos na coluna do Supabase deste aluno
+            try {
+                const { data, error } = await supabaseClient.from('alunos').select('treinos').eq('id', id).single();
+                if (data && data.treinos) {
+                    treinosDoAluno = data.treinos;
+                } else {
+                    treinosDoAluno = [];
+                }
+            } catch (e) {
+                treinosDoAluno = [];
             }
             renderizarTreinosAluno();
         }
@@ -241,27 +248,41 @@
             alunoSelecionado = null;
             document.getElementById('view-detalhe-aluno').classList.add('hidden');
             document.getElementById('view-lista-alunos').classList.remove('hidden');
+            carregarAlunos();
         }
 
-        function criarTreinoDivisao() {
+        async function criarTreinoDivisao() {
             const input = document.getElementById('input-nome-treino');
             const nome = input.value.trim();
             if (!nome) return;
 
             treinosDoAluno.push({ id: 't_' + Date.now(), nome, exercicios: [] });
             input.value = '';
-            salvarTreinosAlunoStorage();
+            await salvarTreinosNoSupabase();
             renderizarTreinosAluno();
         }
 
-        function salvarTreinosAlunoStorage() {
-            if (alunoSelecionado) {
-                localStorage.setItem('treinos_aluno_' + alunoSelecionado.id, JSON.stringify(treinosDoAluno));
+        async function salvarTreinosNoSupabase() {
+            if (!alunoSelecionado) return;
+            try {
+                const { error } = await supabaseClient
+                    .from('alunos')
+                    .update({ treinos: treinosDoAluno })
+                    .eq('id', alunoSelecionado.id);
+                
+                if (error) console.error('Erro ao salvar no Supabase:', error.message);
+            } catch (err) {
+                console.error(err);
             }
         }
 
         function renderizarTreinosAluno() {
             const container = document.getElementById('container-treinos-aluno');
+            if (treinosDoAluno.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-600 text-center py-6">Nenhuma divisão criada ainda.</p>`;
+                return;
+            }
+
             container.innerHTML = treinosDoAluno.map(t => `
                 <div onclick="abrirMontagemTreino('${t.id}')" class="bg-slate-950 border border-slate-900 hover:border-emerald-500/50 rounded-2xl p-4 flex justify-between items-center cursor-pointer transition-all shadow-sm">
                     <div>
@@ -358,7 +379,7 @@
             }
         }
 
-        function salvarExercicioDefinitivo() {
+        async function salvarExercicioDefinitivo() {
             const nome = document.getElementById('input-busca-ex').value.trim();
             const musculo = document.getElementById('select-musculo-ex').value;
             const equipamento = document.getElementById('select-equipamento-ex').value;
@@ -389,7 +410,7 @@
             if (treino) {
                 treino.exercicios.push({ nome, musculo, equipamento, qtdSeries, seriesConfig });
                 document.getElementById('input-busca-ex').value = '';
-                salvarTreinosAlunoStorage();
+                await salvarTreinosNoSupabase();
                 renderizarListaExerciciosDivisao();
             }
         }
@@ -408,9 +429,18 @@
                         <span class="text-[10px] text-emerald-400 font-bold uppercase">${ex.musculo} • ${ex.equipamento}</span>
                         <div class="font-bold text-slate-200">${idx + 1}. ${ex.nome} (${ex.qtdSeries} Séries)</div>
                     </div>
-                    <button onclick="treino.exercicios.splice(${idx}, 1); salvarTreinosAlunoStorage(); renderizarListaExerciciosDivisao();" class="text-xs text-red-400 font-bold">✕</button>
+                    <button onclick="removerExercicioDivisao(${idx})" class="text-xs text-red-400 font-bold">✕</button>
                 </div>
             `).join('');
+        }
+
+        async function removerExercicioDivisao(idx) {
+            const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
+            if (treino) {
+                treino.exercicios.splice(idx, 1);
+                await salvarTreinosNoSupabase();
+                renderizarListaExerciciosDivisao();
+            }
         }
 
         async function cadastrarAluno() {
@@ -418,7 +448,7 @@
             const nome = input.value.trim();
             if (!nome) return;
 
-            const { error } = await supabaseClient.from('alunos').insert([{ nome }]);
+            const { error } = await supabaseClient.from('alunos').insert([{ nome, treinos: [] }]);
             if (error) alert('Erro: ' + error.message);
             else { input.value = ''; carregarAlunos(); }
         }

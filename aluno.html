@@ -120,33 +120,9 @@
         async function carregarDadosAluno() {
             const urlParams = new URLSearchParams(window.location.search);
             const token = urlParams.get('token');
-            const modoTeste = urlParams.get('teste');
 
-            if (!token || modoTeste === 'true') {
-                document.getElementById('nome-aluno').innerText = 'Atleta (Modo Teste)';
-                document.getElementById('badge-modo').innerText = 'Teste';
-                
-                treinosDoAlunoCarregados = JSON.parse(localStorage.getItem('treinos_aluno_teste')) || [
-                    {
-                        id: 't_teste',
-                        nome: 'Peitoral / Tríceps / Ombro (Exemplo)',
-                        exercicios: [
-                            {
-                                nome: 'Supino Reto com Halteres',
-                                musculo: 'Peitoral',
-                                equipamento: 'Halter',
-                                qtdSeries: 4,
-                                seriesConfig: [
-                                    { num: 1, metodo: 'Normal', descanso: 90 },
-                                    { num: 2, metodo: 'Normal', descanso: 90 },
-                                    { num: 3, metodo: 'Normal', descanso: 120 },
-                                    { num: 4, metodo: 'Drop Set', descanso: 120, detalhe: 2 }
-                                ]
-                            }
-                        ]
-                    }
-                ];
-                renderizarDivisoesTreino(treinosDoAlunoCarregados);
+            if (!token) {
+                document.getElementById('container-lista-divisoes').innerHTML = `<p class="text-xs text-red-400 text-center py-6">Link inválido ou sem token do aluno.</p>`;
                 return;
             }
 
@@ -157,24 +133,19 @@
                 document.getElementById('nome-aluno').innerText = aluno.nome;
                 document.getElementById('badge-modo').innerText = 'Online';
 
-                const treinosSalvos = localStorage.getItem('treinos_aluno_' + aluno.id);
-                if (treinosSalvos) {
-                    treinosDoAlunoCarregados = JSON.parse(treinosSalvos);
-                } else {
-                    treinosDoAlunoCarregados = [];
-                }
-
+                // Puxa os treinos reais salvos no banco para este aluno específico!
+                treinosDoAlunoCarregados = aluno.treinos || [];
                 renderizarDivisoesTreino(treinosDoAlunoCarregados);
             } catch (err) {
                 console.error(err);
-                document.getElementById('container-lista-divisoes').innerHTML = `<p class="text-xs text-red-400 text-center py-6">Erro ao carregar treino. Verifique o link.</p>`;
+                document.getElementById('container-lista-divisoes').innerHTML = `<p class="text-xs text-red-400 text-center py-6">Erro ao carregar os dados do atleta.</p>`;
             }
         }
 
         function renderizarDivisoesTreino(treinos) {
             const container = document.getElementById('container-lista-divisoes');
             if (treinos.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">Nenhum treino prescrito pelo personal ainda.</p>`;
+                container.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">Nenhum treino prescrito pelo personal ainda para este aluno.</p>`;
                 return;
             }
 
@@ -324,7 +295,7 @@
         }
 
         function fecharTimerDescanso() {
-            clearInterval(timerInterval);
+            clearInterval(timerIdentity = null);
             document.getElementById('bar-timer-descanso').classList.add('hidden');
         }
 
