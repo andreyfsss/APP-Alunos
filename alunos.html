@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Treino Online - Aluno</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#020617">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
+
+    <header class="bg-slate-900 border-b border-slate-800 p-4 sticky top-0 z-10">
+        <div class="max-w-md mx-auto flex justify-between items-center">
+            <h1 id="nome-aluno" class="font-bold text-lg text-emerald-400">Carregando aluno...</h1>
+            <span id="status-conexao" class="text-xs px-2 py-1 rounded bg-slate-800 text-slate-400">Conectando...</span>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-md w-full mx-auto p-4 space-y-6">
+        
+        <div id="painel-erro" class="hidden bg-red-950/50 border border-red-800 p-4 rounded-xl text-center space-y-2">
+            <h2 class="font-bold text-red-400">Acesso Restrito</h2>
+            <p class="text-sm text-slate-300">Nenhum token válido encontrado. Solicite seu link exclusivo ao personal.</p>
+        </div>
+
+        <div id="painel-treino" class="space-y-4">
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-2">
+                <span class="text-xs font-semibold uppercase tracking-wider text-emerald-500">Treino de Hoje</span>
+                <h2 id="titulo-treino" class="text-xl font-bold">Sessão Ativa</h2>
+                <p id="descricao-treino" class="text-sm text-slate-400">Insira suas marcas de carga, repetições e RPE abaixo.</p>
+            </div>
+
+            <div id="lista-exercicios" class="space-y-4">
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3 exercicio-card" data-exercicio="Supino Reto com Halteres">
+                    <div class="flex justify-between items-start">
+                        <h3 class="font-bold text-base text-slate-200">Supino Reto com Halteres</h3>
+                        <span class="text-xs bg-slate-800 text-slate-300 px-2 py-1 rounded">3 Séries</span>
+                    </div>
+                    
+                    <div class="bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/60 text-xs text-slate-400 flex justify-between">
+                        <span>Anterior: <strong class="text-slate-200" id="hist-supino">Carregando...</strong></span>
+                        <span>RPE Alvo: <strong class="text-emerald-400">8 - 9</strong></span>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2 pt-1">
+                        <div>
+                            <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1">Carga (kg)</label>
+                            <input type="number" step="0.5" class="input-carga w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-center text-sm font-bold text-white focus:border-emerald-500 focus:outline-none" placeholder="Ex: 24">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1">Repetições</label>
+                            <input type="number" class="input-reps w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-center text-sm font-bold text-white focus:border-emerald-500 focus:outline-none" placeholder="Ex: 8">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1">RPE (1-10)</label>
+                            <input type="number" class="input-rpe w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-center text-sm font-bold text-white focus:border-emerald-500 focus:outline-none" placeholder="Ex: 9">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="salvarTreino()" class="w-full bg-emerald-600 hover:bg-emerald-500 font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-emerald-900/20 text-slate-950">
+                Salvar Execução do Treino
+            </button>
+        </div>
+    </main>
+
+    <script>
+        const SUPABASE_URL = 'https://dzifzikdeojazyswjguw.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6aWZ6aWtkZW9qYXp5c3dqZ3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MTg3NjgsImV4cCI6MjEwODk5NDc2OH0.Y3rycAN_O1IL99OdMJsC_TRMrSEKJp4vQJho2P4D_W0';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let alunoAtualId = null;
+
+        async function inicializarApp() {
+            const urlParams = new URLSearchParams(window.location.search);
+            let token = urlParams.get('token');
+
+            if (token) {
+                localStorage.setItem('aluno_token', token);
+            } else {
+                token = localStorage.getItem('aluno_token');
+            }
+
+            if (!token) {
+                document.getElementById('painel-treino').classList.add('hidden');
+                document.getElementById('painel-erro').classList.remove('hidden');
+                document.getElementById('nome-aluno').innerText = 'Acesso Negado';
+                document.getElementById('status-conexao').innerText = 'Sem Token';
+                document.getElementById('status-conexao').className = 'text-xs px-2 py-1 rounded bg-red-900/50 text-red-400';
+                return;
+            }
+
+            try {
+                const { data: aluno, error } = await supabaseClient
+                    .from('alunos')
+                    .select('*')
+                    .eq('token', token)
+                    .single();
+
+                if (error || !aluno) {
+                    throw new Error('Token inválido ou aluno não encontrado.');
+                }
+
+                alunoAtualId = aluno.id;
+                document.getElementById('nome-aluno').innerText = `Olá, ${aluno.nome}`;
+                document.getElementById('status-conexao').innerText = 'Sincronizado';
+                document.getElementById('status-conexao').className = 'text-xs px-2 py-1 rounded bg-emerald-950 text-emerald-400';
+
+                carregarHistoricoUltimoTreino('Supino Reto com Halteres');
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('painel-treino').classList.add('hidden');
+                document.getElementById('painel-erro').classList.remove('hidden');
+                document.getElementById('nome-aluno').innerText = 'Erro de Acesso';
+                document.getElementById('status-conexao').innerText = 'Erro';
+            }
+        }
+
+        async function carregarHistoricoUltimoTreino(exercicioNome) {
+            const { data, error } = await supabaseClient
+                .from('historico_treinos')
+                .select('*')
+                .eq('aluno_id', alunoAtualId)
+                .eq('exercicio_nome', exercicioNome)
+                .order('created_at', { ascending: false })
+                .limit(1);
+
+            if (data && data.length > 0) {
+                const ultimo = data[0];
+                document.getElementById('hist-supino').innerText = `${ultimo.carga}kg x ${ultimo.repeticoes} reps (RPE ${ultimo.rpe})`;
+            } else {
+                document.getElementById('hist-supino').innerText = 'Nenhum registro anterior';
+            }
+        }
+
+        async function salvarTreino() {
+            if (!alunoAtualId) return;
+
+            const card = document.querySelector('.exercicio-card');
+            const exercicioNome = card.getAttribute('data-exercicio');
+            const carga = parseFloat(card.querySelector('.input-carga').value);
+            const repeticoes = parseInt(card.querySelector('.input-reps').value);
+            const rpe = parseInt(card.querySelector('.input-rpe').value);
+
+            if (!carga || !repeticoes || !rpe) {
+                alert('Preencha todos os campos antes de salvar!');
+                return;
+            }
+
+            const { error } = await supabaseClient
+                .from('historico_treinos')
+                .insert([{ aluno_id: alunoAtualId, exercicio_nome: exercicioNome, carga, repeticoes, rpe }]);
+
+            if (error) {
+                alert('Erro ao salvar treino: ' + error.message);
+            } else {
+                alert('Treino salvo com sucesso! Histórico atualizado.');
+                location.reload();
+            }
+        }
+
+        window.onload = inicializarApp;
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
+</body>
+</html>
