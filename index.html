@@ -112,7 +112,10 @@
                     <button onclick="mudarSubTabRelatorio('series')" id="subtab-ser" class="flex-1 py-1.5 rounded-lg text-slate-400 transition-all">Séries</button>
                     <button onclick="mudarSubTabRelatorio('grupos')" id="subtab-grp" class="flex-1 py-1.5 rounded-lg text-slate-400 transition-all">Grupos</button>
                 </div>
-                <div id="subbox-volume" class="bg-af-card border border-slate-800 rounded-2xl p-4 text-center text-xs text-slate-400 py-10">Nenhum dado registrado nesta semana.</div>
+                <div id="subbox-volume" class="bg-af-card border border-slate-800 rounded-2xl p-4 text-xs text-slate-300 space-y-2">
+                    <p class="font-bold text-af-orange">Histórico de Sessões Realizadas:</p>
+                    <div id="lista-historico-admin" class="space-y-1 text-[11px]">Nenhum treino registrado ainda.</div>
+                </div>
                 <div id="subbox-series" class="hidden bg-af-card border border-slate-800 rounded-2xl p-4 text-center text-xs text-slate-400 py-10">Nenhuma série registrada.</div>
                 <div id="subbox-grupos" class="hidden bg-af-card border border-slate-800 rounded-2xl p-4 text-center text-xs text-slate-400 py-10">Nenhum grupo muscular registrado.</div>
             </div>
@@ -126,7 +129,8 @@
             </div>
 
             <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3 relative">
-                <h3 class="font-bold text-xs uppercase text-slate-300">Adicionar / Editar Exercício</h3>
+                <h3 id="titulo-form-exercicio" class="font-bold text-xs uppercase text-slate-300">Adicionar Exercício</h3>
+                <input type="hidden" id="edit-exercicio-index" value="-1">
                 
                 <div class="space-y-2.5">
                     <div class="relative">
@@ -176,12 +180,19 @@
                         </div>
                     </div>
 
+                    <!-- Bloco para Pirâmides com Reps por Série -->
+                    <div id="bloco-piramide-config" class="hidden space-y-2 pt-2 border-t border-slate-800">
+                        <label class="block text-[11px] font-bold text-slate-300">Repetições por Série (Pirâmide)</label>
+                        <div id="container-config-piramide" class="space-y-1.5"></div>
+                    </div>
+
+                    <!-- Configuração Modular por Série -->
                     <div id="bloco-configuracao-modular" class="space-y-2 pt-2 border-t border-slate-800">
                         <label class="block text-[11px] font-bold text-slate-300">Configuração por Série (Método & Reps)</label>
                         <div id="container-config-series-admin" class="space-y-2"></div>
                     </div>
 
-                    <button onclick="salvarExercicioDefinitivo()" class="w-full bg-af-orange font-black py-3 rounded-xl text-black text-xs transition-all shadow-md mt-2">
+                    <button id="btn-salvar-exercicio-def" onclick="salvarExercicioDefinitivo()" class="w-full bg-af-orange font-black py-3 rounded-xl text-black text-xs transition-all shadow-md mt-2">
                         Salvar Exercício na Divisão
                     </button>
                 </div>
@@ -273,6 +284,7 @@
                 treinosDoAluno = (data && data.treinos) ? data.treinos : [];
                 historicoTreinosAluno = (data && data.historico) ? data.historico : [];
                 calcularEvolucaoRecenteAdmin();
+                renderizarHistoricoAdmin();
             } catch (e) {
                 treinosDoAluno = [];
                 historicoTreinosAluno = [];
@@ -292,6 +304,20 @@
             document.getElementById('val-mais-peso').innerText = mais;
             document.getElementById('val-mesmo-peso').innerText = mesmo;
             document.getElementById('val-menos-peso').innerText = menos;
+        }
+
+        function renderizarHistoricoAdmin() {
+            const container = document.getElementById('lista-historico-admin');
+            if (!historicoTreinosAluno || historicoTreinosAluno.length === 0) {
+                container.innerHTML = 'Nenhum treino registrado ainda.';
+                return;
+            }
+            container.innerHTML = historicoTreinosAluno.map((h, i) => `
+                <div class="bg-black p-2 rounded-lg border border-slate-800 flex justify-between">
+                    <span>Treino #${i+1} (${new Date(h.data).toLocaleDateString('pt-BR')})</span>
+                    <strong class="text-af-orange">${h.volume.toLocaleString('pt-BR')} kg</strong>
+                </div>
+            `).join('');
         }
 
         function mudarAbaAdminAluno(aba) {
@@ -319,10 +345,14 @@
 
         function alternarVisibilidadeMetodoMacro(valor) {
             const blocoModular = document.getElementById('bloco-configuracao-modular');
+            const blocoPiramide = document.getElementById('bloco-piramide-config');
             if (valor !== 'Nulo') {
                 blocoModular.classList.add('hidden');
+                blocoPiramide.classList.remove('hidden');
+                gerarCamposPiramideAdmin(document.getElementById('input-qtd-series-ex').value);
             } else {
                 blocoModular.classList.remove('hidden');
+                blocoPiramide.classList.add('hidden');
             }
         }
 
@@ -393,6 +423,14 @@
             document.getElementById('titulo-treino-ativo').innerText = treino.nome;
             document.getElementById('view-detalhe-aluno').classList.add('hidden');
             document.getElementById('view-montar-exercicios').classList.remove('hidden');
+            
+            // Resetar formulário para adição nova
+            document.getElementById('titulo-form-exercicio').innerText = "Adicionar Exercício";
+            document.getElementById('edit-exercicio-index').value = "-1";
+            document.getElementById('input-busca-ex').value = "";
+            document.getElementById('input-qtd-series-ex').value = "4";
+            document.getElementById('select-metodo-geral-ex').value = "Nulo";
+            alternarVisibilidadeMetodoMacro("Nulo");
             gerarCamposSeriesAdmin(4);
             renderizarListaExerciciosDivisao();
         }
@@ -420,6 +458,11 @@
 
         function gerarCamposSeriesAdmin(qtd) {
             const container = document.getElementById('container-config-series-admin');
+            const metodoGeral = document.getElementById('select-metodo-geral-ex').value;
+            if (metodoGeral !== 'Nulo') {
+                gerarCamposPiramideAdmin(qtd);
+                return;
+            }
             let html = '';
             for (let i = 1; i <= qtd; i++) {
                 html += `
@@ -427,19 +470,37 @@
                         <div class="flex items-center gap-2">
                             <span class="font-bold text-slate-400 text-xs w-4">${i}ª</span>
                             <select onchange="atualizarMetodoSerieAdmin(this)" class="select-metodo-serie flex-1 bg-slate-900 border border-slate-800 rounded-lg p-1 text-[11px] text-slate-200 focus:outline-none">
-                                <option value="Nulo">Série Normal</option>
+                                <option value="Série Normal">Série Normal</option>
                                 <option value="Drop Set">Drop-Set</option>
                                 <option value="Rest Pause">Rest-Pause</option>
                                 <option value="Cluster Set">Cluster Set</option>
                                 <option value="FST-7">FST-7</option>
                             </select>
-                            <input type="text" placeholder="Reps (ex: 10 a 12)" class="input-reps-sugeridas w-28 bg-slate-900 border border-slate-800 rounded p-1 text-center text-[10px] text-white">
+                            <input type="text" placeholder="Reps (ex: 12)" class="input-reps-sugeridas w-24 bg-slate-900 border border-slate-800 rounded p-1 text-center text-[10px] text-white">
                             <div class="flex items-center gap-1">
                                 <input type="number" value="90" oninput="validarApenasNumeros(this)" class="input-descanso-serie w-10 bg-slate-900 border border-slate-800 rounded p-1 text-center text-xs text-af-orange font-bold">
                                 <span class="text-[9px] text-slate-500">s</span>
                             </div>
                         </div>
                         <div class="box-detalhe-metodo hidden text-[10px] text-slate-400 pl-6"></div>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        function gerarCamposPiramideAdmin(qtd) {
+            const container = document.getElementById('container-config-piramide');
+            let html = '';
+            for (let i = 1; i <= qtd; i++) {
+                html += `
+                    <div class="bg-black border border-slate-800 p-2 rounded-xl flex items-center gap-2 piramide-config-item" data-serie="${i}">
+                        <span class="font-bold text-slate-400 text-xs w-12">${i}ª Série</span>
+                        <input type="text" placeholder="Qtd Reps (ex: 12 ou 10 a 12)" class="input-reps-piramide flex-1 bg-slate-900 border border-slate-800 rounded p-1 text-center text-xs text-white">
+                        <div class="flex items-center gap-1">
+                            <input type="number" value="90" oninput="validarApenasNumeros(this)" class="input-descanso-piramide w-12 bg-slate-900 border border-slate-800 rounded p-1 text-center text-xs text-af-orange font-bold">
+                            <span class="text-[9px] text-slate-500">s</span>
+                        </div>
                     </div>
                 `;
             }
@@ -470,15 +531,19 @@
             const equipamento = document.getElementById('select-equipamento-ex').value;
             const qtdSeries = parseInt(document.getElementById('input-qtd-series-ex').value) || 4;
             const metodoGeral = document.getElementById('select-metodo-geral-ex').value;
+            const editIndex = parseInt(document.getElementById('edit-exercicio-index').value);
 
             if (!nome) { alert('Digite o nome do exercício!'); return; }
             if (!baseExerciciosGlobais.includes(nome)) baseExerciciosGlobais.push(nome);
 
             const seriesConfig = [];
             if (metodoGeral !== 'Nulo') {
-                for (let i = 1; i <= qtdSeries; i++) {
-                    seriesConfig.push({ num: i, metodo: 'Série Normal', descanso: 90, repsSugeridas: '10 a 12' });
-                }
+                document.querySelectorAll('.piramide-config-item').forEach(item => {
+                    const num = item.getAttribute('data-serie');
+                    const repsSugeridas = item.querySelector('.input-reps-piramide').value || '10 a 12';
+                    const descanso = parseInt(item.querySelector('.input-descanso-piramide').value) || 90;
+                    seriesConfig.push({ num, metodo: 'Série Normal', descanso, repsSugeridas });
+                });
             } else {
                 document.querySelectorAll('.serie-config-item').forEach(item => {
                     const num = item.getAttribute('data-serie');
@@ -496,8 +561,20 @@
             const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
             if (treino) {
                 if (!treino.exercicios) treino.exercicios = [];
-                treino.exercicios.push({ nome, musculo, equipamento, qtdSeries, metodoGeral, seriesConfig });
+                
+                const exercicioObj = { nome, musculo, equipamento, qtdSeries, metodoGeral, seriesConfig };
+
+                if (editIndex >= 0) {
+                    treino.exercicios[editIndex] = exercicioObj;
+                } else {
+                    treino.exercicios.push(exercicioObj);
+                }
+
                 document.getElementById('input-busca-ex').value = '';
+                document.getElementById('edit-exercicio-index').value = "-1";
+                document.getElementById('titulo-form-exercicio').innerText = "Adicionar Exercício";
+                document.getElementById('btn-salvar-exercicio-def').innerText = "Salvar Exercício na Divisão";
+
                 await salvarTreinosNoSupabase();
                 renderizarListaExerciciosDivisao();
             }
@@ -512,14 +589,60 @@
             }
             container.innerHTML = treino.exercicios.map((ex, idx) => `
                 <div class="bg-black border border-slate-900 p-3 rounded-xl flex justify-between items-center text-xs">
-                    <div>
+                    <div onclick="carregarExercicioParaEdicao(${idx})" class="flex-1 cursor-pointer">
                         <span class="text-[10px] text-af-orange font-bold uppercase">${ex.musculo} • ${ex.equipamento}</span>
                         <div class="font-bold text-slate-200">${idx + 1}. ${ex.nome} (${ex.qtdSeries} Séries)</div>
                         ${ex.metodoGeral && ex.metodoGeral !== 'Nulo' ? `<span class="text-[9px] text-amber-400 font-bold">Método: ${ex.metodoGeral}</span>` : ''}
                     </div>
-                    <button onclick="removerExercicioDivisao(${idx})" class="text-xs text-rose-400 font-bold">✕</button>
+                    <div class="flex gap-2">
+                        <button onclick="carregarExercicioParaEdicao(${idx})" class="text-xs text-slate-300 font-bold" title="Editar">✏️</button>
+                        <button onclick="removerExercicioDivisao(${idx})" class="text-xs text-rose-400 font-bold" title="Excluir">✕</button>
+                    </div>
                 </div>
             `).join('');
+        }
+
+        function carregarExercicioParaEdicao(idx) {
+            const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
+            if (!treino || !treino.exercicios[idx]) return;
+            const ex = treino.exercicios[idx];
+
+            document.getElementById('input-busca-ex').value = ex.nome;
+            document.getElementById('select-musculo-ex').value = ex.musculo;
+            document.getElementById('select-equipamento-ex').value = ex.equipamento;
+            document.getElementById('input-qtd-series-ex').value = ex.qtdSeries;
+            document.getElementById('select-metodo-geral-ex').value = ex.metodoGeral || 'Nulo';
+            
+            document.getElementById('edit-exercicio-index').value = idx;
+            document.getElementById('titulo-form-exercicio').innerText = "Editar Exercício Prescrito";
+            document.getElementById('btn-salvar-exercicio-def').innerText = "Atualizar Exercício";
+
+            alternarVisibilidadeMetodoMacro(ex.metodoGeral || 'Nulo');
+
+            // Preencher campos de série individuais conforme config salva
+            setTimeout(() => {
+                if (ex.metodoGeral && ex.metodoGeral !== 'Nulo') {
+                    const items = document.querySelectorAll('.piramide-config-item');
+                    ex.seriesConfig.forEach((s, i) => {
+                        if (items[i]) {
+                            items[i].querySelector('.input-reps-piramide').value = s.repsSugeridas || '';
+                            items[i].querySelector('.input-descanso-piramide').value = s.descanso || 90;
+                        }
+                    });
+                } else {
+                    const items = document.querySelectorAll('.serie-config-item');
+                    ex.seriesConfig.forEach((s, i) => {
+                        if (items[i]) {
+                            items[i].querySelector('.select-metodo-serie').value = s.metodo || 'Série Normal';
+                            items[i].querySelector('.input-reps-sugeridas').value = s.repsSugeridas || '';
+                            items[i].querySelector('.input-descanso-serie').value = s.descanso || 90;
+                            atualizarMetodoSerieAdmin(items[i].querySelector('.select-metodo-serie'));
+                        }
+                    });
+                }
+            }, 50);
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         async function removerExercicioDivisao(idx) {
