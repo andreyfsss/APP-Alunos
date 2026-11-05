@@ -1,36 +1,16 @@
-const CACHE_NAME = 'treino-pwa-v2';
-const ASSETS_TO_CACHE = [
-  './index.html',
-  './aluno.html',
-  './manifest.webmanifest.json'
-];
-
-self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return Promise.allSettled(
-        ASSETS_TO_CACHE.map(path => cache.add(path))
-      );
-    })
-  );
-  self.skipWaiting();
-});
+// v3: service worker "faxina".
+// O sw antigo usava cache-first e nunca atualizava: o celular ficava preso numa versão velha do app.
+// Este arquivo apaga todos os caches, se desregistra e recarrega as abas abertas.
+self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', (e) => {
-  e.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
-      );
-    })
-  );
-  self.clientsClaim();
+  e.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.map((k) => caches.delete(k)));
+    await self.registration.unregister();
+    const clientes = await self.clients.matchAll({ type: 'window' });
+    clientes.forEach((c) => c.navigate(c.url));
+  })());
 });
 
-self.addEventListener('fetch', (e) => {
-  e.respondWith(
-    caches.match(e.request).then((response) => {
-      return response || fetch(e.request);
-    }).catch(() => {})
-  );
-});
+// Sem handler de fetch: tudo vai direto para a rede.

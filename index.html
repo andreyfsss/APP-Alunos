@@ -13,10 +13,12 @@
         .bg-af-orange { background-color: #FF6A00; }
         .border-af-orange { border-color: #FF6A00; }
         
-        /* TRAVA ABSOLUTA DE ZOOM NO iOS SAFARI */
-        input[type="text"], input[type="number"], select, textarea {
+        /* TRAVA DE ZOOM NO iOS SAFARI: qualquer campo com fonte < 16px faz o iOS dar zoom ao focar */
+        input, select, textarea {
             font-size: 16px !important;
         }
+        /* evita zoom por toque duplo */
+        html { touch-action: manipulation; }
     </style>
 </head>
 <body class="text-slate-100 min-h-screen p-3 md:p-6 flex flex-col items-center antialiased">
@@ -689,5 +691,6 @@
 
         window.onload = carregarAlunos;
     </script>
+<div style="position:fixed;bottom:2px;left:6px;font-size:9px;color:#475569;opacity:.6;pointer-events:none;z-index:50">v3-zoomfix</div>
 </body>
 </html>
