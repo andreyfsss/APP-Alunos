@@ -15,10 +15,9 @@
         .bg-af-orange { background-color: #FF6A00; }
         .border-af-orange { border-color: #FF6A00; }
         
-        /* TRAVA ABSOLUTA DO ZOOM E SALTO NO iOS/ANDROID */
+        /* TRAVA ABSOLUTA DE ZOOM NO iOS SAFARI */
         input[type="text"], input[type="number"], select, textarea {
             font-size: 16px !important;
-            max-height: none !important;
         }
     </style>
 </head>
@@ -150,7 +149,7 @@
         let alunoAtualId = null;
         let inputRPEAtivo = null;
         let timerInterval = null;
-        let tempoRestante = 0;
+        let tempoTerminoAlvo = 0;
         let folegoUtilizado = false;
         let treinosDoAlunoCarregados = [];
         let historicoTreinosAluno = [];
@@ -425,26 +424,34 @@
             } catch (e) {}
         }
 
+        // LÓGICA DO TIMER COM Date.now() PARA IGNORAR CONGELAMENTO DE TELA
         function dispararTimerDescanso(seg) {
-            tempoRestante = seg; folegoUtilizado = false;
+            tempoTerminoAlvo = Date.now() + (seg * 1000);
+            folegoUtilizado = false;
             document.getElementById('bar-timer-descanso').classList.remove('hidden');
             clearInterval(timerInterval);
+            
             timerInterval = setInterval(() => {
-                tempoRestante--;
-                if (tempoRestante <= 0) {
+                const agora = Date.now();
+                const milissegundosRestantes = tempoTerminoAlvo - agora;
+                const segundosRestantes = Math.ceil(milissegundosRestantes / 1000);
+
+                if (segundosRestantes <= 0) {
                     clearInterval(timerInterval);
                     tocarAlarmeDigital();
                     document.getElementById('bar-timer-descanso').classList.add('hidden');
                 } else {
-                    const m = Math.floor(tempoRestante/60), s = tempoRestante%60;
+                    const m = Math.floor(segundosRestantes / 60);
+                    const s = segundosRestantes % 60;
                     document.getElementById('display-tempo-timer').innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
                 }
-            }, 1000);
+            }, 200);
         }
 
         function adicionarTempoTimer(s) {
             if (folegoUtilizado) return;
-            folegoUtilizado = true; tempoRestante += s;
+            folegoUtilizado = true;
+            tempoTerminoAlvo += (s * 1000);
         }
 
         async function finalizarTreinoAluno() {
