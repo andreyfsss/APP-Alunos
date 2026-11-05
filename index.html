@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AF Pro - Painel do Personal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -12,6 +12,10 @@
         .text-af-orange { color: #FF6A00; }
         .bg-af-orange { background-color: #FF6A00; }
         .border-af-orange { border-color: #FF6A00; }
+        /* TRAVA O ZOOM AUTOMÁTICO DO CELULAR NO PAINEL */
+        input, select, textarea {
+            font-size: 16px !important;
+        }
     </style>
 </head>
 <body class="text-slate-100 min-h-screen p-3 md:p-6 flex flex-col items-center antialiased">
@@ -319,7 +323,6 @@
             if (!alunoSelecionado) return;
             const { data, error } = await supabaseClient.from('alunos').select('treinos, historico').eq('id', alunoSelecionado.id).single();
             if (error) { alert('Erro ao atualizar relatório: ' + error.message); return; }
-            // não sobrescreve 'treinos' local (pode ter edição em andamento); só traz o histórico novo
             historicoTreinosAluno = (data && data.historico) ? data.historico : [];
         }
 
