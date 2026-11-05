@@ -310,6 +310,7 @@
 
         function calcularEvolucaoRecenteAdmin() {
             let mais = 0, mesmo = 0, menos = 0;
+            // Se houver histórico de treinos realizados, calcula. Caso contrário, mantém tudo zerado.
             if (historicoTreinosAluno && historicoTreinosAluno.length > 0) {
                 historicoTreinosAluno.forEach(h => {
                     if (h.comparativo === 'mais') mais++;
@@ -335,17 +336,21 @@
 
             const grupos = {};
             let volTotal = 0, totalSeries = 0;
-            historicoTreinosAluno.forEach(h => {
-                volTotal += h.volume || 0;
-                totalSeries += h.qtdSeriesValidadas || 0;
-                (h.exerciciosRealizados || []).forEach(exR => {
-                    const musculo = exR.musculo || mapaMusculo[(exR.nome || '').toLowerCase()] || 'Sem grupo';
-                    const g = grupos[musculo] || (grupos[musculo] = { volume: 0, series: 0 });
-                    const volEx = (typeof exR.volume === 'number') ? exR.volume : (exR.series || []).reduce((s, x) => s + (x.carga || 0) * (x.reps || 0), 0);
-                    g.volume += volEx;
-                    g.series += (exR.series || []).length;
+            
+            // Só computa se houver histórico real de treinos concluídos
+            if (historicoTreinosAluno && historicoTreinosAluno.length > 0) {
+                historicoTreinosAluno.forEach(h => {
+                    volTotal += h.volume || 0;
+                    totalSeries += h.qtdSeriesValidadas || 0;
+                    (h.exerciciosRealizados || []).forEach(exR => {
+                        const musculo = exR.musculo || mapaMusculo[(exR.nome || '').toLowerCase()] || 'Sem grupo';
+                        const g = grupos[musculo] || (grupos[musculo] = { volume: 0, series: 0 });
+                        const volEx = (typeof exR.volume === 'number') ? exR.volume : (exR.series || []).reduce((s, x) => s + (x.carga || 0) * (x.reps || 0), 0);
+                        g.volume += volEx;
+                        g.series += (exR.series || []).length;
+                    });
                 });
-            });
+            }
 
             document.getElementById('admin-vol-total').innerText = `${volTotal.toLocaleString('pt-BR')} kg`;
             document.getElementById('admin-qtd-series').innerText = totalSeries;
@@ -357,12 +362,12 @@
 
             const linha = (nome, valor) => `<div class="flex justify-between bg-black border border-slate-800 p-2 rounded-lg"><span class="font-bold text-af-orange">${nome}</span><span class="text-slate-200 font-bold">${valor}</span></div>`;
             const nomes = Object.keys(grupos);
-            const vazio = '<p class="text-[10px] text-slate-500 text-center">Nenhum grupo muscular registrado ainda.</p>';
+            const vazio = '<p class="text-[10px] text-slate-500 text-center">Nenhum registro de grupo muscular ainda.</p>';
 
             document.getElementById('admin-vol-grupos').innerHTML = nomes.length
-                ? nomes.sort((a, b) => grupos[b].volume - grupos[a].volume).map(n => linha(n, `${grupos[n].volume.toLocaleString('pt-BR')} kg`)).join('') : '';
+                ? nomes.sort((a, b) => grupos[b].volume - grupos[a].volume).map(n => linha(n, `${grupos[n].volume.toLocaleString('pt-BR')} kg`)).join('') : '<p class="text-[10px] text-slate-500 text-center">Nenhum dado de volume ainda.</p>';
             document.getElementById('admin-series-grupos').innerHTML = nomes.length
-                ? nomes.sort((a, b) => grupos[b].series - grupos[a].series).map(n => linha(n, `${grupos[n].series} séries`)).join('') : '';
+                ? nomes.sort((a, b) => grupos[b].series - grupos[a].series).map(n => linha(n, `${grupos[n].series} séries`)).join('') : '<p class="text-[10px] text-slate-500 text-center">Nenhum dado de séries ainda.</p>';
             document.getElementById('admin-lista-grupos').innerHTML = nomes.length
                 ? nomes.sort((a, b) => grupos[b].volume - grupos[a].volume).map(n => linha(n, `${grupos[n].volume.toLocaleString('pt-BR')} kg • ${grupos[n].series} séries`)).join('') : vazio;
         }
@@ -691,6 +696,6 @@
 
         window.onload = carregarAlunos;
     </script>
-<div style="position:fixed;bottom:2px;left:6px;font-size:9px;color:#475569;opacity:.6;pointer-events:none;z-index:50">v3-zoomfix</div>
+<div style="position:fixed;bottom:2px;left:6px;font-size:9px;color:#475569;opacity:.6;pointer-events:none;z-index:50">v3-zerar-vazios</div>
 </body>
 </html>

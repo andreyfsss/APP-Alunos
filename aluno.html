@@ -212,13 +212,20 @@
         }
 
         function atualizarEstatisticasRelatorio() {
-            const agora = new Date();
-            const doMes = historicoTreinosAluno.filter(h => {
-                const d = new Date(h.data);
-                return d.getMonth() === agora.getMonth() && d.getFullYear() === agora.getFullYear();
-            });
-            let totalTreinos = doMes.length;
-            let volumeTotalMes = doMes.reduce((acc, h) => acc + (h.volume || 0), 0);
+            let totalTreinos = 0;
+            let volumeTotalMes = 0;
+
+            // Só calcula se realmente existir histórico de treinos concluídos pelo atleta
+            if (historicoTreinosAluno && historicoTreinosAluno.length > 0) {
+                const agora = new Date();
+                const doMes = historicoTreinosAluno.filter(h => {
+                    const d = new Date(h.data);
+                    return d.getMonth() === agora.getMonth() && d.getFullYear() === agora.getFullYear();
+                });
+                totalTreinos = doMes.length;
+                volumeTotalMes = doMes.reduce((acc, h) => acc + (h.volume || 0), 0);
+            }
+
             document.getElementById('stat-qtd-treinos').innerText = totalTreinos;
             document.getElementById('stat-vol-treinos').innerText = `${volumeTotalMes.toLocaleString('pt-BR')} kg`;
         }
@@ -540,6 +547,6 @@
 
         window.onload = carregarDadosAluno;
     </script>
-<div style="position:fixed;bottom:2px;left:6px;font-size:9px;color:#475569;opacity:.6;pointer-events:none;z-index:50">v3-zoomfix</div>
+<div style="position:fixed;bottom:2px;left:6px;font-size:9px;color:#475569;opacity:.6;pointer-events:none;z-index:50">v3-zerar-aluno</div>
 </body>
 </html>
