@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AF Pro - Meu Treino</title>
     <link rel="manifest" href="manifest.webmanifest.json">
     <meta name="theme-color" content="#050505">
@@ -14,6 +14,10 @@
         .text-af-orange { color: #FF6A00; }
         .bg-af-orange { background-color: #FF6A00; }
         .border-af-orange { border-color: #FF6A00; }
+        /* TRAVA O ZOOM AUTOMÁTICO DO CELULAR (IOS/ANDROID) */
+        input, select, textarea {
+            font-size: 16px !important;
+        }
     </style>
 </head>
 <body class="text-slate-100 min-h-screen flex flex-col antialiased">
@@ -70,15 +74,15 @@
         </div>
 
         <div class="grid grid-cols-1 gap-2 my-auto max-w-sm w-full mx-auto py-4">
-            <button onclick="selecionarRPE('10')" class="bg-af-card border border-slate-800 p-2.5 rounded-xl text-left hover:border-af-orange"><div class="font-bold text-xs text-af-orange">RPE 10 - Esforço Máximo</div><p class="text-[9px] text-slate-400">Falha total, nenhuma repetição extra possível.</p></button>
-            <button onclick="selecionarRPE('9.5')" class="bg-af-card border border-slate-800 p-2.5 rounded-xl text-left hover:border-af-orange"><div class="font-bold text-xs text-af-orange">RPE 9.5 - Quase Falha</div><p class="text-[9px] text-slate-400">Sem reps na reserva, talvez apenas com ajuda.</p></button>
-            <button onclick="selecionarRPE('9')" class="bg-af-card border border-slate-800 p-2.5 rounded-xl text-left hover:border-af-orange"><div class="font-bold text-xs text-af-orange">RPE 9 - 1 Rep na Reserva</div><p class="text-[9px] text-slate-400">Muito pesado, aguentaria exatamente mais 1 rep.</p></button>
-            <button onclick="selecionarRPE('8.5')" class="bg-af-card border border-slate-800 p-2.5 rounded-xl text-left hover:border-af-orange"><div class="font-bold text-xs text-af-orange">RPE 8.5 - 1 a 2 Reps na Reserva</div><p class="text-[9px] text-slate-400">Carga bem pesada e intensa.</p></button>
-            <button onclick="selecionarRPE('8')" class="bg-af-card border border-slate-800 p-2.5 rounded-xl text-left hover:border-af-orange"><div class="font-bold text-xs text-af-orange">RPE 8 - 2 Reps na Reserva</div><p class="text-[9px] text-slate-400">Pesado, porém controlado com boa técnica.</p></button>
-            <button onclick="selecionarRPE('7.5')" class="bg-af-card border border-slate-800 p-2.5 rounded-xl text-left hover:border-af-orange"><div class="font-bold text-xs text-af-orange">RPE 7.5 - 2 a 3 Reps na Reserva</div><p class="text-[9px] text-slate-400">Intensidade moderada-alta.</p></button>
-            <button onclick="selecionarRPE('7')" class="bg-af-card border border-slate-800 p-2.5 rounded-xl text-left hover:border-af-orange"><div class="font-bold text-xs text-af-orange">RPE 7 - 3 Reps na Reserva</div><p class="text-[9px] text-slate-400">Carga moderada, velocidade constante.</p></button>
-            <button onclick="selecionarRPE('6')" class="bg-af-card border border-slate-800 p-2.5 rounded-xl text-left hover:border-af-orange"><div class="font-bold text-xs text-slate-300">RPE 6 - Carga Leve/Aquecimento</div><p class="text-[9px] text-slate-400">Movimento bem rápido e fluido.</p></button>
-            <button onclick="selecionarRPE('5')" class="bg-af-card border border-slate-800 p-2.5 rounded-xl text-left hover:border-af-orange"><div class="font-bold text-xs text-slate-400">RPE 1-5 - Esforço Leve / Preparatório</div><p class="text-[9px] text-slate-500">Apenas reconhecimento da carga.</p></button>
+            <button onclick="selecionarRPE('10')" class="bg-af-card border border-slate-800 p-3 rounded-xl text-left hover:border-af-orange"><div class="font-bold text-sm text-af-orange">RPE 10 - Esforço Máximo</div><p class="text-[10px] text-slate-400">Falha total, nenhuma repetição extra possível.</p></button>
+            <button onclick="selecionarRPE('9.5')" class="bg-af-card border border-slate-800 p-3 rounded-xl text-left hover:border-af-orange"><div class="font-bold text-sm text-af-orange">RPE 9.5 - Quase Falha</div><p class="text-[10px] text-slate-400">Sem reps na reserva, talvez apenas com ajuda.</p></button>
+            <button onclick="selecionarRPE('9')" class="bg-af-card border border-slate-800 p-3 rounded-xl text-left hover:border-af-orange"><div class="font-bold text-sm text-af-orange">RPE 9 - 1 Rep na Reserva</div><p class="text-[10px] text-slate-400">Muito pesado, aguentaria exatamente mais 1 rep.</p></button>
+            <button onclick="selecionarRPE('8.5')" class="bg-af-card border border-slate-800 p-3 rounded-xl text-left hover:border-af-orange"><div class="font-bold text-sm text-af-orange">RPE 8.5 - 1 a 2 Reps na Reserva</div><p class="text-[10px] text-slate-400">Carga bem pesada e intensa.</p></button>
+            <button onclick="selecionarRPE('8')" class="bg-af-card border border-slate-800 p-3 rounded-xl text-left hover:border-af-orange"><div class="font-bold text-sm text-af-orange">RPE 8 - 2 Reps na Reserva</div><p class="text-[10px] text-slate-400">Pesado, porém controlado com boa técnica.</p></button>
+            <button onclick="selecionarRPE('7.5')" class="bg-af-card border border-slate-800 p-3 rounded-xl text-left hover:border-af-orange"><div class="font-bold text-sm text-af-orange">RPE 7.5 - 2 a 3 Reps na Reserva</div><p class="text-[10px] text-slate-400">Intensidade moderada-alta.</p></button>
+            <button onclick="selecionarRPE('7')" class="bg-af-card border border-slate-800 p-3 rounded-xl text-left hover:border-af-orange"><div class="font-bold text-sm text-af-orange">RPE 7 - 3 Reps na Reserva</div><p class="text-[10px] text-slate-400">Carga moderada, velocidade constante.</p></button>
+            <button onclick="selecionarRPE('6')" class="bg-af-card border border-slate-800 p-3 rounded-xl text-left hover:border-af-orange"><div class="font-bold text-sm text-slate-300">RPE 6 - Carga Leve/Aquecimento</div><p class="text-[10px] text-slate-400">Movimento bem rápido e fluido.</p></button>
+            <button onclick="selecionarRPE('5')" class="bg-af-card border border-slate-800 p-3 rounded-xl text-left hover:border-af-orange"><div class="font-bold text-sm text-slate-400">RPE 1-5 - Esforço Leve / Preparatório</div><p class="text-[10px] text-slate-500">Apenas reconhecimento da carga.</p></button>
         </div>
     </div>
 
@@ -258,7 +262,6 @@
 
         function buscarDadoAnteriorExercicio(nomeExercicio, numeroSerie) {
             if (!historicoTreinosAluno || historicoTreinosAluno.length === 0) return '<span class="text-[9px] text-slate-500">-</span>';
-            // pega SÓ a última sessão que teve este exercício (não mistura sessões diferentes)
             for (let i = historicoTreinosAluno.length - 1; i >= 0; i--) {
                 const sessao = historicoTreinosAluno[i];
                 const exRealizado = (sessao.exerciciosRealizados || []).find(e => (e.nome || '').toLowerCase() === nomeExercicio.toLowerCase());
@@ -289,9 +292,9 @@
                             htmlSubLinhas += `
                                 <div class="grid grid-cols-4 gap-1.5 items-center pt-1 border-t border-slate-800/60 mt-1 sub-bloco-item">
                                     <span class="text-[9px] text-af-orange font-bold text-center">Sub ${b}</span>
-                                    <input type="number" step="0.5" oninput="validarApenasNumeros(this)" class="w-full h-7 bg-slate-900 border border-slate-800 rounded p-1 text-center text-[10px] text-white input-carga-sub" placeholder="kg">
-                                    <input type="number" oninput="validarApenasNumeros(this)" class="w-full h-7 bg-slate-900 border border-slate-800 rounded p-1 text-center text-[10px] text-white input-reps-sub" placeholder="reps">
-                                    <span class="text-[8px] text-slate-500 text-center">Drop</span>
+                                    <input type="number" step="0.5" oninput="validarApenasNumeros(this)" class="w-full h-8 bg-slate-900 border border-slate-800 rounded p-1 text-center text-sm text-white input-carga-sub" placeholder="kg">
+                                    <input type="number" oninput="validarApenasNumeros(this)" class="w-full h-8 bg-slate-900 border border-slate-800 rounded p-1 text-center text-sm text-white input-reps-sub" placeholder="reps">
+                                    <span class="text-[9px] text-slate-500 text-center">Drop</span>
                                 </div>`;
                         }
                     }
@@ -299,22 +302,22 @@
                     return `
                         <div class="bg-black border border-slate-800 p-2.5 rounded-xl space-y-2 serie-item" data-serie-concluida="false">
                             <div class="flex items-center gap-1.5">
-                                <span class="w-4 text-center font-bold text-[11px] text-slate-400">${s.num}ª</span>
+                                <span class="w-4 text-center font-bold text-xs text-slate-400">${s.num}ª</span>
                                 
-                                <div onclick="event.stopPropagation(); ${temExplicacao ? `mostrarExplicacaoMetodo('${textoMetodoExibido}')` : ''}" class="bg-black border border-slate-800 px-2 py-0.5 rounded-lg text-[9px] text-slate-300 flex items-center gap-1 ${temExplicacao ? 'cursor-pointer hover:border-af-orange' : ''}">
+                                <div onclick="event.stopPropagation(); ${temExplicacao ? `mostrarExplicacaoMetodo('${textoMetodoExibido}')` : ''}" class="bg-black border border-slate-800 px-2 py-0.5 rounded-lg text-[10px] text-slate-300 flex items-center gap-1 ${temExplicacao ? 'cursor-pointer hover:border-af-orange' : ''}">
                                     <span class="text-slate-500 uppercase">MÉTODO:</span>
                                     <strong class="text-af-orange font-bold">${textoMetodoExibido}</strong>
-                                    ${temExplicacao ? '<span class="text-[9px] text-af-orange">ℹ️</span>' : ''}
+                                    ${temExplicacao ? '<span class="text-[10px] text-af-orange">ℹ️</span>' : ''}
                                 </div>
 
                                 <button onclick="dispararTimerDescanso(${s.descanso || 90})" class="ml-auto bg-black text-af-orange border border-slate-800 text-[10px] px-2 py-1 rounded-lg font-bold">⏱️ ${s.descanso || 90}s</button>
                                 
-                                <button onclick="toggleValidarSerie(this)" class="bg-slate-900 border border-slate-800 hover:border-emerald-500 text-slate-400 px-2 py-1 rounded-lg text-xs font-bold transition-all btn-check-serie" title="Marcar série como feita">
+                                <button onclick="toggleValidarSerie(this)" class="bg-slate-900 border border-slate-800 hover:border-emerald-500 text-slate-400 px-2.5 py-1 rounded-lg text-xs font-bold transition-all btn-check-serie" title="Marcar série como feita">
                                     ✔
                                 </button>
                             </div>
 
-                            <div class="grid grid-cols-4 gap-1.5 text-[8px] font-bold text-slate-500 uppercase text-center">
+                            <div class="grid grid-cols-4 gap-1.5 text-[9px] font-bold text-slate-500 uppercase text-center">
                                 <div>ANT.</div>
                                 <div>KG</div>
                                 <div>REPS (${repsMeta})</div>
@@ -322,12 +325,12 @@
                             </div>
 
                             <div class="grid grid-cols-4 gap-1.5 items-center">
-                                <div class="bg-slate-900 border border-slate-800 rounded-lg p-1 text-center flex flex-col items-center justify-center" style="min-height:2rem" title="Treino Anterior">
+                                <div class="bg-slate-900 border border-slate-800 rounded-lg p-1.5 text-center flex flex-col items-center justify-center" style="min-height:2.25rem" title="Treino Anterior">
                                     ${dadoAnterior}
                                 </div>
-                                <input type="number" step="0.5" oninput="validarApenasNumeros(this)" class="w-full h-8 bg-slate-900 border border-slate-800 rounded-lg p-1 text-center text-xs font-bold text-white input-carga focus:border-af-orange focus:outline-none" placeholder="kg">
-                                <input type="number" oninput="validarApenasNumeros(this)" class="w-full h-8 bg-slate-900 border border-slate-800 rounded-lg p-1 text-center text-xs font-bold text-white input-reps focus:border-af-orange focus:outline-none" placeholder="${repsMeta}">
-                                <input readonly onclick="abrirRPEFullScreen(this)" type="text" class="w-full h-8 bg-slate-900 border border-slate-800 rounded-lg p-1 text-center text-xs font-bold text-af-orange cursor-pointer focus:outline-none" placeholder="RPE">
+                                <input type="number" step="0.5" oninput="validarApenasNumeros(this)" class="w-full h-9 bg-slate-900 border border-slate-800 rounded-lg p-1 text-center text-sm font-bold text-white input-carga focus:border-af-orange focus:outline-none" placeholder="kg">
+                                <input type="number" oninput="validarApenasNumeros(this)" class="w-full h-9 bg-slate-900 border border-slate-800 rounded-lg p-1 text-center text-sm font-bold text-white input-reps focus:border-af-orange focus:outline-none" placeholder="${repsMeta}">
+                                <input readonly onclick="abrirRPEFullScreen(this)" type="text" class="w-full h-9 bg-slate-900 border border-slate-800 rounded-lg p-1 text-center text-sm font-bold text-af-orange cursor-pointer focus:outline-none" placeholder="RPE">
                             </div>
                             ${htmlSubLinhas}
                         </div>`;
@@ -337,11 +340,11 @@
                     <div class="bg-af-card border border-slate-800 rounded-2xl overflow-hidden shadow-md" data-nome-exercicio="${ex.nome}" data-musculo="${ex.musculo || ''}">
                         <div onclick="alternarColapsoExercicio(this)" class="p-3.5 bg-af-card flex justify-between items-center cursor-pointer select-none">
                             <div>
-                                <span class="text-[9px] font-bold uppercase tracking-wider text-af-orange">${ex.musculo} • ${ex.equipamento}</span>
-                                <h3 class="font-bold text-xs text-slate-100">${index + 1}. ${ex.nome} ${metodoGeral ? `<span onclick="event.stopPropagation(); mostrarExplicacaoMetodo('${metodoGeral}')" class="text-[9px] text-af-orange font-bold ml-1 px-1.5 py-0.5 bg-orange-950/40 rounded border border-orange-800/40 cursor-pointer">ℹ️ ${metodoGeral}</span>` : ''}</h3>
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-af-orange">${ex.musculo} • ${ex.equipamento}</span>
+                                <h3 class="font-bold text-xs text-slate-100">${index + 1}. ${ex.nome} ${metodoGeral ? `<span onclick="event.stopPropagation(); mostrarExplicacaoMetodo('${metodoGeral}')" class="text-[10px] text-af-orange font-bold ml-1 px-1.5 py-0.5 bg-orange-950/40 rounded border border-orange-800/40 cursor-pointer">ℹ️ ${metodoGeral}</span>` : ''}</h3>
                             </div>
                             <div class="flex items-center gap-2">
-                                <span class="text-[9px] bg-black text-slate-400 px-2 py-0.5 rounded border border-slate-800">${ex.qtdSeries} Séries</span>
+                                <span class="text-[10px] bg-black text-slate-400 px-2 py-0.5 rounded border border-slate-800">${ex.qtdSeries} Séries</span>
                                 <span class="seta-toggle text-xs text-slate-400" style="transform: rotate(180deg);">▼</span>
                             </div>
                         </div>
@@ -389,7 +392,6 @@
                     volumeTotal += (parseFloat(cargaInput.value) || 0) * (parseFloat(repsInput.value) || 0);
                 }
 
-                // Soma rigorosa de todas as sub-linhas de drop-sets / rest-pauses
                 serie.querySelectorAll('.sub-bloco-item').forEach(sub => {
                     const cSub = parseFloat(sub.querySelector('.input-carga-sub')?.value) || 0;
                     const rSub = parseFloat(sub.querySelector('.input-reps-sub')?.value) || 0;
@@ -486,7 +488,6 @@
                 exerciciosRealizados.push({ nome: nomeEx, musculo, volume: volumeEx, series: seriesDoEx });
             });
 
-            // compara com a sessão anterior do MESMO treino (proxy simples: volume total)
             const treinoId = treinoExecucaoAtual ? treinoExecucaoAtual.id : null;
             const anterior = [...historicoTreinosAluno].reverse().find(h => treinoId && h.treinoId === treinoId);
             let comparativo = 'mesmo';
@@ -507,7 +508,6 @@
 
             salvandoTreino = true;
             try {
-                // relê o histórico do servidor antes de anexar (evita sobrescrever com cópia velha)
                 const { data: atual, error: errLeitura } = await supabaseClient.from('alunos').select('historico').eq('id', alunoAtualId).single();
                 if (errLeitura) throw errLeitura;
                 const historicoServidor = (atual && atual.historico) ? atual.historico : [];
@@ -516,7 +516,7 @@
                 const { data: salvo, error } = await supabaseClient.from('alunos').update({ historico: historicoServidor }).eq('id', alunoAtualId).select('id');
                 if (error) throw error;
                 if (!salvo || salvo.length === 0) {
-                    throw new Error('O banco ignorou a gravação (0 linhas atualizadas). Isso é política UPDATE/RLS faltando no Supabase.');
+                    throw new Error('O banco ignorou a gravação (0 linhas atualizadas).');
                 }
 
                 alert('Treino finalizado e registrado com sucesso! 🚀');
