@@ -9,14 +9,16 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { background-color: #050505; }
+        body { background-color: #050505; -webkit-text-size-adjust: 100%; }
         .bg-af-card { background-color: #151515; }
         .text-af-orange { color: #FF6A00; }
         .bg-af-orange { background-color: #FF6A00; }
         .border-af-orange { border-color: #FF6A00; }
-        /* TRAVA O ZOOM AUTOMÁTICO DO CELULAR (IOS/ANDROID) */
-        input, select, textarea {
+        
+        /* TRAVA ABSOLUTA DO ZOOM E SALTO NO iOS/ANDROID */
+        input[type="text"], input[type="number"], select, textarea {
             font-size: 16px !important;
+            max-height: none !important;
         }
     </style>
 </head>
