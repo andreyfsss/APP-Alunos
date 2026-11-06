@@ -38,15 +38,48 @@
         </div>
     </header>
 
-    <!-- BARRA DE TIMER FLUTUANTE COM ALARME -->
+    <!-- BARRA DE TIMER FLUTUANTE SEM BOTÃO PARAR -->
     <div id="bar-timer-descanso" class="hidden fixed top-24 left-0 right-0 z-30 bg-orange-950/95 border-b border-af-orange backdrop-blur p-3 shadow-2xl">
         <div class="max-w-md mx-auto flex justify-between items-center text-xs">
             <span class="text-white font-bold flex items-center gap-1.5">
                 ⏱️ Descanso: <span id="display-tempo-timer" class="text-sm text-af-orange font-black">01:30</span>
             </span>
-            <div class="flex gap-1.5">
-                <button onclick="adicionarTempoTimer(30)" class="bg-black text-af-orange text-[10px] px-2.5 py-1 rounded-lg font-bold border border-slate-800">+30s Fôlego</button>
-                <button onclick="pararTimer()" class="bg-rose-950 text-rose-300 text-[10px] px-2 py-1 rounded-lg font-bold border border-rose-800">Parar</button>
+            <button id="btn-folego-extra" onclick="adicionarTempoTimer(30)" class="bg-black text-af-orange text-[10px] px-3 py-1.5 rounded-lg font-bold border border-slate-800 transition-all">+30s (1x)</button>
+        </div>
+    </div>
+
+    <!-- MODAL RELATÓRIO PÓS-TREINO -->
+    <div id="modal-relatorio-pos-treino" class="fixed inset-0 bg-black/95 backdrop-blur-md hidden z-50 flex flex-col p-4 overflow-y-auto">
+        <div class="max-w-md w-full mx-auto space-y-4 my-auto">
+            <div class="bg-af-card border border-slate-800 rounded-3xl p-5 space-y-4 text-center shadow-2xl">
+                <div class="w-12 h-12 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-2xl flex items-center justify-center text-2xl mx-auto">
+                    🏆
+                </div>
+                <div>
+                    <span class="text-[10px] font-bold text-af-orange uppercase tracking-widest block">Treino Finalizado com Sucesso</span>
+                    <h2 id="relatorio-nome-treino" class="text-lg font-black text-white">Treino A</h2>
+                    <p id="relatorio-data-hora" class="text-[10px] text-slate-400 mt-0.5">Hoje</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 pt-2">
+                    <div class="bg-black border border-slate-800 p-3 rounded-2xl">
+                        <span class="text-[9px] uppercase font-bold text-slate-500 block">Volume da Sessão</span>
+                        <strong id="relatorio-volume-total" class="text-base font-black text-af-orange">0 kg</strong>
+                    </div>
+                    <div class="bg-black border border-slate-800 p-3 rounded-2xl">
+                        <span class="text-[9px] uppercase font-bold text-slate-500 block">Séries Feitas</span>
+                        <strong id="relatorio-qtd-series" class="text-base font-black text-white">0</strong>
+                    </div>
+                </div>
+
+                <div class="text-left space-y-2 pt-2 border-t border-slate-800">
+                    <h3 class="font-bold text-xs uppercase text-slate-300">Resumo por Exercício</h3>
+                    <div id="relatorio-lista-exercicios" class="space-y-1.5 text-xs max-h-52 overflow-y-auto pr-1"></div>
+                </div>
+
+                <button onclick="fecharRelatorioEAtualizar()" class="w-full bg-af-orange text-black font-black py-3 rounded-xl text-xs shadow-lg">
+                    Concluir e Voltar ao Início
+                </button>
             </div>
         </div>
     </div>
@@ -150,6 +183,7 @@
         let timerInterval = null;
         let segundosRestantes = 0;
         let audioCtx = null;
+        let folegoUsado = false;
 
         function mudarAbaAtiva(aba) {
             if (aba === 'treinos') {
@@ -320,33 +354,48 @@
 
         function fecharModalMetodo() { document.getElementById('modal-explicacao-metodo').classList.add('hidden'); }
 
-        // SISTEMA DE ALARME SONORO BEM ALTO E CONTROLE DE TELA DE BLOQUEIO
+        // GERENCIADOR DE ÁUDIO BEM ALTO E DISPARO
+        function prepararAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
         function tocarAlarmeAlto() {
             try {
-                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-
-                // Disparar 3 bipes agudos e fortes em sequência
-                for (let i = 0; i < 3; i++) {
+                prepararAudioContext();
+                // Toca um bipe duplo bem alto e agudo
+                [0, 350, 700].forEach(delay => {
                     setTimeout(() => {
                         const osc = audioCtx.createOscillator();
                         const gain = audioCtx.createGain();
-                        osc.type = 'square'; // Som estridente e alto
-                        osc.frequency.setValueAtTime(880, audioCtx.currentTime); // Nota Lá alta
+                        osc.type = 'sawtooth'; // Som forte
+                        osc.frequency.setValueAtTime(1050, audioCtx.currentTime); // Agudo
                         gain.gain.setValueAtTime(1.0, audioCtx.currentTime); // Volume máximo
                         gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
                         osc.connect(gain);
                         gain.connect(audioCtx.destination);
                         osc.start();
                         osc.stop(audioCtx.currentTime + 0.3);
-                    }, i * 400);
-                }
+                    }, delay);
+                });
             } catch (e) {}
         }
 
         function iniciarTimer(segundos) {
+            prepararAudioContext();
             clearInterval(timerInterval);
             segundosRestantes = segundos;
+            folegoUsado = false;
+
+            const btnFolego = document.getElementById('btn-folego-extra');
+            btnFolego.disabled = false;
+            btnFolego.className = 'bg-black text-af-orange text-[10px] px-3 py-1.5 rounded-lg font-bold border border-slate-800 transition-all';
+            btnFolego.innerText = '+30s (1x)';
+
             const barra = document.getElementById('bar-timer-descanso');
             barra.classList.remove('hidden');
             atualizarDisplayTimer();
@@ -356,21 +405,26 @@
                 atualizarDisplayTimer();
                 if (segundosRestantes <= 0) {
                     clearInterval(timerInterval);
-                    document.title = '🚨 TEMPO ACABOU! - AF Pro';
+                    document.title = '🚨 ZEROU O TEMPO!';
                     tocarAlarmeAlto();
                     setTimeout(() => {
                         barra.classList.add('hidden');
                         document.title = 'AF Pro - Meu Treino';
-                    }, 5000);
+                    }, 3000);
                 }
             }, 1000);
         }
 
-        function adicionarTempoTimer(seg) { segundosRestantes += seg; atualizarDisplayTimer(); }
-        function pararTimer() {
-            clearInterval(timerInterval);
-            document.getElementById('bar-timer-descanso').classList.add('hidden');
-            document.title = 'AF Pro - Meu Treino';
+        function adicionarTempoTimer(seg) {
+            if (folegoUsado) return;
+            folegoUsado = true;
+            segundosRestantes += seg;
+            atualizarDisplayTimer();
+
+            const btnFolego = document.getElementById('btn-folego-extra');
+            btnFolego.disabled = true;
+            btnFolego.className = 'bg-slate-900 text-slate-600 text-[10px] px-3 py-1.5 rounded-lg font-bold border border-slate-800 cursor-not-allowed opacity-50';
+            btnFolego.innerText = '+30s (Usado)';
         }
 
         function atualizarDisplayTimer() {
@@ -461,16 +515,42 @@
                 const hist = Array.isArray(data?.historico) ? data.historico : [];
                 hist.push(novoRegistro);
                 await supabaseClient.from('alunos').update({ historico: hist }).eq('id', alunoAtualId);
-                alert('Treino finalizado e salvo com sucesso! 🚀');
-                window.location.reload();
+
+                // EXIBIR O RELATÓRIO PÓS-TREINO NA TELA
+                document.getElementById('relatorio-nome-treino').innerText = treinoExecucaoAtual?.nome || 'Treino';
+                document.getElementById('relatorio-data-hora').innerText = new Date().toLocaleString('pt-BR');
+                document.getElementById('relatorio-volume-total').innerText = `${volumeSessao.toLocaleString('pt-BR')} kg`;
+                document.getElementById('relatorio-qtd-series').innerText = document.querySelectorAll('.serie-item').length;
+
+                const listaExHtml = exerciciosRealizados.map(e => {
+                    const maxCarga = Math.max(...e.series.map(s => s.carga), 0);
+                    const totalReps = e.series.reduce((a, b) => a + b.reps, 0);
+                    return `
+                        <div class="bg-black border border-slate-800 p-2.5 rounded-xl flex justify-between items-center">
+                            <div>
+                                <strong class="text-white block">${e.nome}</strong>
+                                <span class="text-[10px] text-slate-400">${e.series.length} séries • ${totalReps} reps totais</span>
+                            </div>
+                            <span class="text-af-orange font-bold text-xs">Máx: ${maxCarga} kg</span>
+                        </div>
+                    `;
+                }).join('');
+
+                document.getElementById('relatorio-lista-exercicios').innerHTML = listaExHtml;
+                document.getElementById('modal-relatorio-pos-treino').classList.remove('hidden');
+
             } catch (e) {
                 salvandoTreino = false;
                 alert('Erro ao salvar: ' + e.message);
             }
         }
 
+        function fecharRelatorioEAtualizar() {
+            window.location.reload();
+        }
+
         window.onload = carregarDadosAluno;
     </script>
-<div style="position:fixed;bottom:2px;left:6px;font-size:9px;color:#475569;opacity:.6;pointer-events:none;z-index:50">v9-aluno-alarme-rpe</div>
+<div style="position:fixed;bottom:2px;left:6px;font-size:9px;color:#475569;opacity:.6;pointer-events:none;z-index:50">v10-aluno-relatorio-som</div>
 </body>
 </html>
