@@ -47,6 +47,24 @@
         </div>
     </div>
 
+    <!-- MODAL RPE -->
+    <div id="modal-rpe-fullscreen" class="fixed inset-0 bg-black/95 backdrop-blur-md hidden z-50 flex flex-col justify-between p-5 overflow-y-auto">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+            <div>
+                <span class="text-[10px] uppercase font-bold text-af-orange">Escala de Esforço Percebido</span>
+                <h3 class="text-base font-bold text-white">Selecione o RPE (1 a 10)</h3>
+            </div>
+            <button onclick="fecharRPEFullScreen()" class="bg-black text-slate-300 px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-800">✕ Fechar</button>
+        </div>
+        <div class="grid grid-cols-1 gap-2 my-auto max-w-sm w-full mx-auto py-4">
+            <button onclick="selecionarRPE('10')" class="bg-af-card border border-slate-800 p-3 rounded-xl text-left"><div class="font-bold text-sm text-af-orange">RPE 10 - Esforço Máximo</div></button>
+            <button onclick="selecionarRPE('9')" class="bg-af-card border border-slate-800 p-3 rounded-xl text-left"><div class="font-bold text-sm text-af-orange">RPE 9 - 1 Rep na Reserva</div></button>
+            <button onclick="selecionarRPE('8')" class="bg-af-card border border-slate-800 p-3 rounded-xl text-left"><div class="font-bold text-sm text-slate-200">RPE 8 - 2 Reps na Reserva</div></button>
+            <button onclick="selecionarRPE('7')" class="bg-af-card border border-slate-800 p-3 rounded-xl text-left"><div class="font-bold text-sm text-slate-300">RPE 7 - 3 Reps na Reserva</div></button>
+            <button onclick="selecionarRPE('5')" class="bg-af-card border border-slate-800 p-3 rounded-xl text-left"><div class="font-bold text-sm text-slate-400">RPE 1-5 - Esforço Leve / Aquecimento</div></button>
+        </div>
+    </div>
+
     <main class="flex-1 max-w-md w-full mx-auto p-3 md:p-4 space-y-4 pb-24">
         <div id="aba-atleta-treinos" class="space-y-4">
             <div id="view-divisoes-aluno" class="space-y-3">
@@ -102,6 +120,7 @@
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let alunoAtualId = null;
+        let inputRPEAtivo = null;
         let treinosDoAlunoCarregados = [];
         let historicoTreinosAluno = [];
         let treinoExecucaoAtual = null;
@@ -190,20 +209,131 @@
             document.getElementById('view-divisoes-aluno').classList.remove('hidden');
         }
 
+        function alternarColapsoExercicio(cabecalho) {
+            const body = cabecalho.nextElementSibling;
+            body.classList.toggle('hidden');
+        }
+
+        function renderizarExerciciosAluno(exercicios) {
+            const container = document.getElementById('lista-exercicios-aluno');
+            container.innerHTML = exercicios.map((ex, index) => {
+                const exigeRpe = ex.exigeRpe !== false;
+                const htmlSeries = (ex.seriesConfig || []).map(s => `
+                    <div class="bg-black border border-slate-800 p-2.5 rounded-xl space-y-2 serie-item" data-serie-concluida="false" data-exige-rpe="${exigeRpe}">
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-4 text-center font-bold text-xs text-slate-400">${s.num}ª</span>
+                            <span class="text-[10px] text-slate-400">Meta: <strong>${s.repsSugeridas}</strong></span>
+                            <button onclick="toggleValidarSerie(this)" class="ml-auto bg-slate-900 border border-slate-800 text-slate-400 px-2.5 py-1 rounded-lg text-xs font-bold btn-check-serie">✔</button>
+                        </div>
+                        <div class="grid grid-cols-${exigeRpe ? '2' : '1'} gap-2 items-center">
+                            <input type="number" step="0.5" oninput="calcularVolumeTotal()" class="w-full h-9 bg-slate-900 border border-slate-800 rounded-lg p-1 text-center text-sm font-bold text-white input-carga" placeholder="${ex.equipamento === 'Corporal' ? 'Peso corporal (0 se livre)' : 'Carga (kg)'}">
+                            ${exigeRpe ? '<input readonly onclick="abrirRPEFullScreen(this)" type="text" class="w-full h-9 bg-slate-900 border border-slate-800 rounded-lg p-1 text-center text-sm font-bold text-af-orange cursor-pointer input-rpe" placeholder="RPE">' : ''}
+                        </div>
+                    </div>
+                `).join('');
+
+                return `
+                    <div class="bg-af-card border border-slate-800 rounded-2xl overflow-hidden shadow-md" data-nome-exercicio="${ex.nome}" data-musculo="${ex.musculo || ''}">
+                        <div onclick="alternarColapsoExercicio(this)" class="p-3.5 bg-af-card flex justify-between items-center cursor-pointer select-none">
+                            <div>
+                                <span class="text-[10px] font-bold uppercase text-af-orange">${ex.musculo} • ${ex.equipamento}</span>
+                                <h3 class="font-bold text-xs text-slate-100">${index + 1}. ${ex.nome}</h3>
+                            </div>
+                            <span class="text-xs text-slate-400">▼</span>
+                        </div>
+                        <div class="p-2.5 border-t border-slate-800 space-y-2 bg-af-card">${htmlSeries}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleValidarSerie(botao) {
+            const serieItem = botao.closest('.serie-item');
+            const exigeRpe = serieItem.getAttribute('data-exige-rpe') === 'true';
+            const carga = serieItem.querySelector('.input-carga').value;
+            const rpe = exigeRpe ? serieItem.querySelector('.input-rpe').value : 'N/A';
+
+            if (!carga || (exigeRpe && !rpe)) {
+                alert('Preencha os campos obrigatórios da série antes de validar!');
+                return;
+            }
+
+            const concluida = serieItem.getAttribute('data-serie-concluida') === 'true';
+            if (!concluida) {
+                serieItem.setAttribute('data-serie-concluida', 'true');
+                serieItem.classList.add('border-emerald-500/80', 'bg-emerald-950/25');
+                botao.className = 'ml-auto bg-emerald-500 text-black px-2.5 py-1 rounded-lg text-xs font-bold btn-check-serie';
+                botao.innerText = '✔ Feito';
+            } else {
+                serieItem.setAttribute('data-serie-concluida', 'false');
+                serieItem.classList.remove('border-emerald-500/80', 'bg-emerald-950/25');
+                botao.className = 'ml-auto bg-slate-900 border border-slate-800 text-slate-400 px-2.5 py-1 rounded-lg text-xs font-bold btn-check-serie';
+                botao.innerText = '✔';
+            }
+            calcularVolumeTotal();
+        }
+
         function calcularVolumeTotal() {
             let volumeTotal = 0;
             document.querySelectorAll('.serie-item').forEach(serie => {
-                const cargaInput = serie.querySelector('.input-carga');
-                const repsInput = serie.querySelector('.input-reps');
-                if (cargaInput && repsInput) {
-                    volumeTotal += (parseFloat(cargaInput.value) || 0) * (parseFloat(repsInput.value) || 0);
-                }
+                const carga = parseFloat(serie.querySelector('.input-carga')?.value) || 0;
+                volumeTotal += carga;
             });
             document.getElementById('volume-total-aluno').innerText = `${volumeTotal.toLocaleString('pt-BR')} kg`;
         }
 
+        function abrirRPEFullScreen(input) { inputRPEAtivo = input; document.getElementById('modal-rpe-fullscreen').classList.remove('hidden'); }
+        function fecharRPEFullScreen() { document.getElementById('modal-rpe-fullscreen').classList.add('hidden'); }
+        function selecionarRPE(v) { if (inputRPEAtivo) inputRPEAtivo.value = v; fecharRPEFullScreen(); }
+
+        async function finalizarTreinoAluno() {
+            if (salvandoTreino) return;
+            let todasValidadas = true;
+            document.querySelectorAll('.serie-item').forEach(s => { if (s.getAttribute('data-serie-concluida') !== 'true') todasValidadas = false; });
+            if (!todasValidadas) { alert('Valide todas as séries antes de finalizar!'); return; }
+
+            let volumeSessao = 0;
+            let exerciciosRealizados = [];
+
+            document.querySelectorAll('[data-nome-exercicio]').forEach(cardEx => {
+                const nome = cardEx.getAttribute('data-nome-exercicio');
+                const musculo = cardEx.getAttribute('data-musculo');
+                let series = [];
+                cardEx.querySelectorAll('.serie-item').forEach(s => {
+                    const carga = parseFloat(s.querySelector('.input-carga')?.value) || 0;
+                    const rpe = s.querySelector('.input-rpe')?.value || 'N/A';
+                    volumeSessao += carga;
+                    series.push({ carga, rpe });
+                });
+                exerciciosRealizados.push({ nome, musculo, series });
+            });
+
+            const novoRegistro = {
+                data: new Date().toISOString(),
+                treinoId: treinoExecucaoAtual?.id,
+                treinoNome: treinoExecucaoAtual?.nome || '',
+                volume: volumeSessao,
+                qtdSeriesValidadas: document.querySelectorAll('.serie-item').length,
+                comparativo: 'mesmo',
+                exerciciosRealizados
+            };
+
+            salvandoTreino = true;
+            try {
+                const { data } = await supabaseClient.from('alunos').select('historico').eq('id', alunoAtualId).single();
+                const hist = Array.isArray(data?.historico) ? data.historico : [];
+                hist.push(novoRegistro);
+                await supabaseClient.from('alunos').update({ historico: hist }).eq('id', alunoAtualId);
+                alert('Treino finalizado com sucesso! 🚀');
+                window.location.reload();
+            } catch (e) {
+                salvandoTreino = false;
+                alert('Erro ao salvar: ' + e.message);
+            }
+        }
+
         window.onload = carregarDadosAluno;
     </script>
-<div style="position:fixed;bottom:2px;left:6px;font-size:9px;color:#475569;opacity:.6;pointer-events:none;z-index:50">v5-aluno-zerado</div>
+<div style="position:fixed;bottom:2px;left:6px;font-size:9px;color:#475569;opacity:.6;pointer-events:none;z-index:50">v6-aluno-completo</div>
 </body>
 </html>
