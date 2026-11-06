@@ -26,16 +26,19 @@
 <body class="text-slate-100 min-h-screen p-3 md:p-6 flex flex-col items-center antialiased">
 
     <div class="max-w-md w-full space-y-5">
-        <!-- Topo -->
+        <!-- Topo Profissional com Status de Sincronização -->
         <div class="flex justify-between items-center bg-af-card border border-slate-800 rounded-2xl p-4 shadow-xl no-print">
             <div>
                 <div class="flex items-center gap-1.5">
                     <span class="font-black text-xl text-white tracking-tighter">ANDREY FRANCO</span>
                     <span class="font-black text-xs text-af-orange tracking-widest bg-orange-950/60 px-1.5 py-0.5 rounded border border-orange-600/40">PERSONAL</span>
                 </div>
-                <p class="text-[10px] text-slate-400 mt-0.5">Painel Profissional de Gestão</p>
+                <div class="flex items-center gap-2 mt-1">
+                    <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <p id="status-sincronizacao" class="text-[10px] text-slate-400 font-medium">Sincronizado agora</p>
+                </div>
             </div>
-            <button onclick="carregarAlunos()" class="bg-black hover:bg-slate-900 text-slate-300 p-2.5 rounded-xl border border-slate-800 text-xs transition-all">🔄</button>
+            <button onclick="carregarAlunos()" class="bg-black hover:bg-slate-900 text-slate-300 p-2.5 rounded-xl border border-slate-800 text-xs transition-all" title="Atualizar dados">🔄</button>
         </div>
 
         <!-- TELA 1: LISTA DE ALUNOS -->
@@ -82,7 +85,7 @@
                 <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3">
                     <div class="flex justify-between items-center">
                         <h3 class="font-black text-xs uppercase tracking-wider text-af-orange">EVOLUÇÃO RECENTE</h3>
-                        <button onclick="zerarHistoricoAluno()" class="text-[9px] bg-rose-950/60 text-rose-400 border border-rose-800 px-2 py-1 rounded font-bold">🗑️ Limpar Histórico</button>
+                        <button onclick="zerarHistoricoAlunoComConfirmacao()" class="text-[9px] bg-rose-950/60 text-rose-400 border border-rose-800 px-2 py-1 rounded font-bold hover:bg-rose-900/60">🗑️ Limpar Histórico</button>
                     </div>
                     <div class="grid grid-cols-3 gap-2">
                         <div class="bg-black border border-slate-800 p-3 rounded-xl text-center">
@@ -255,12 +258,19 @@
         let historicoTreinosAluno = [];
         let periodoRelatorioAtual = 'semanal';
 
+        function atualizarHoraSincronizacao() {
+            const agora = new Date();
+            const horaFormatada = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('status-sincronizacao').innerText = `Sincronizado ${horaFormatada}`;
+        }
+
         function validarApenasNumeros(input) { input.value = input.value.replace(/[^0-9.]/g, ''); }
 
         async function carregarAlunos() {
             try {
                 const { data, error } = await supabaseClient.from('alunos').select('*').order('created_at', { ascending: false });
                 if (error) return;
+                atualizarHoraSincronizacao();
                 const container = document.getElementById('container-alunos');
                 if (!data || data.length === 0) {
                     container.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">Nenhum aluno cadastrado.</p>`;
@@ -306,16 +316,20 @@
             else carregarAlunos();
         }
 
-        async function zerarHistoricoAluno() {
+        // COM JANELA DE CONFIRMAÇÃO EXPLICITA ANTES DE LIMPAR O HISTÓRICO
+        async function zerarHistoricoAlunoComConfirmacao() {
             if (!alunoSelecionado) return;
-            if (!confirm(`Deseja ZERAR completamente todo o histórico de treinos de "${alunoSelecionado.nome}"? Isso removerá a contagem antiga do banco.`)) return;
+            const confirmacao = confirm(`Deseja realmente ZERAR todo o histórico de treinos do aluno "${alunoSelecionado.nome}"?\n\nEsta ação apagará as sessões anteriores e deixará o painel limpo para o novo ciclo mensal.`);
+            if (!confirmacao) return;
+
             try {
                 const { error } = await supabaseClient.from('alunos').update({ historico: [] }).eq('id', alunoSelecionado.id);
                 if (error) throw error;
                 historicoTreinosAluno = [];
                 calcularEvolucaoRecenteAdmin();
                 atualizarRelatoriosAdmin();
-                alert('Histórico zerado com sucesso!');
+                atualizarHoraSincronizacao();
+                alert('Histórico limpo e zerado com sucesso!');
             } catch (err) { alert('Erro ao zerar histórico: ' + err.message); }
         }
 
@@ -332,6 +346,7 @@
                 const { data } = await supabaseClient.from('alunos').select('treinos, historico').eq('id', id).single();
                 treinosDoAluno = (data && data.treinos) ? data.treinos : [];
                 historicoTreinosAluno = (data && data.historico && Array.isArray(data.historico)) ? data.historico : [];
+                atualizarHoraSincronizacao();
                 calcularEvolucaoRecenteAdmin();
                 atualizarRelatoriosAdmin();
             } catch (e) {
@@ -360,6 +375,7 @@
             const { data, error } = await supabaseClient.from('alunos').select('treinos, historico').eq('id', alunoSelecionado.id).single();
             if (error) { alert('Erro ao atualizar relatório: ' + error.message); return; }
             historicoTreinosAluno = (data && data.historico && Array.isArray(data.historico)) ? data.historico : [];
+            atualizarHoraSincronizacao();
         }
 
         function mudarPeriodoRelatorio(periodo) {
@@ -489,6 +505,8 @@
                 const { data, error } = await supabaseClient.from('alunos').update({ treinos: treinosDoAluno }).eq('id', alunoSelecionado.id).select('id');
                 if (error || !data || data.length === 0) {
                     alert('ATENÇÃO: não salvou no banco.');
+                } else {
+                    atualizarHoraSincronizacao();
                 }
             } catch (err) { alert('ATENÇÃO: falha de conexão ao salvar.'); }
         }
@@ -730,6 +748,6 @@
 
         window.onload = carregarAlunos;
     </script>
-<div style="position:fixed;bottom:2px;left:6px;font-size:9px;color:#475569;opacity:.6;pointer-events:none;z-index:50">v4-reset-historico</div>
+<div style="position:fixed;bottom:2px;left:6px;font-size:9px;color:#475569;opacity:.6;pointer-events:none;z-index:50">v5-panel-sync</div>
 </body>
 </html>

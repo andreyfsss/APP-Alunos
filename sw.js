@@ -1,6 +1,5 @@
 // v3: service worker "faxina".
-// O sw antigo usava cache-first e nunca atualizava: o celular ficava preso numa versão velha do app.
-// Este arquivo apaga todos os caches, se desregistra e recarrega as abas abertas.
+// Limpa caches antigos e garante atualização imediata nos celulares dos alunos.
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', (e) => {
@@ -12,5 +11,3 @@ self.addEventListener('activate', (e) => {
     clientes.forEach((c) => c.navigate(c.url));
   })());
 });
-
-// Sem handler de fetch: tudo vai direto para a rede.
