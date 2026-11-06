@@ -38,13 +38,16 @@
         </div>
     </header>
 
-    <!-- BARRA DE TIMER FLUTUANTE -->
+    <!-- BARRA DE TIMER FLUTUANTE COM ALARME -->
     <div id="bar-timer-descanso" class="hidden fixed top-24 left-0 right-0 z-30 bg-orange-950/95 border-b border-af-orange backdrop-blur p-3 shadow-2xl">
         <div class="max-w-md mx-auto flex justify-between items-center text-xs">
             <span class="text-white font-bold flex items-center gap-1.5">
                 ⏱️ Descanso: <span id="display-tempo-timer" class="text-sm text-af-orange font-black">01:30</span>
             </span>
-            <button onclick="adicionarTempoTimer(30)" class="bg-black text-af-orange text-[10px] px-2.5 py-1 rounded-lg font-bold border border-slate-800">+30s Fôlego</button>
+            <div class="flex gap-1.5">
+                <button onclick="adicionarTempoTimer(30)" class="bg-black text-af-orange text-[10px] px-2.5 py-1 rounded-lg font-bold border border-slate-800">+30s Fôlego</button>
+                <button onclick="pararTimer()" class="bg-rose-950 text-rose-300 text-[10px] px-2 py-1 rounded-lg font-bold border border-rose-800">Parar</button>
+            </div>
         </div>
     </div>
 
@@ -60,21 +63,26 @@
         </div>
     </div>
 
-    <!-- MODAL RPE -->
-    <div id="modal-rpe-fullscreen" class="fixed inset-0 bg-black/95 backdrop-blur-md hidden z-50 flex flex-col justify-between p-5 overflow-y-auto">
+    <!-- MODAL RPE COMPLETO (1 A 10) -->
+    <div id="modal-rpe-fullscreen" class="fixed inset-0 bg-black/95 backdrop-blur-md hidden z-50 flex flex-col justify-between p-4 overflow-y-auto">
         <div class="flex justify-between items-center border-b border-slate-800 pb-3">
             <div>
-                <span class="text-[10px] uppercase font-bold text-af-orange">Escala de Esforço Percebido</span>
-                <h3 class="text-base font-bold text-white">Selecione o RPE (1 a 10)</h3>
+                <span class="text-[10px] uppercase font-bold text-af-orange">Escala de Esforço Percebido (Borg)</span>
+                <h3 class="text-sm font-bold text-white">Selecione o nível de esforço da série</h3>
             </div>
             <button onclick="fecharRPEFullScreen()" class="bg-black text-slate-300 px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-800">✕ Fechar</button>
         </div>
-        <div class="grid grid-cols-1 gap-2 my-auto max-w-sm w-full mx-auto py-4">
-            <button onclick="selecionarRPE('10')" class="bg-af-card border border-slate-800 p-3 rounded-xl text-left"><div class="font-bold text-sm text-af-orange">RPE 10 - Esforço Máximo</div></button>
-            <button onclick="selecionarRPE('9')" class="bg-af-card border border-slate-800 p-3 rounded-xl text-left"><div class="font-bold text-sm text-af-orange">RPE 9 - 1 Rep na Reserva</div></button>
-            <button onclick="selecionarRPE('8')" class="bg-af-card border border-slate-800 p-3 rounded-xl text-left"><div class="font-bold text-sm text-slate-200">RPE 8 - 2 Reps na Reserva</div></button>
-            <button onclick="selecionarRPE('7')" class="bg-af-card border border-slate-800 p-3 rounded-xl text-left"><div class="font-bold text-sm text-slate-300">RPE 7 - 3 Reps na Reserva</div></button>
-            <button onclick="selecionarRPE('5')" class="bg-af-card border border-slate-800 p-3 rounded-xl text-left"><div class="font-bold text-sm text-slate-400">RPE 1-5 - Aquecimento / Leve</div></button>
+        <div class="grid grid-cols-1 gap-1.5 my-auto max-w-sm w-full mx-auto py-2 text-xs">
+            <button onclick="selecionarRPE('10')" class="bg-af-card border border-slate-800 p-2.5 rounded-xl text-left flex justify-between items-center"><span class="font-bold text-af-orange">RPE 10 - Esforço Máximo</span><span class="text-[10px] text-slate-500">Exaustão total</span></button>
+            <button onclick="selecionarRPE('9.5')" class="bg-af-card border border-slate-800 p-2.5 rounded-xl text-left flex justify-between items-center"><span class="font-bold text-af-orange">RPE 9.5 - Incapaz de mais reps</span><span class="text-[10px] text-slate-500">Nem 0.5 rep</span></button>
+            <button onclick="selecionarRPE('9')" class="bg-af-card border border-slate-800 p-2.5 rounded-xl text-left flex justify-between items-center"><span class="font-bold text-amber-400">RPE 9 - 1 Rep na Reserva</span><span class="text-[10px] text-slate-500">Muito difícil</span></button>
+            <button onclick="selecionarRPE('8.5')" class="bg-af-card border border-slate-800 p-2.5 rounded-xl text-left flex justify-between items-center"><span class="font-bold text-amber-400">RPE 8.5 - 1 a 2 Reps</span><span class="text-[10px] text-slate-500">Quase falhando</span></button>
+            <button onclick="selecionarRPE('8')" class="bg-af-card border border-slate-800 p-2.5 rounded-xl text-left flex justify-between items-center"><span class="font-bold text-slate-200">RPE 8 - 2 Reps na Reserva</span><span class="text-[10px] text-slate-500">Pesado</span></button>
+            <button onclick="selecionarRPE('7.5')" class="bg-af-card border border-slate-800 p-2.5 rounded-xl text-left flex justify-between items-center"><span class="font-bold text-slate-200">RPE 7.5 - 2 a 3 Reps</span><span class="text-[10px] text-slate-500">Firme</span></button>
+            <button onclick="selecionarRPE('7')" class="bg-af-card border border-slate-800 p-2.5 rounded-xl text-left flex justify-between items-center"><span class="font-bold text-slate-300">RPE 7 - 3 Reps na Reserva</span><span class="text-[10px] text-slate-500">Moderado a pesado</span></button>
+            <button onclick="selecionarRPE('6')" class="bg-af-card border border-slate-800 p-2.5 rounded-xl text-left flex justify-between items-center"><span class="font-bold text-slate-300">RPE 6 - 4 Reps na Reserva</span><span class="text-[10px] text-slate-500">Moderado</span></button>
+            <button onclick="selecionarRPE('5')" class="bg-af-card border border-slate-800 p-2.5 rounded-xl text-left flex justify-between items-center"><span class="font-bold text-slate-400">RPE 5 - Leve / Aquecimento</span><span class="text-[10px] text-slate-500">Tranquilo</span></button>
+            <button onclick="selecionarRPE('1-4')" class="bg-af-card border border-slate-800 p-2.5 rounded-xl text-left flex justify-between items-center"><span class="font-bold text-slate-500">RPE 1 a 4 - Muito Leve</span><span class="text-[10px] text-slate-500">Sem esforço</span></button>
         </div>
     </div>
 
@@ -141,6 +149,7 @@
 
         let timerInterval = null;
         let segundosRestantes = 0;
+        let audioCtx = null;
 
         function mudarAbaAtiva(aba) {
             if (aba === 'treinos') {
@@ -291,26 +300,49 @@
 
             let desc = '';
             if (metodo === 'Pirâmide Crescente') {
-                desc = 'Na Pirâmide Crescente, você aumenta a carga a cada série e diminui um pouco as repetições, priorizando picos de força nas últimas séries.';
+                desc = 'Na Pirâmide Crescente, você aumenta a carga a cada série e diminui um pouco as repetições, priorizando picos de força.';
             } else if (metodo === 'Pirâmide Decrescente') {
-                desc = 'Na Pirâmide Decrescente (Drop Set mecânico ou clássico), você começa com mais carga nas primeiras séries e vai reduzindo o peso nas séries seguintes mantendo ou subindo as repetições.';
+                desc = 'Na Pirâmide Decrescente, você começa com mais carga nas primeiras séries e vai reduzindo o peso nas séries seguintes.';
             } else if (metodo === 'Drop Set') {
-                desc = 'No Drop Set, ao atingir a falha na série principal, você reduz a carga imediatamente (cerca de 20% a 30%) e continua executando o exercício até a nova falha.';
+                desc = 'No Drop Set, ao atingir a falha, você reduz a carga imediatamente (20% a 30%) e continua executando até a nova falha.';
             } else if (metodo === 'Rest Pause') {
-                desc = 'No Rest Pause, você executa até a falha, descansa de 10 a 15 segundos respirando fundo e faz mais algumas repetições antes de encerrar a série.';
+                desc = 'No Rest Pause, você executa até a falha, descansa 10 a 15 segundos respirando fundo e faz mais algumas repetições.';
             } else if (metodo === 'Cluster Set') {
-                desc = 'No Cluster Set, a série é dividida em mini-blocos com pequenos intervalos programados de 10 a 15 segundos entre eles, permitindo usar cargas mais elevadas.';
+                desc = 'No Cluster Set, a série é dividida em mini-blocos com pequenos intervalos programados de 10 a 15 segundos.';
             } else if (metodo === 'FST-7') {
-                desc = 'O FST-7 consiste em realizar 7 séries no final do exercício com intervalos curtos (30 a 45 segundos), visando o máximo estiramento da fáscia muscular e pump.';
+                desc = 'O FST-7 consiste em realizar 7 séries no final do exercício com intervalos curtos (30 a 45s) para o máximo pump.';
             } else {
                 desc = 'Série Normal com execução padrão orientada pelo seu personal trainer.';
             }
-
             texto.innerText = desc;
             modal.classList.remove('hidden');
         }
 
         function fecharModalMetodo() { document.getElementById('modal-explicacao-metodo').classList.add('hidden'); }
+
+        // SISTEMA DE ALARME SONORO BEM ALTO E CONTROLE DE TELA DE BLOQUEIO
+        function tocarAlarmeAlto() {
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+
+                // Disparar 3 bipes agudos e fortes em sequência
+                for (let i = 0; i < 3; i++) {
+                    setTimeout(() => {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'square'; // Som estridente e alto
+                        osc.frequency.setValueAtTime(880, audioCtx.currentTime); // Nota Lá alta
+                        gain.gain.setValueAtTime(1.0, audioCtx.currentTime); // Volume máximo
+                        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.start();
+                        osc.stop(audioCtx.currentTime + 0.3);
+                    }, i * 400);
+                }
+            } catch (e) {}
+        }
 
         function iniciarTimer(segundos) {
             clearInterval(timerInterval);
@@ -324,17 +356,29 @@
                 atualizarDisplayTimer();
                 if (segundosRestantes <= 0) {
                     clearInterval(timerInterval);
-                    barra.classList.add('hidden');
+                    document.title = '🚨 TEMPO ACABOU! - AF Pro';
+                    tocarAlarmeAlto();
+                    setTimeout(() => {
+                        barra.classList.add('hidden');
+                        document.title = 'AF Pro - Meu Treino';
+                    }, 5000);
                 }
             }, 1000);
         }
 
         function adicionarTempoTimer(seg) { segundosRestantes += seg; atualizarDisplayTimer(); }
+        function pararTimer() {
+            clearInterval(timerInterval);
+            document.getElementById('bar-timer-descanso').classList.add('hidden');
+            document.title = 'AF Pro - Meu Treino';
+        }
 
         function atualizarDisplayTimer() {
             const min = Math.floor(segundosRestantes / 60);
             const sec = segundosRestantes % 60;
-            document.getElementById('display-tempo-timer').innerText = `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+            const textoTempo = `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+            document.getElementById('display-tempo-timer').innerText = textoTempo;
+            document.title = `⏱️ ${textoTempo} - Descanso`;
         }
 
         function toggleValidarSerie(botao) {
@@ -427,6 +471,6 @@
 
         window.onload = carregarDadosAluno;
     </script>
-<div style="position:fixed;bottom:2px;left:6px;font-size:9px;color:#475569;opacity:.6;pointer-events:none;z-index:50">v8-aluno-completo-timer</div>
+<div style="position:fixed;bottom:2px;left:6px;font-size:9px;color:#475569;opacity:.6;pointer-events:none;z-index:50">v9-aluno-alarme-rpe</div>
 </body>
 </html>
