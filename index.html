@@ -13,19 +13,21 @@
         .bg-af-orange { background-color: #FF6A00; }
         .border-af-orange { border-color: #FF6A00; }
         
-        /* TRAVA DE ZOOM NO iOS SAFARI: qualquer campo com fonte < 16px faz o iOS dar zoom ao focar */
-        input, select, textarea {
-            font-size: 16px !important;
-        }
-        /* evita zoom por toque duplo */
+        input, select, textarea { font-size: 16px !important; }
         html { touch-action: manipulation; }
+
+        @media print {
+            body { background-color: #ffffff !important; color: #000000 !important; }
+            .no-print { display: none !important; }
+            .print-container { background: #fff !important; color: #000 !important; border: none !important; }
+        }
     </style>
 </head>
 <body class="text-slate-100 min-h-screen p-3 md:p-6 flex flex-col items-center antialiased">
 
     <div class="max-w-md w-full space-y-5">
-        <!-- Topo com Logo Andrey Franco Personal -->
-        <div class="flex justify-between items-center bg-af-card border border-slate-800 rounded-2xl p-4 shadow-xl">
+        <!-- Topo -->
+        <div class="flex justify-between items-center bg-af-card border border-slate-800 rounded-2xl p-4 shadow-xl no-print">
             <div>
                 <div class="flex items-center gap-1.5">
                     <span class="font-black text-xl text-white tracking-tighter">ANDREY FRANCO</span>
@@ -37,7 +39,7 @@
         </div>
 
         <!-- TELA 1: LISTA DE ALUNOS -->
-        <div id="view-lista-alunos" class="space-y-4">
+        <div id="view-lista-alunos" class="space-y-4 no-print">
             <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3 shadow-lg">
                 <h2 class="font-bold text-xs uppercase tracking-wider text-af-orange">Cadastrar Novo Aluno</h2>
                 <div class="flex gap-2">
@@ -55,8 +57,8 @@
         </div>
 
         <!-- TELA 2: VISÃO DO ALUNO (PERFIL E TREINOS) -->
-        <div id="view-detalhe-aluno" class="hidden space-y-4">
-            <div class="flex items-center justify-between bg-af-card border border-slate-800 rounded-2xl p-4">
+        <div id="view-detalhe-aluno" class="hidden space-y-4 w-full">
+            <div class="flex items-center justify-between bg-af-card border border-slate-800 rounded-2xl p-4 no-print">
                 <div class="flex items-center gap-3">
                     <button onclick="voltarParaLista()" class="bg-black text-slate-400 px-3 py-2 rounded-xl text-xs font-bold border border-slate-800">← Voltar</button>
                     <div>
@@ -70,17 +72,17 @@
                 </div>
             </div>
 
-            <div class="flex gap-1 bg-af-card p-1.5 rounded-2xl border border-slate-800 text-[11px] font-bold text-center">
+            <div class="flex gap-1 bg-af-card p-1.5 rounded-2xl border border-slate-800 text-[11px] font-bold text-center no-print">
                 <button onclick="mudarAbaAdminAluno('treinos')" id="tab-admin-treinos" class="flex-1 py-2 rounded-xl bg-af-orange text-black transition-all">🏋️ Treinos</button>
-                <button onclick="mudarAbaAdminAluno('relatorios')" id="tab-admin-relatorios" class="flex-1 py-2 rounded-xl text-slate-400 hover:text-white transition-all">📊 Relatórios</button>
+                <button onclick="mudarAbaAdminAluno('relatorios')" id="tab-admin-relatorios" class="flex-1 py-2 rounded-xl text-slate-400 hover:text-white transition-all">📊 Relatórios & PDF</button>
             </div>
 
             <!-- ABA TREINOS (ADMIN) -->
-            <div id="sec-admin-treinos" class="space-y-4">
+            <div id="sec-admin-treinos" class="space-y-4 no-print">
                 <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3">
                     <div class="flex justify-between items-center">
                         <h3 class="font-black text-xs uppercase tracking-wider text-af-orange">EVOLUÇÃO RECENTE</h3>
-                        <span class="text-[9px] text-slate-500">Histórico Consolidado</span>
+                        <button onclick="zerarHistoricoAluno()" class="text-[9px] bg-rose-950/60 text-rose-400 border border-rose-800 px-2 py-1 rounded font-bold">🗑️ Limpar Histórico</button>
                     </div>
                     <div class="grid grid-cols-3 gap-2">
                         <div class="bg-black border border-slate-800 p-3 rounded-xl text-center">
@@ -112,32 +114,50 @@
                 </div>
             </div>
 
-            <!-- ABA RELATÓRIOS (ADMIN) -->
+            <!-- ABA RELATÓRIOS & PDF (ADMIN) -->
             <div id="sec-admin-relatorios" class="hidden space-y-4">
-                <div class="flex gap-1.5 bg-black p-1.5 rounded-xl border border-slate-800 text-xs font-bold text-center">
-                    <button onclick="mudarSubTabRelatorio('volume')" id="subtab-vol" class="flex-1 py-1.5 rounded-lg bg-af-orange text-black transition-all">Volume</button>
-                    <button onclick="mudarSubTabRelatorio('series')" id="subtab-ser" class="flex-1 py-1.5 rounded-lg text-slate-400 transition-all">Séries</button>
-                    <button onclick="mudarSubTabRelatorio('grupos')" id="subtab-grp" class="flex-1 py-1.5 rounded-lg text-slate-400 transition-all">Grupos</button>
+                <div class="flex justify-between items-center bg-af-card border border-slate-800 rounded-2xl p-4 no-print">
+                    <div>
+                        <h3 class="font-bold text-xs text-af-orange uppercase">Relatório de Desempenho</h3>
+                        <p class="text-[10px] text-slate-400">Métricas semanais e mensais do atleta</p>
+                    </div>
+                    <button onclick="gerarRelatorioPDF()" class="bg-af-orange text-black font-black px-3.5 py-2 rounded-xl text-xs shadow-md">📄 Baixar / Imprimir PDF</button>
                 </div>
-                <div id="subbox-volume" class="bg-af-card border border-slate-800 rounded-2xl p-4 text-center text-xs text-slate-400 py-6">
-                    <div class="text-sm font-bold text-white mb-1" id="admin-vol-total">0 kg</div>
-                    <p class="text-[10px] text-slate-500">Volume total acumulado nas sessões concluídas.</p>
-                    <p class="text-[10px] text-slate-500 mt-1" id="admin-ultima-sessao"></p>
-                    <div id="admin-vol-grupos" class="mt-3 space-y-1 text-left"></div>
+
+                <div class="flex gap-1.5 bg-black p-1.5 rounded-xl border border-slate-800 text-xs font-bold text-center no-print">
+                    <button onclick="mudarPeriodoRelatorio('semanal')" id="btn-periodo-semanal" class="flex-1 py-1.5 rounded-lg bg-af-orange text-black transition-all">📅 Semanal (Últimos 7 dias)</button>
+                    <button onclick="mudarPeriodoRelatorio('mensal')" id="btn-periodo-mensal" class="flex-1 py-1.5 rounded-lg text-slate-400 transition-all">📆 Mensal (Mês Atual)</button>
                 </div>
-                <div id="subbox-series" class="hidden bg-af-card border border-slate-800 rounded-2xl p-4 text-center text-xs text-slate-400 py-6">
-                    <div class="text-sm font-bold text-white mb-1" id="admin-qtd-series">0</div>
-                    <p class="text-[10px] text-slate-500">Total de séries validadas pelo atleta.</p>
-                    <div id="admin-series-grupos" class="mt-3 space-y-1 text-left"></div>
-                </div>
-                <div id="subbox-grupos" class="hidden bg-af-card border border-slate-800 rounded-2xl p-4 text-center text-xs text-slate-400 py-6">
-                    <div id="admin-lista-grupos" class="text-xs text-slate-200 space-y-1">Nenhum registro de grupo muscular ainda.</div>
+
+                <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-4 print-container">
+                    <div class="text-center border-b border-slate-800 pb-3">
+                        <span id="label-periodo-ativo" class="text-[10px] font-bold text-af-orange uppercase tracking-wider block">Relatório Semanal</span>
+                        <h4 id="nome-aluno-relatorio-titulo" class="font-bold text-base text-white">Atleta</h4>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="bg-black p-3 rounded-xl border border-slate-800 text-center">
+                            <span class="text-[9px] uppercase text-slate-500 font-bold block">Volume Total (Carga × Reps)</span>
+                            <strong class="text-base text-af-orange" id="rel-vol-total">0 kg</strong>
+                        </div>
+                        <div class="bg-black p-3 rounded-xl border border-slate-800 text-center">
+                            <span class="text-[9px] uppercase text-slate-500 font-bold block">Séries Validadas</span>
+                            <strong class="text-base text-white" id="rel-qtd-series">0</strong>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2 pt-2 border-t border-slate-800">
+                        <h5 class="font-bold text-xs uppercase text-slate-300">Volume por Grupamento Muscular</h5>
+                        <div id="rel-container-grupos" class="space-y-1.5 text-xs">
+                            <p class="text-[10px] text-slate-500 text-center py-3">Nenhum registro no período.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- TELA 3: MONTAGEM DE EXERCÍCIOS -->
-        <div id="view-montar-exercicios" class="hidden space-y-4">
+        <div id="view-montar-exercicios" class="hidden space-y-4 no-print">
             <div class="flex items-center justify-between bg-af-card border border-slate-800 rounded-2xl p-4">
                 <button onclick="voltarParaTreinos()" class="bg-black text-slate-400 px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-800">← Voltar</button>
                 <h2 id="titulo-treino-ativo" class="font-bold text-xs text-af-orange uppercase tracking-wider">Treino Ativo</h2>
@@ -233,10 +253,9 @@
         let baseExerciciosGlobais = ['Agachamento Livre', 'Supino Reto', 'Leg Press 45', 'Cadeira Extensora', 'Puxada Alta'];
         let treinosDoAluno = [];
         let historicoTreinosAluno = [];
+        let periodoRelatorioAtual = 'semanal';
 
-        function validarApenasNumeros(input) {
-            input.value = input.value.replace(/[^0-9.]/g, '');
-        }
+        function validarApenasNumeros(input) { input.value = input.value.replace(/[^0-9.]/g, ''); }
 
         async function carregarAlunos() {
             try {
@@ -287,9 +306,23 @@
             else carregarAlunos();
         }
 
+        async function zerarHistoricoAluno() {
+            if (!alunoSelecionado) return;
+            if (!confirm(`Deseja ZERAR completamente todo o histórico de treinos de "${alunoSelecionado.nome}"? Isso removerá a contagem antiga do banco.`)) return;
+            try {
+                const { error } = await supabaseClient.from('alunos').update({ historico: [] }).eq('id', alunoSelecionado.id);
+                if (error) throw error;
+                historicoTreinosAluno = [];
+                calcularEvolucaoRecenteAdmin();
+                atualizarRelatoriosAdmin();
+                alert('Histórico zerado com sucesso!');
+            } catch (err) { alert('Erro ao zerar histórico: ' + err.message); }
+        }
+
         async function abrirPainelAluno(id, nome, token, link) {
             alunoSelecionado = { id, nome, token, link };
             document.getElementById('detalhe-nome-aluno').innerText = nome;
+            document.getElementById('nome-aluno-relatorio-titulo').innerText = nome;
             document.getElementById('btn-copiar-link-aluno').onclick = () => copiarLinkDirect(link);
             document.getElementById('btn-testar-link-aluno').onclick = () => window.open(link, '_blank');
             document.getElementById('view-lista-alunos').classList.add('hidden');
@@ -298,7 +331,7 @@
             try {
                 const { data } = await supabaseClient.from('alunos').select('treinos, historico').eq('id', id).single();
                 treinosDoAluno = (data && data.treinos) ? data.treinos : [];
-                historicoTreinosAluno = (data && data.historico) ? data.historico : [];
+                historicoTreinosAluno = (data && data.historico && Array.isArray(data.historico)) ? data.historico : [];
                 calcularEvolucaoRecenteAdmin();
                 atualizarRelatoriosAdmin();
             } catch (e) {
@@ -310,7 +343,6 @@
 
         function calcularEvolucaoRecenteAdmin() {
             let mais = 0, mesmo = 0, menos = 0;
-            // Se houver histórico de treinos realizados, calcula. Caso contrário, mantém tudo zerado.
             if (historicoTreinosAluno && historicoTreinosAluno.length > 0) {
                 historicoTreinosAluno.forEach(h => {
                     if (h.comparativo === 'mais') mais++;
@@ -327,49 +359,75 @@
             if (!alunoSelecionado) return;
             const { data, error } = await supabaseClient.from('alunos').select('treinos, historico').eq('id', alunoSelecionado.id).single();
             if (error) { alert('Erro ao atualizar relatório: ' + error.message); return; }
-            historicoTreinosAluno = (data && data.historico) ? data.historico : [];
+            historicoTreinosAluno = (data && data.historico && Array.isArray(data.historico)) ? data.historico : [];
+        }
+
+        function mudarPeriodoRelatorio(periodo) {
+            periodoRelatorioAtual = periodo;
+            const btnSem = document.getElementById('btn-periodo-semanal');
+            const btnMen = document.getElementById('btn-periodo-mensal');
+            const label = document.getElementById('label-periodo-ativo');
+
+            if (periodo === 'semanal') {
+                btnSem.className = 'flex-1 py-1.5 rounded-lg bg-af-orange text-black font-bold transition-all';
+                btnMen.className = 'flex-1 py-1.5 rounded-lg text-slate-400 font-bold transition-all';
+                label.innerText = 'Relatório Semanal (Últimos 7 dias)';
+            } else {
+                btnMen.className = 'flex-1 py-1.5 rounded-lg bg-af-orange text-black font-bold transition-all';
+                btnSem.className = 'flex-1 py-1.5 rounded-lg text-slate-400 font-bold transition-all';
+                label.innerText = 'Relatório Mensal (Mês Atual)';
+            }
+            atualizarRelatoriosAdmin();
         }
 
         function atualizarRelatoriosAdmin() {
             const mapaMusculo = {};
             treinosDoAluno.forEach(t => (t.exercicios || []).forEach(e => { if (e.musculo) mapaMusculo[e.nome.toLowerCase()] = e.musculo; }));
 
+            const agora = new Date();
+            const historicoFiltrado = historicoTreinosAluno.filter(h => {
+                if (!h.data) return false;
+                const d = new Date(h.data);
+                if (periodoRelatorioAtual === 'semanal') {
+                    const seteDiasAtras = new Date();
+                    seteDiasAtras.setDate(agora.getDate() - 7);
+                    return d >= seteDiasAtras && d <= agora;
+                } else {
+                    return d.getMonth() === agora.getMonth() && d.getFullYear() === agora.getFullYear();
+                }
+            });
+
             const grupos = {};
             let volTotal = 0, totalSeries = 0;
-            
-            // Só computa se houver histórico real de treinos concluídos
-            if (historicoTreinosAluno && historicoTreinosAluno.length > 0) {
-                historicoTreinosAluno.forEach(h => {
-                    volTotal += h.volume || 0;
-                    totalSeries += h.qtdSeriesValidadas || 0;
-                    (h.exerciciosRealizados || []).forEach(exR => {
-                        const musculo = exR.musculo || mapaMusculo[(exR.nome || '').toLowerCase()] || 'Sem grupo';
-                        const g = grupos[musculo] || (grupos[musculo] = { volume: 0, series: 0 });
-                        const volEx = (typeof exR.volume === 'number') ? exR.volume : (exR.series || []).reduce((s, x) => s + (x.carga || 0) * (x.reps || 0), 0);
-                        g.volume += volEx;
-                        g.series += (exR.series || []).length;
-                    });
+
+            historicoFiltrado.forEach(h => {
+                volTotal += h.volume || 0;
+                totalSeries += h.qtdSeriesValidadas || 0;
+                (h.exerciciosRealizados || []).forEach(exR => {
+                    const musculo = exR.musculo || mapaMusculo[(exR.nome || '').toLowerCase()] || 'Sem grupo';
+                    const g = grupos[musculo] || (grupos[musculo] = { volume: 0, series: 0 });
+                    const volEx = (typeof exR.volume === 'number') ? exR.volume : (exR.series || []).reduce((s, x) => s + (x.carga || 0) * (x.reps || 0), 0);
+                    g.volume += volEx;
+                    g.series += (exR.series || []).length;
                 });
-            }
+            });
 
-            document.getElementById('admin-vol-total').innerText = `${volTotal.toLocaleString('pt-BR')} kg`;
-            document.getElementById('admin-qtd-series').innerText = totalSeries;
+            document.getElementById('rel-vol-total').innerText = `${volTotal.toLocaleString('pt-BR')} kg`;
+            document.getElementById('rel-qtd-series').innerText = totalSeries;
 
-            const ultima = historicoTreinosAluno.length ? historicoTreinosAluno[historicoTreinosAluno.length - 1] : null;
-            document.getElementById('admin-ultima-sessao').innerText = ultima
-                ? `${historicoTreinosAluno.length} sessão(ões) • última: ${new Date(ultima.data).toLocaleString('pt-BR')}`
-                : 'Nenhuma sessão registrada ainda.';
-
-            const linha = (nome, valor) => `<div class="flex justify-between bg-black border border-slate-800 p-2 rounded-lg"><span class="font-bold text-af-orange">${nome}</span><span class="text-slate-200 font-bold">${valor}</span></div>`;
             const nomes = Object.keys(grupos);
-            const vazio = '<p class="text-[10px] text-slate-500 text-center">Nenhum registro de grupo muscular ainda.</p>';
+            const containerGrupos = document.getElementById('rel-container-grupos');
 
-            document.getElementById('admin-vol-grupos').innerHTML = nomes.length
-                ? nomes.sort((a, b) => grupos[b].volume - grupos[a].volume).map(n => linha(n, `${grupos[n].volume.toLocaleString('pt-BR')} kg`)).join('') : '<p class="text-[10px] text-slate-500 text-center">Nenhum dado de volume ainda.</p>';
-            document.getElementById('admin-series-grupos').innerHTML = nomes.length
-                ? nomes.sort((a, b) => grupos[b].series - grupos[a].series).map(n => linha(n, `${grupos[n].series} séries`)).join('') : '<p class="text-[10px] text-slate-500 text-center">Nenhum dado de séries ainda.</p>';
-            document.getElementById('admin-lista-grupos').innerHTML = nomes.length
-                ? nomes.sort((a, b) => grupos[b].volume - grupos[a].volume).map(n => linha(n, `${grupos[n].volume.toLocaleString('pt-BR')} kg • ${grupos[n].series} séries`)).join('') : vazio;
+            if (nomes.length === 0) {
+                containerGrupos.innerHTML = `<p class="text-[10px] text-slate-500 text-center py-3">Nenhum registro de treino encontrado neste período.</p>`;
+            } else {
+                containerGrupos.innerHTML = nomes.sort((a, b) => grupos[b].volume - grupos[a].volume).map(n => `
+                    <div class="flex justify-between bg-black border border-slate-800 p-2.5 rounded-xl">
+                        <span class="font-bold text-af-orange">${n}</span>
+                        <span class="text-slate-200 font-bold">${grupos[n].volume.toLocaleString('pt-BR')} kg • ${grupos[n].series} séries</span>
+                    </div>
+                `).join('');
+            }
         }
 
         async function mudarAbaAdminAluno(aba) {
@@ -389,26 +447,7 @@
             }
         }
 
-        function mudarSubTabRelatorio(sub) {
-            ['volume', 'series', 'grupos'].forEach(s => {
-                document.getElementById(`subbox-${s}`).classList.add('hidden');
-                document.getElementById(`subtab-${s === 'volume' ? 'vol' : s === 'series' ? 'ser' : 'grp'}`).className = 'flex-1 py-1.5 rounded-lg text-slate-400 transition-all';
-            });
-            document.getElementById(`subbox-${sub}`).classList.remove('hidden');
-            document.getElementById(`subtab-${sub === 'volume' ? 'vol' : sub === 'series' ? 'ser' : 'grp'}`).className = 'flex-1 py-1.5 rounded-lg bg-af-orange text-black font-bold transition-all';
-        }
-
-        function alternarVisibilidadeMetodoMacro(valor) {
-            const blocoModular = document.getElementById('bloco-configuracao-modular');
-            const blocoPiramideReps = document.getElementById('bloco-piramide-reps');
-            if (valor !== 'Nulo') {
-                blocoModular.classList.add('hidden');
-                blocoPiramideReps.classList.remove('hidden');
-            } else {
-                blocoModular.classList.remove('hidden');
-                blocoPiramideReps.classList.add('hidden');
-            }
-        }
+        function gerarRelatorioPDF() { window.print(); }
 
         function voltarParaLista() {
             alunoSelecionado = null;
@@ -449,9 +488,9 @@
             try {
                 const { data, error } = await supabaseClient.from('alunos').update({ treinos: treinosDoAluno }).eq('id', alunoSelecionado.id).select('id');
                 if (error || !data || data.length === 0) {
-                    alert('ATENÇÃO: não salvou no banco. ' + (error ? error.message : 'Nenhuma linha atualizada (verifique a política UPDATE/RLS no Supabase).'));
+                    alert('ATENÇÃO: não salvou no banco.');
                 }
-            } catch (err) { alert('ATENÇÃO: falha de conexão ao salvar. ' + err.message); }
+            } catch (err) { alert('ATENÇÃO: falha de conexão ao salvar.'); }
         }
 
         function renderizarTreinosAluno() {
@@ -539,10 +578,7 @@
                 `;
             }
             container.innerHTML = html;
-
-            document.querySelectorAll('.select-metodo-serie').forEach(sel => {
-                atualizarMetodoSerieAdmin(sel);
-            });
+            document.querySelectorAll('.select-metodo-serie').forEach(sel => atualizarMetodoSerieAdmin(sel));
         }
 
         function atualizarMetodoSerieAdmin(select) {
@@ -635,13 +671,11 @@
             const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
             if (treino) {
                 if (!treino.exercicios) treino.exercicios = [];
-                
                 if (indiceExercicioEditando !== null) {
                     treino.exercicios[indiceExercicioEditando] = { nome, musculo, equipamento, qtdSeries, metodoGeral, repsPiramide, seriesConfig };
                 } else {
                     treino.exercicios.push({ nome, musculo, equipamento, qtdSeries, metodoGeral, repsPiramide, seriesConfig });
                 }
-
                 cancelarEdicaoExercicio();
                 await salvarTreinosNoSupabase();
                 renderizarListaExerciciosDivisao();
@@ -696,6 +730,6 @@
 
         window.onload = carregarAlunos;
     </script>
-<div style="position:fixed;bottom:2px;left:6px;font-size:9px;color:#475569;opacity:.6;pointer-events:none;z-index:50">v3-zerar-vazios</div>
+<div style="position:fixed;bottom:2px;left:6px;font-size:9px;color:#475569;opacity:.6;pointer-events:none;z-index:50">v4-reset-historico</div>
 </body>
 </html>
