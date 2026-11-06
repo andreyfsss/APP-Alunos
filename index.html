@@ -75,14 +75,13 @@
                 </div>
             </div>
 
-            <!-- Abas do Painel do Aluno -->
             <div class="flex gap-1 bg-af-card p-1.5 rounded-2xl border border-slate-800 text-[11px] font-bold text-center no-print">
                 <button onclick="mudarAbaAdminAluno('treinos')" id="tab-admin-treinos" class="flex-1 py-2 rounded-xl bg-af-orange text-black transition-all">🏋️ Treinos</button>
                 <button onclick="mudarAbaAdminAluno('exercicios')" id="tab-admin-exercicios" class="flex-1 py-2 rounded-xl text-slate-400 hover:text-white transition-all">📈 Progressão</button>
                 <button onclick="mudarAbaAdminAluno('relatorios')" id="tab-admin-relatorios" class="flex-1 py-2 rounded-xl text-slate-400 hover:text-white transition-all">📊 Relatórios</button>
             </div>
 
-            <!-- ABA 1: TREINOS (ADMIN) -->
+            <!-- ABA 1: TREINOS -->
             <div id="sec-admin-treinos" class="space-y-4 no-print">
                 <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3">
                     <div class="flex justify-between items-center">
@@ -119,7 +118,7 @@
                 </div>
             </div>
 
-            <!-- ABA 2: PROGRESSÃO POR EXERCÍCIO (ADMIN) -->
+            <!-- ABA 2: PROGRESSÃO -->
             <div id="sec-admin-exercicios" class="hidden space-y-4 no-print">
                 <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3">
                     <h3 class="font-bold text-xs uppercase text-af-orange">Progresso Individual por Exercício</h3>
@@ -128,11 +127,11 @@
                     </select>
                 </div>
                 <div id="container-progresso-detalhe" class="space-y-2">
-                    <p class="text-xs text-slate-500 text-center py-6">Selecione um exercício acima para ver o histórico de cargas, séries e volume.</p>
+                    <p class="text-xs text-slate-500 text-center py-6">Selecione um exercício acima para ver o histórico.</p>
                 </div>
             </div>
 
-            <!-- ABA 3: RELATÓRIOS & PDF (ADMIN) -->
+            <!-- ABA 3: RELATÓRIOS & PDF -->
             <div id="sec-admin-relatorios" class="hidden space-y-4">
                 <div class="flex justify-between items-center bg-af-card border border-slate-800 rounded-2xl p-4 no-print">
                     <div>
@@ -142,33 +141,28 @@
                     <button onclick="gerarRelatorioPDF()" class="bg-af-orange text-black font-black px-3.5 py-2 rounded-xl text-xs shadow-md">📄 Baixar / Imprimir PDF</button>
                 </div>
 
-                <!-- Seletor de Período -->
                 <div class="flex gap-1.5 bg-black p-1.5 rounded-xl border border-slate-800 text-xs font-bold text-center no-print">
                     <button onclick="mudarPeriodoRelatorio('semanal')" id="btn-periodo-semanal" class="flex-1 py-1.5 rounded-lg bg-af-orange text-black transition-all">📅 Semanal</button>
                     <button onclick="mudarPeriodoRelatorio('mensal')" id="btn-periodo-mensal" class="flex-1 py-1.5 rounded-lg text-slate-400 transition-all">📆 Mensal</button>
                 </div>
 
-                <!-- Sub-abas de Relatório (Peso, Séries, Grupos) -->
                 <div class="flex gap-1 bg-af-card p-1 rounded-xl border border-slate-800 text-[10px] font-bold text-center no-print">
                     <button onclick="mudarSubAbaRelatorio('peso')" id="subtab-peso" class="flex-1 py-1.5 rounded-lg bg-af-orange text-black">🏋️ Volume (kg)</button>
                     <button onclick="mudarSubAbaRelatorio('series')" id="subtab-series" class="flex-1 py-1.5 rounded-lg text-slate-400">🔢 Séries</button>
                     <button onclick="mudarSubAbaRelatorio('grupos')" id="subtab-grupos" class="flex-1 py-1.5 rounded-lg text-slate-400">🎯 Grupamentos</button>
                 </div>
 
-                <!-- Container do Relatório -->
                 <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-4 print-container">
                     <div class="text-center border-b border-slate-800 pb-3">
                         <span id="label-periodo-ativo" class="text-[10px] font-bold text-af-orange uppercase tracking-wider block">Relatório Semanal</span>
                         <h4 id="nome-aluno-relatorio-titulo" class="font-bold text-base text-white">Atleta</h4>
                     </div>
-
-                    <!-- Conteúdo dinâmico da sub-aba -->
                     <div id="relatorio-conteudo-dinamico" class="space-y-3"></div>
                 </div>
             </div>
         </div>
 
-        <!-- TELA 3: MONTAGEM DE EXERCÍCIOS -->
+        <!-- TELA 3: MONTAGEM DE EXERCÍCIOS (COM MÉTODOS COMPLETOS E REGRAS DE PESO CORPORAL) -->
         <div id="view-montar-exercicios" class="hidden space-y-4 no-print">
             <div class="flex items-center justify-between bg-af-card border border-slate-800 rounded-2xl p-4">
                 <button onclick="voltarParaTreinos()" class="bg-black text-slate-400 px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-800">← Voltar</button>
@@ -202,13 +196,13 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Equipamento / Tipo</label>
-                            <select id="select-equipamento-ex" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-slate-200">
+                            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Equipamento / Categoria</label>
+                            <select id="select-equipamento-ex" onchange="verificarRegrasEquipamento()" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-slate-200">
                                 <option value="Barra">Barra</option>
                                 <option value="Halter">Halter</option>
                                 <option value="Máquina">Máquina</option>
+                                <option value="Crossover">Crossover</option>
                                 <option value="Corporal">Peso Corporal / Sem Peso</option>
-                                <option value="Tempo">Por Tempo (Ex: Prancha)</option>
                             </select>
                         </div>
                     </div>
@@ -219,16 +213,31 @@
                             <input type="number" id="input-qtd-series-ex" value="4" oninput="validarApenasNumeros(this)" onchange="gerarCamposSeriesAdmin(this.value)" min="1" max="10" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-white text-center font-bold">
                         </div>
                         <div>
-                            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Exigir RPE?</label>
-                            <select id="select-exige-rpe" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-af-orange font-bold">
-                                <option value="sim">Sim (Com RPE)</option>
-                                <option value="nao">Não (Sem RPE / Alongamento)</option>
+                            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Método Geral</label>
+                            <select id="select-metodo-geral-ex" onchange="alternarVisibilidadeMetodoMacro(this.value)" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-af-orange font-bold">
+                                <option value="Nulo">Nulo (Modular por Série)</option>
+                                <option value="Pirâmide Crescente">Pirâmide Crescente</option>
+                                <option value="Pirâmide Decrescente">Pirâmide Decrescente</option>
                             </select>
                         </div>
                     </div>
 
-                    <div class="space-y-2 pt-2 border-t border-slate-800">
-                        <label class="block text-[11px] font-bold text-slate-300">Configuração por Série</label>
+                    <!-- Exigir RPE (Desativado automaticamente se for corporal livre sem carga) -->
+                    <div id="bloco-exigir-rpe">
+                        <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Exigir RPE do Aluno?</label>
+                        <select id="select-exige-rpe" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-slate-200 font-bold">
+                            <option value="sim">Sim (Com RPE obrigatório)</option>
+                            <option value="nao">Não (Sem RPE / Alongamento)</option>
+                        </select>
+                    </div>
+
+                    <div id="bloco-piramide-reps" class="hidden space-y-1">
+                        <label class="block text-[10px] text-slate-400 uppercase font-bold">Faixa de Repetições (Pirâmide)</label>
+                        <input type="text" id="input-reps-piramide" placeholder="Ex: 10 a 12 ou 8 a 12" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-white font-bold text-center">
+                    </div>
+
+                    <div id="bloco-configuracao-modular" class="space-y-2 pt-2 border-t border-slate-800">
+                        <label class="block text-[11px] font-bold text-slate-300">Configuração de Métodos & Repetições por Série</label>
                         <div id="container-config-series-admin" class="space-y-2"></div>
                     </div>
 
@@ -258,7 +267,7 @@
         let alunoSelecionado = null;
         let treinoAtivoId = null;
         let indiceExercicioEditando = null;
-        let baseExerciciosGlobais = ['Agachamento Livre', 'Supino Reto', 'Leg Press 45', 'Panturrilha em Pé', 'Prancha Abdominal', 'Alongamento Posterior'];
+        let baseExerciciosGlobais = ['Agachamento Livre', 'Supino Reto', 'Leg Press 45', 'Panturrilha em Pé', 'Prancha Abdominal'];
         let treinosDoAluno = [];
         let historicoTreinosAluno = [];
         let periodoRelatorioAtual = 'semanal';
@@ -324,9 +333,7 @@
 
         async function zerarHistoricoAlunoComConfirmacao() {
             if (!alunoSelecionado) return;
-            const confirmacao = confirm(`Deseja realmente ZERAR todo o histórico de treinos do aluno "${alunoSelecionado.nome}"?`);
-            if (!confirmacao) return;
-
+            if (!confirm(`Deseja realmente ZERAR todo o histórico de treinos do aluno "${alunoSelecionado.nome}"?`)) return;
             try {
                 const { error } = await supabaseClient.from('alunos').update({ historico: [] }).eq('id', alunoSelecionado.id);
                 if (error) throw error;
@@ -512,17 +519,13 @@
             const exerciciosUnicos = new Set();
             treinosDoAluno.forEach(t => (t.exercicios || []).forEach(e => exerciciosUnicos.add(e.nome)));
             historicoTreinosAluno.forEach(h => (h.exerciciosRealizados || []).forEach(e => exerciciosUnicos.add(e.nome)));
-
             select.innerHTML = `<option value="">Selecione um exercício...</option>` + Array.from(exerciciosUnicos).map(ex => `<option value="${ex}">${ex}</option>`).join('');
         }
 
         function renderizarGraficoProgressaoExercicio() {
             const nomeEx = document.getElementById('select-exercicio-progresso').value;
             const container = document.getElementById('container-progresso-detalhe');
-            if (!nomeEx) {
-                container.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">Selecione um exercício acima.</p>`;
-                return;
-            }
+            if (!nomeEx) { container.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">Selecione um exercício acima.</p>`; return; }
 
             let registros = [];
             historicoTreinosAluno.forEach(h => {
@@ -535,10 +538,7 @@
                 }
             });
 
-            if (registros.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">Nenhum registro encontrado para este exercício.</p>`;
-                return;
-            }
+            if (registros.length === 0) { container.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">Nenhum registro encontrado.</p>`; return; }
 
             container.innerHTML = registros.map(r => `
                 <div class="bg-black border border-slate-800 p-3 rounded-xl flex justify-between items-center text-xs">
@@ -554,8 +554,213 @@
             `).join('');
         }
 
-        function gerarRelatorioPDF() { window.print(); }
+        function verificarRegrasEquipamento() {
+            const eq = document.getElementById('select-equipamento-ex').value;
+            const blocoRpe = document.getElementById('bloco-exigir-rpe');
+            if (eq === 'Corporal') {
+                blocoRpe.classList.add('hidden');
+                document.getElementById('select-exige-rpe').value = 'nao';
+            } else {
+                blocoRpe.classList.remove('hidden');
+            }
+        }
 
+        function alternarVisibilidadeMetodoMacro(valor) {
+            const blocoModular = document.getElementById('bloco-configuracao-modular');
+            const blocoPiramideReps = document.getElementById('bloco-piramide-reps');
+            if (valor !== 'Nulo') {
+                blocoModular.classList.add('hidden');
+                blocoPiramideReps.classList.remove('hidden');
+            } else {
+                blocoModular.classList.remove('hidden');
+                blocoPiramideReps.classList.add('hidden');
+            }
+        }
+
+        function gerarCamposSeriesAdmin(qtd, valoresExistentes = []) {
+            const container = document.getElementById('container-config-series-admin');
+            let html = '';
+            for (let i = 1; i <= qtd; i++) {
+                const sData = valoresExistentes[i - 1] || {};
+                const metodoSel = sData.metodo || 'Série Normal';
+                const repsSel = sData.repsSugeridas || '10 a 12';
+                const descansoSel = sData.descanso || 90;
+
+                html += `
+                    <div class="bg-black border border-slate-800 p-2.5 rounded-xl space-y-1.5 serie-config-item" data-serie="${i}">
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-slate-400 text-xs w-4">${i}ª</span>
+                            <select onchange="atualizarMetodoSerieAdmin(this)" class="select-metodo-serie flex-1 bg-slate-900 border border-slate-800 rounded-lg p-1 text-[11px] text-slate-200 focus:outline-none">
+                                <option value="Série Normal" ${metodoSel==='Série Normal'?'selected':''}>Série Normal</option>
+                                <option value="Drop Set" ${metodoSel==='Drop Set'?'selected':''}>Drop-Set</option>
+                                <option value="Rest Pause" ${metodoSel==='Rest Pause'?'selected':''}>Rest-Pause</option>
+                                <option value="Cluster Set" ${metodoSel==='Cluster Set'?'selected':''}>Cluster Set</option>
+                                <option value="FST-7" ${metodoSel==='FST-7'?'selected':''}>FST-7</option>
+                            </select>
+                            <input type="text" value="${repsSel}" placeholder="Reps (ex: 10 a 12)" class="input-reps-sugeridas w-28 bg-slate-900 border border-slate-800 rounded p-1 text-center text-[10px] text-white">
+                            <div class="flex items-center gap-1">
+                                <input type="number" value="${descansoSel}" oninput="validarApenasNumeros(this)" class="input-descanso-serie w-10 bg-slate-900 border border-slate-800 rounded p-1 text-center text-xs text-af-orange font-bold">
+                                <span class="text-[9px] text-slate-500">s</span>
+                            </div>
+                        </div>
+                        <div class="box-detalhe-metodo hidden text-[10px] text-slate-400 pl-6"></div>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+            document.querySelectorAll('.select-metodo-serie').forEach(sel => atualizarMetodoSerieAdmin(sel));
+        }
+
+        function atualizarMetodoSerieAdmin(select) {
+            const box = select.parentElement.parentElement.querySelector('.box-detalhe-metodo');
+            const val = select.value;
+            if (val === 'Drop Set') {
+                box.classList.remove('hidden');
+                box.innerHTML = `Qtd de Drops: <input type="number" min="1" max="5" value="2" oninput="validarApenasNumeros(this)" class="input-qtd-drops w-12 bg-black border border-slate-800 rounded p-0.5 text-center text-white ml-1">`;
+            } else if (val === 'Rest Pause' || val === 'Cluster Set') {
+                box.classList.remove('hidden');
+                box.innerHTML = `Qtd Mini-Blocos: <input type="number" min="2" max="4" value="2" oninput="validarApenasNumeros(this)" class="input-qtd-blocos w-12 bg-black border border-slate-800 rounded p-0.5 text-center text-white ml-1">`;
+            } else if (val === 'FST-7') {
+                box.classList.remove('hidden');
+                box.innerHTML = `Qtd Séries: <input type="number" min="3" max="7" value="7" oninput="validarApenasNumeros(this)" class="input-qtd-fst7 w-12 bg-black border border-slate-800 rounded p-0.5 text-center text-white ml-1">`;
+            } else {
+                box.classList.add('hidden');
+                box.innerHTML = '';
+            }
+        }
+
+        function prepararEdicaoExercicio(idx) {
+            const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
+            if (!treino || !treino.exercicios[idx]) return;
+            const ex = treino.exercicios[idx];
+
+            indiceExercicioEditando = idx;
+            document.getElementById('input-busca-ex').value = ex.nome;
+            document.getElementById('select-musculo-ex').value = ex.musculo;
+            document.getElementById('select-equipamento-ex').value = ex.equipamento;
+            document.getElementById('input-qtd-series-ex').value = ex.qtdSeries;
+            document.getElementById('select-metodo-geral-ex').value = ex.metodoGeral || 'Nulo';
+            document.getElementById('select-exige-rpe').value = ex.exigeRpe !== false ? 'sim' : 'nao';
+            alternarVisibilidadeMetodoMacro(ex.metodoGeral || 'Nulo');
+
+            if (ex.metodoGeral && ex.metodoGeral !== 'Nulo') {
+                document.getElementById('input-reps-piramide').value = ex.repsPiramide || '10 a 12';
+            } else {
+                gerarCamposSeriesAdmin(ex.qtdSeries, ex.seriesConfig);
+            }
+            verificarRegrasEquipamento();
+
+            document.getElementById('titulo-modo-exercicio').innerText = 'Editar Exercício';
+            document.getElementById('btn-salvar-exercicio').innerText = 'Atualizar Exercício';
+            document.getElementById('btn-cancelar-edicao').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function cancelarEdicaoExercicio() {
+            indiceExercicioEditando = null;
+            document.getElementById('input-busca-ex').value = '';
+            document.getElementById('input-qtd-series-ex').value = '4';
+            document.getElementById('select-metodo-geral-ex').value = 'Nulo';
+            document.getElementById('select-exige-rpe').value = 'sim';
+            alternarVisibilidadeMetodoMacro('Nulo');
+            gerarCamposSeriesAdmin(4);
+            verificarRegrasEquipamento();
+            document.getElementById('titulo-modo-exercicio').innerText = 'Adicionar Exercício';
+            document.getElementById('btn-salvar-exercicio').innerText = 'Salvar Exercício na Divisão';
+            document.getElementById('btn-cancelar-edicao').classList.add('hidden');
+        }
+
+        async function salvarExercicioDefinitivo() {
+            const nome = document.getElementById('input-busca-ex').value.trim();
+            const musculo = document.getElementById('select-musculo-ex').value;
+            const equipamento = document.getElementById('select-equipamento-ex').value;
+            const qtdSeries = parseInt(document.getElementById('input-qtd-series-ex').value) || 4;
+            const metodoGeral = document.getElementById('select-metodo-geral-ex').value;
+            const exigeRpe = equipamento === 'Corporal' ? false : (document.getElementById('select-exige-rpe').value === 'sim');
+
+            if (!nome) { alert('Digite o nome do exercício!'); return; }
+            if (!baseExerciciosGlobais.includes(nome)) baseExerciciosGlobais.push(nome);
+
+            const seriesConfig = [];
+            let repsPiramide = '';
+
+            if (metodoGeral !== 'Nulo') {
+                repsPiramide = document.getElementById('input-reps-piramide').value.trim() || '10 a 12';
+                for (let i = 1; i <= qtdSeries; i++) {
+                    seriesConfig.push({ num: i, metodo: 'Série Normal', descanso: 90, repsSugeridas: repsPiramide });
+                }
+            } else {
+                document.querySelectorAll('.serie-config-item').forEach(item => {
+                    const num = item.getAttribute('data-serie');
+                    const metodo = item.querySelector('.select-metodo-serie').value;
+                    const descanso = parseInt(item.querySelector('.input-descanso-serie').value) || 90;
+                    const repsSugeridas = item.querySelector('.input-reps-sugeridas')?.value || '10 a 12';
+                    seriesConfig.push({ num, metodo, descanso, repsSugeridas });
+                });
+            }
+
+            const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
+            if (treino) {
+                if (!treino.exercicios) treino.exercicios = [];
+                const dadosEx = { nome, musculo, equipamento, qtdSeries, metodoGeral, repsPiramide, exigeRpe, seriesConfig };
+                if (indiceExercicioEditando !== null) {
+                    treino.exercicios[indiceExercicioEditando] = dadosEx;
+                } else {
+                    treino.exercicios.push(dadosEx);
+                }
+                cancelarEdicaoExercicio();
+                await salvarTreinosNoSupabase();
+                renderizarListaExerciciosDivisao();
+            }
+        }
+
+        function renderizarListaExerciciosDivisao() {
+            const container = document.getElementById('container-lista-exercicios-divisao');
+            const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
+            if (!treino || !treino.exercicios || treino.exercicios.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-600 text-center py-4">Nenhum exercício adicionado ainda.</p>`;
+                return;
+            }
+            container.innerHTML = treino.exercicios.map((ex, idx) => `
+                <div class="bg-black border border-slate-900 p-3 rounded-xl flex justify-between items-center text-xs">
+                    <div>
+                        <span class="text-[10px] text-af-orange font-bold uppercase">${ex.musculo} • ${ex.equipamento}</span>
+                        <div class="font-bold text-slate-200">${idx + 1}. ${ex.nome} (${ex.qtdSeries} Séries)</div>
+                        ${ex.metodoGeral && ex.metodoGeral !== 'Nulo' ? `<span class="text-[9px] text-amber-400 font-bold">Método: ${ex.metodoGeral}</span>` : ''}
+                    </div>
+                    <div class="flex gap-1.5">
+                        <button onclick="prepararEdicaoExercicio(${idx})" class="text-xs text-slate-300 bg-slate-900 border border-slate-800 px-2 py-1 rounded-lg">✏️</button>
+                        <button onclick="removerExercicioDivisao(${idx})" class="text-xs text-rose-400 bg-slate-900 border border-slate-800 px-2 py-1 rounded-lg">✕</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function removerExercicioDivisao(idx) {
+            const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
+            if (treino && treino.exercicios) {
+                treino.exercicios.splice(idx, 1);
+                await salvarTreinosNoSupabase();
+                renderizarListaExerciciosDivisao();
+            }
+        }
+
+        async function cadastrarAluno() {
+            const input = document.getElementById('nome-novo-aluno');
+            const nome = input.value.trim();
+            if (!nome) return;
+            const token = 'tok_' + Math.random().toString(36).substring(2, 10);
+            const { error } = await supabaseClient.from('alunos').insert([{ nome, token, treinos: [], historico: [] }]);
+            if (error) alert('Erro: ' + error.message);
+            else { input.value = ''; carregarAlunos(); }
+        }
+
+        function copiarLinkDirect(link) {
+            navigator.clipboard.writeText(link);
+            alert('Link do aluno copiado!');
+        }
+
+        function gerarRelatorioPDF() { window.print(); }
         function voltarParaLista() {
             alunoSelecionado = null;
             document.getElementById('view-detalhe-aluno').classList.add('hidden');
@@ -576,7 +781,7 @@
         async function renomearTreino(treinoId) {
             const treino = treinosDoAluno.find(t => t.id === treinoId);
             if (!treino) return;
-            const novoNome = prompt("Renomear divisão de treino:", treino.nome);
+            const novoNome = prompt("Renomear divisão:", treino.nome);
             if (!novoNome || !novoNome.trim()) return;
             treino.nome = novoNome.trim();
             await salvarTreinosNoSupabase();
@@ -584,7 +789,7 @@
         }
 
         async function excluirTreino(treinoId) {
-            if (!confirm("Deseja realmente apagar esta divisão de treino?")) return;
+            if (!confirm("Deseja realmente apagar esta divisão?")) return;
             treinosDoAluno = treinosDoAluno.filter(t => t.id !== treinoId);
             await salvarTreinosNoSupabase();
             renderizarTreinosAluno();
@@ -593,9 +798,8 @@
         async function salvarTreinosNoSupabase() {
             if (!alunoSelecionado) return;
             try {
-                const { error } = await supabaseClient.from('alunos').update({ treinos: treinosDoAluno }).eq('id', alunoSelecionado.id);
-                if (error) alert('Erro ao salvar: ' + error.message);
-                else atualizarHoraSincronizacao();
+                await supabaseClient.from('alunos').update({ treinos: treinosDoAluno }).eq('id', alunoSelecionado.id);
+                atualizarHoraSincronizacao();
             } catch (err) {}
         }
 
@@ -644,7 +848,7 @@
             if (!texto.trim()) { box.classList.add('hidden'); return; }
             const filtrados = baseExerciciosGlobais.filter(e => e.toLowerCase().includes(texto.toLowerCase()));
             if (filtrados.length === 0) { box.classList.add('hidden'); return; }
-            box.innerHTML = filtrados.map(f => `<div onclick="selecionarSugestaoExercicio('${f}')" class="p-2.5 hover:bg-slate-800 cursor-pointer text-xs text-slate-200 border-b border-slate-800/50">${f}</div>`).join('');
+            box.innerHTML = filtrados.map(f => `<div onclick="selecionarSugestaoExercicio('${f}')" class="p-2.5 hover:bg-slate-800 cursor-pointer text-xs text-slate-200">${f}</div>`).join('');
             box.classList.remove('hidden');
         }
 
@@ -653,141 +857,8 @@
             document.getElementById('sugestoes-autocomplete').classList.add('hidden');
         }
 
-        function gerarCamposSeriesAdmin(qtd, valoresExistentes = []) {
-            const container = document.getElementById('container-config-series-admin');
-            let html = '';
-            for (let i = 1; i <= qtd; i++) {
-                const sData = valoresExistentes[i - 1] || {};
-                const repsSel = sData.repsSugeridas || '10 a 12';
-                const descansoSel = sData.descanso || 90;
-
-                html += `
-                    <div class="bg-black border border-slate-800 p-2.5 rounded-xl space-y-1.5 serie-config-item" data-serie="${i}">
-                        <div class="flex items-center gap-2">
-                            <span class="font-bold text-slate-400 text-xs w-4">${i}ª</span>
-                            <input type="text" value="${repsSel}" placeholder="Reps / Tempo (ex: 12 ou 45s)" class="input-reps-sugeridas flex-1 bg-slate-900 border border-slate-800 rounded p-1 text-center text-[10px] text-white">
-                            <div class="flex items-center gap-1">
-                                <input type="number" value="${descansoSel}" oninput="validarApenasNumeros(this)" class="input-descanso-serie w-10 bg-slate-900 border border-slate-800 rounded p-1 text-center text-xs text-af-orange font-bold">
-                                <span class="text-[9px] text-slate-500">s</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-            container.innerHTML = html;
-        }
-
-        function prepararEdicaoExercicio(idx) {
-            const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
-            if (!treino || !treino.exercicios[idx]) return;
-            const ex = treino.exercicios[idx];
-
-            indiceExercicioEditando = idx;
-            document.getElementById('input-busca-ex').value = ex.nome;
-            document.getElementById('select-musculo-ex').value = ex.musculo;
-            document.getElementById('select-equipamento-ex').value = ex.equipamento;
-            document.getElementById('input-qtd-series-ex').value = ex.qtdSeries;
-            document.getElementById('select-exige-rpe').value = ex.exigeRpe !== false ? 'sim' : 'nao';
-            gerarCamposSeriesAdmin(ex.qtdSeries, ex.seriesConfig);
-
-            document.getElementById('titulo-modo-exercicio').innerText = 'Editar Exercício';
-            document.getElementById('btn-salvar-exercicio').innerText = 'Atualizar Exercício';
-            document.getElementById('btn-cancelar-edicao').classList.remove('hidden');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function cancelarEdicaoExercicio() {
-            indiceExercicioEditando = null;
-            document.getElementById('input-busca-ex').value = '';
-            document.getElementById('input-qtd-series-ex').value = '4';
-            document.getElementById('select-exige-rpe').value = 'sim';
-            gerarCamposSeriesAdmin(4);
-            document.getElementById('titulo-modo-exercicio').innerText = 'Adicionar Exercício';
-            document.getElementById('btn-salvar-exercicio').innerText = 'Salvar Exercício na Divisão';
-            document.getElementById('btn-cancelar-edicao').classList.add('hidden');
-        }
-
-        async function salvarExercicioDefinitivo() {
-            const nome = document.getElementById('input-busca-ex').value.trim();
-            const musculo = document.getElementById('select-musculo-ex').value;
-            const equipamento = document.getElementById('select-equipamento-ex').value;
-            const qtdSeries = parseInt(document.getElementById('input-qtd-series-ex').value) || 4;
-            const exigeRpe = document.getElementById('select-exige-rpe').value === 'sim';
-
-            if (!nome) { alert('Digite o nome do exercício!'); return; }
-            if (!baseExerciciosGlobais.includes(nome)) baseExerciciosGlobais.push(nome);
-
-            const seriesConfig = [];
-            document.querySelectorAll('.serie-config-item').forEach(item => {
-                const num = item.getAttribute('data-serie');
-                const descanso = parseInt(item.querySelector('.input-descanso-serie').value) || 90;
-                const repsSugeridas = item.querySelector('.input-reps-sugeridas')?.value || '10 a 12';
-                seriesConfig.push({ num, metodo: 'Série Normal', descanso, repsSugeridas });
-            });
-
-            const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
-            if (treino) {
-                if (!treino.exercicios) treino.exercicios = [];
-                const dadosEx = { nome, musculo, equipamento, qtdSeries, exigeRpe, seriesConfig };
-                if (indiceExercicioEditando !== null) {
-                    treino.exercicios[indiceExercicioEditando] = dadosEx;
-                } else {
-                    treino.exercicios.push(dadosEx);
-                }
-                cancelarEdicaoExercicio();
-                await salvarTreinosNoSupabase();
-                renderizarListaExerciciosDivisao();
-            }
-        }
-
-        function renderizarListaExerciciosDivisao() {
-            const container = document.getElementById('container-lista-exercicios-divisao');
-            const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
-            if (!treino || !treino.exercicios || treino.exercicios.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-600 text-center py-4">Nenhum exercício adicionado ainda.</p>`;
-                return;
-            }
-            container.innerHTML = treino.exercicios.map((ex, idx) => `
-                <div class="bg-black border border-slate-900 p-3 rounded-xl flex justify-between items-center text-xs">
-                    <div>
-                        <span class="text-[10px] text-af-orange font-bold uppercase">${ex.musculo} • ${ex.equipamento}</span>
-                        <div class="font-bold text-slate-200">${idx + 1}. ${ex.nome} (${ex.qtdSeries} Séries)</div>
-                        ${!ex.exigeRpe ? '<span class="text-[9px] text-amber-400 font-bold">Sem RPE (Alongamento/Corporal)</span>' : ''}
-                    </div>
-                    <div class="flex gap-1.5">
-                        <button onclick="prepararEdicaoExercicio(${idx})" class="text-xs text-slate-300 bg-slate-900 border border-slate-800 px-2 py-1 rounded-lg">✏️</button>
-                        <button onclick="removerExercicioDivisao(${idx})" class="text-xs text-rose-400 bg-slate-900 border border-slate-800 px-2 py-1 rounded-lg">✕</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        async function removerExercicioDivisao(idx) {
-            const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
-            if (treino && treino.exercicios) {
-                treino.exercicios.splice(idx, 1);
-                await salvarTreinosNoSupabase();
-                renderizarListaExerciciosDivisao();
-            }
-        }
-
-        async function cadastrarAluno() {
-            const input = document.getElementById('nome-novo-aluno');
-            const nome = input.value.trim();
-            if (!nome) return;
-            const token = 'tok_' + Math.random().toString(36).substring(2, 10);
-            const { error } = await supabaseClient.from('alunos').insert([{ nome, token, treinos: [], historico: [] }]);
-            if (error) alert('Erro: ' + error.message);
-            else { input.value = ''; carregarAlunos(); }
-        }
-
-        function copiarLinkDirect(link) {
-            navigator.clipboard.writeText(link);
-            alert('Link do aluno copiado!');
-        }
-
         window.onload = carregarAlunos;
     </script>
-<div style="position:fixed;bottom:2px;left:6px;font-size:9px;color:#475569;opacity:.6;pointer-events:none;z-index:50">v6-painel-completo</div>
+<div style="position:fixed;bottom:2px;left:6px;font-size:9px;color:#475569;opacity:.6;pointer-events:none;z-index:50">v7-metodos-restaurados</div>
 </body>
 </html>
