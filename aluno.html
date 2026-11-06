@@ -38,12 +38,25 @@
         </div>
     </header>
 
+    <!-- BARRA DE TIMER FLUTUANTE -->
     <div id="bar-timer-descanso" class="hidden fixed top-24 left-0 right-0 z-30 bg-orange-950/95 border-b border-af-orange backdrop-blur p-3 shadow-2xl">
         <div class="max-w-md mx-auto flex justify-between items-center text-xs">
             <span class="text-white font-bold flex items-center gap-1.5">
                 ⏱️ Descanso: <span id="display-tempo-timer" class="text-sm text-af-orange font-black">01:30</span>
             </span>
-            <button id="btn-folego-extra" onclick="adicionarTempoTimer(30)" class="bg-black text-af-orange text-[10px] px-2.5 py-1 rounded-lg font-bold border border-slate-800">+30s Fôlego (1x)</button>
+            <button onclick="adicionarTempoTimer(30)" class="bg-black text-af-orange text-[10px] px-2.5 py-1 rounded-lg font-bold border border-slate-800">+30s Fôlego</button>
+        </div>
+    </div>
+
+    <!-- MODAL EXPLICATIVO DE TÉCNICAS E MÉTODOS -->
+    <div id="modal-explicacao-metodo" class="fixed inset-0 bg-black/90 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-af-card border border-slate-800 rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 id="modal-titulo-metodo" class="font-bold text-sm text-af-orange uppercase">Entenda o Método</h3>
+                <button onclick="fecharModalMetodo()" class="text-slate-400 text-xs font-bold bg-black border border-slate-800 px-2.5 py-1 rounded-lg">✕</button>
+            </div>
+            <p id="modal-texto-metodo" class="text-xs text-slate-300 leading-relaxed"></p>
+            <button onclick="fecharModalMetodo()" class="w-full bg-af-orange text-black font-black py-2.5 rounded-xl text-xs">Entendi</button>
         </div>
     </div>
 
@@ -61,7 +74,7 @@
             <button onclick="selecionarRPE('9')" class="bg-af-card border border-slate-800 p-3 rounded-xl text-left"><div class="font-bold text-sm text-af-orange">RPE 9 - 1 Rep na Reserva</div></button>
             <button onclick="selecionarRPE('8')" class="bg-af-card border border-slate-800 p-3 rounded-xl text-left"><div class="font-bold text-sm text-slate-200">RPE 8 - 2 Reps na Reserva</div></button>
             <button onclick="selecionarRPE('7')" class="bg-af-card border border-slate-800 p-3 rounded-xl text-left"><div class="font-bold text-sm text-slate-300">RPE 7 - 3 Reps na Reserva</div></button>
-            <button onclick="selecionarRPE('5')" class="bg-af-card border border-slate-800 p-3 rounded-xl text-left"><div class="font-bold text-sm text-slate-400">RPE 1-5 - Esforço Leve / Aquecimento</div></button>
+            <button onclick="selecionarRPE('5')" class="bg-af-card border border-slate-800 p-3 rounded-xl text-left"><div class="font-bold text-sm text-slate-400">RPE 1-5 - Aquecimento / Leve</div></button>
         </div>
     </div>
 
@@ -83,7 +96,7 @@
                 <div class="bg-af-card border border-slate-800 rounded-2xl p-3.5 flex justify-between items-center text-xs">
                     <div>
                         <span class="text-[10px] uppercase font-bold text-slate-400 block">Volume Total da Sessão</span>
-                        <strong class="text-slate-200">Cargas x Repetições</strong>
+                        <strong class="text-slate-200">Cargas x Repetições Reais</strong>
                     </div>
                     <span class="text-af-orange font-black text-base" id="volume-total-aluno">0 kg</span>
                 </div>
@@ -99,7 +112,7 @@
         <div id="aba-atleta-relatorios" class="hidden space-y-4">
             <div class="bg-af-card border border-slate-800 rounded-2xl p-5 space-y-3 text-center">
                 <h3 class="font-bold text-sm text-af-orange uppercase">Resumo Mensal do Atleta</h3>
-                <p class="text-xs text-slate-400">Aqui você acompanha o seu progresso geral de volume e constância nos treinos prescritos.</p>
+                <p class="text-xs text-slate-400">Acompanhe seu volume e constância nos treinos.</p>
                 <div class="grid grid-cols-2 gap-2 pt-2">
                     <div class="bg-black p-3 rounded-xl border border-slate-800">
                         <span class="text-[10px] uppercase text-slate-500 font-bold block">Treinos Realizados</span>
@@ -125,6 +138,9 @@
         let historicoTreinosAluno = [];
         let treinoExecucaoAtual = null;
         let salvandoTreino = false;
+
+        let timerInterval = null;
+        let segundosRestantes = 0;
 
         function mudarAbaAtiva(aba) {
             if (aba === 'treinos') {
@@ -158,9 +174,7 @@
         }
 
         function atualizarEstatisticasRelatorio() {
-            let totalTreinos = 0;
-            let volumeTotalMes = 0;
-
+            let totalTreinos = 0, volumeTotalMes = 0;
             if (historicoTreinosAluno && historicoTreinosAluno.length > 0) {
                 const agora = new Date();
                 const doMes = historicoTreinosAluno.filter(h => {
@@ -171,7 +185,6 @@
                 totalTreinos = doMes.length;
                 volumeTotalMes = doMes.reduce((acc, h) => acc + (h.volume || 0), 0);
             }
-
             document.getElementById('stat-qtd-treinos').innerText = totalTreinos;
             document.getElementById('stat-vol-treinos').innerText = `${volumeTotalMes.toLocaleString('pt-BR')} kg`;
         }
@@ -218,28 +231,51 @@
             const container = document.getElementById('lista-exercicios-aluno');
             container.innerHTML = exercicios.map((ex, index) => {
                 const exigeRpe = ex.exigeRpe !== false;
-                const htmlSeries = (ex.seriesConfig || []).map(s => `
-                    <div class="bg-black border border-slate-800 p-2.5 rounded-xl space-y-2 serie-item" data-serie-concluida="false" data-exige-rpe="${exigeRpe}">
-                        <div class="flex items-center gap-1.5">
-                            <span class="w-4 text-center font-bold text-xs text-slate-400">${s.num}ª</span>
-                            <span class="text-[10px] text-slate-400">Meta: <strong>${s.repsSugeridas}</strong></span>
-                            <button onclick="toggleValidarSerie(this)" class="ml-auto bg-slate-900 border border-slate-800 text-slate-400 px-2.5 py-1 rounded-lg text-xs font-bold btn-check-serie">✔</button>
+                const metodoGeral = ex.metodoGeral || 'Nulo';
+                
+                let badgeMetodoHtml = '';
+                if (metodoGeral !== 'Nulo') {
+                    badgeMetodoHtml = `<span onclick="event.stopPropagation(); mostrarExplicacaoMetodo('${metodoGeral}')" class="text-[9px] bg-amber-950/80 text-amber-400 border border-amber-600/40 px-2 py-0.5 rounded font-black cursor-pointer uppercase">${metodoGeral} ℹ️</span>`;
+                }
+
+                const htmlSeries = (ex.seriesConfig || []).map(s => {
+                    const metodoSerie = s.metodo || 'Série Normal';
+                    let badgeSerieHtml = '';
+                    if (metodoGeral === 'Nulo') {
+                        badgeSerieHtml = `<span onclick="mostrarExplicacaoMetodo('${metodoSerie}')" class="text-[9px] bg-slate-900 text-af-orange border border-slate-800 px-1.5 py-0.5 rounded font-bold cursor-pointer">${metodoSerie} ℹ️</span>`;
+                    }
+
+                    return `
+                        <div class="bg-black border border-slate-800 p-2.5 rounded-xl space-y-2 serie-item" data-serie-concluida="false" data-exige-rpe="${exigeRpe}">
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="w-4 text-center font-bold text-xs text-slate-400">${s.num}ª</span>
+                                ${badgeSerieHtml}
+                                <span class="text-[10px] text-slate-400">Meta: <strong>${s.repsSugeridas}</strong></span>
+                                <button onclick="iniciarTimer(${s.descanso || 90})" class="ml-auto bg-slate-900 border border-slate-800 text-af-orange text-[10px] px-2 py-0.5 rounded-lg font-bold">⏱️ ${s.descanso || 90}s</button>
+                                <button onclick="toggleValidarSerie(this)" class="bg-slate-900 border border-slate-800 text-slate-400 px-2.5 py-1 rounded-lg text-xs font-bold btn-check-serie">✔</button>
+                            </div>
+                            <div class="grid grid-cols-${exigeRpe ? '3' : '2'} gap-2 items-center">
+                                <input type="number" step="0.5" oninput="calcularVolumeTotal()" class="w-full h-9 bg-slate-900 border border-slate-800 rounded-lg p-1 text-center text-xs font-bold text-white input-carga" placeholder="${ex.equipamento === 'Corporal' ? 'Corporal (0)' : 'Carga (kg)'}">
+                                <input type="number" oninput="calcularVolumeTotal()" class="w-full h-9 bg-slate-900 border border-slate-800 rounded-lg p-1 text-center text-xs font-bold text-white input-reps-reais" placeholder="Reps feitas">
+                                ${exigeRpe ? '<input readonly onclick="abrirRPEFullScreen(this)" type="text" class="w-full h-9 bg-slate-900 border border-slate-800 rounded-lg p-1 text-center text-xs font-bold text-af-orange cursor-pointer input-rpe" placeholder="RPE">' : ''}
+                            </div>
                         </div>
-                        <div class="grid grid-cols-${exigeRpe ? '2' : '1'} gap-2 items-center">
-                            <input type="number" step="0.5" oninput="calcularVolumeTotal()" class="w-full h-9 bg-slate-900 border border-slate-800 rounded-lg p-1 text-center text-sm font-bold text-white input-carga" placeholder="${ex.equipamento === 'Corporal' ? 'Peso corporal (0 se livre)' : 'Carga (kg)'}">
-                            ${exigeRpe ? '<input readonly onclick="abrirRPEFullScreen(this)" type="text" class="w-full h-9 bg-slate-900 border border-slate-800 rounded-lg p-1 text-center text-sm font-bold text-af-orange cursor-pointer input-rpe" placeholder="RPE">' : ''}
-                        </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
 
                 return `
                     <div class="bg-af-card border border-slate-800 rounded-2xl overflow-hidden shadow-md" data-nome-exercicio="${ex.nome}" data-musculo="${ex.musculo || ''}">
                         <div onclick="alternarColapsoExercicio(this)" class="p-3.5 bg-af-card flex justify-between items-center cursor-pointer select-none">
-                            <div>
-                                <span class="text-[10px] font-bold uppercase text-af-orange">${ex.musculo} • ${ex.equipamento}</span>
-                                <h3 class="font-bold text-xs text-slate-100">${index + 1}. ${ex.nome}</h3>
+                            <div class="flex items-center gap-2">
+                                <div>
+                                    <span class="text-[10px] font-bold uppercase text-af-orange">${ex.musculo} • ${ex.equipamento}</span>
+                                    <h3 class="font-bold text-xs text-slate-100">${index + 1}. ${ex.nome}</h3>
+                                </div>
                             </div>
-                            <span class="text-xs text-slate-400">▼</span>
+                            <div class="flex items-center gap-2">
+                                ${badgeMetodoHtml}
+                                <span class="text-xs text-slate-400">▼</span>
+                            </div>
                         </div>
                         <div class="p-2.5 border-t border-slate-800 space-y-2 bg-af-card">${htmlSeries}</div>
                     </div>
@@ -247,14 +283,69 @@
             }).join('');
         }
 
+        function mostrarExplicacaoMetodo(metodo) {
+            const modal = document.getElementById('modal-explicacao-metodo');
+            const titulo = document.getElementById('modal-titulo-metodo');
+            const texto = document.getElementById('modal-texto-metodo');
+            titulo.innerText = metodo;
+
+            let desc = '';
+            if (metodo === 'Pirâmide Crescente') {
+                desc = 'Na Pirâmide Crescente, você aumenta a carga a cada série e diminui um pouco as repetições, priorizando picos de força nas últimas séries.';
+            } else if (metodo === 'Pirâmide Decrescente') {
+                desc = 'Na Pirâmide Decrescente (Drop Set mecânico ou clássico), você começa com mais carga nas primeiras séries e vai reduzindo o peso nas séries seguintes mantendo ou subindo as repetições.';
+            } else if (metodo === 'Drop Set') {
+                desc = 'No Drop Set, ao atingir a falha na série principal, você reduz a carga imediatamente (cerca de 20% a 30%) e continua executando o exercício até a nova falha.';
+            } else if (metodo === 'Rest Pause') {
+                desc = 'No Rest Pause, você executa até a falha, descansa de 10 a 15 segundos respirando fundo e faz mais algumas repetições antes de encerrar a série.';
+            } else if (metodo === 'Cluster Set') {
+                desc = 'No Cluster Set, a série é dividida em mini-blocos com pequenos intervalos programados de 10 a 15 segundos entre eles, permitindo usar cargas mais elevadas.';
+            } else if (metodo === 'FST-7') {
+                desc = 'O FST-7 consiste em realizar 7 séries no final do exercício com intervalos curtos (30 a 45 segundos), visando o máximo estiramento da fáscia muscular e pump.';
+            } else {
+                desc = 'Série Normal com execução padrão orientada pelo seu personal trainer.';
+            }
+
+            texto.innerText = desc;
+            modal.classList.remove('hidden');
+        }
+
+        function fecharModalMetodo() { document.getElementById('modal-explicacao-metodo').classList.add('hidden'); }
+
+        function iniciarTimer(segundos) {
+            clearInterval(timerInterval);
+            segundosRestantes = segundos;
+            const barra = document.getElementById('bar-timer-descanso');
+            barra.classList.remove('hidden');
+            atualizarDisplayTimer();
+
+            timerInterval = setInterval(() => {
+                segundosRestantes--;
+                atualizarDisplayTimer();
+                if (segundosRestantes <= 0) {
+                    clearInterval(timerInterval);
+                    barra.classList.add('hidden');
+                }
+            }, 1000);
+        }
+
+        function adicionarTempoTimer(seg) { segundosRestantes += seg; atualizarDisplayTimer(); }
+
+        function atualizarDisplayTimer() {
+            const min = Math.floor(segundosRestantes / 60);
+            const sec = segundosRestantes % 60;
+            document.getElementById('display-tempo-timer').innerText = `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+        }
+
         function toggleValidarSerie(botao) {
             const serieItem = botao.closest('.serie-item');
             const exigeRpe = serieItem.getAttribute('data-exige-rpe') === 'true';
             const carga = serieItem.querySelector('.input-carga').value;
+            const reps = serieItem.querySelector('.input-reps-reais').value;
             const rpe = exigeRpe ? serieItem.querySelector('.input-rpe').value : 'N/A';
 
-            if (!carga || (exigeRpe && !rpe)) {
-                alert('Preencha os campos obrigatórios da série antes de validar!');
+            if (carga === '' || !reps || (exigeRpe && !rpe)) {
+                alert('Preencha a carga, as repetições reais e o RPE antes de validar a série!');
                 return;
             }
 
@@ -262,12 +353,12 @@
             if (!concluida) {
                 serieItem.setAttribute('data-serie-concluida', 'true');
                 serieItem.classList.add('border-emerald-500/80', 'bg-emerald-950/25');
-                botao.className = 'ml-auto bg-emerald-500 text-black px-2.5 py-1 rounded-lg text-xs font-bold btn-check-serie';
+                botao.className = 'bg-emerald-500 text-black px-2.5 py-1 rounded-lg text-xs font-bold btn-check-serie';
                 botao.innerText = '✔ Feito';
             } else {
                 serieItem.setAttribute('data-serie-concluida', 'false');
                 serieItem.classList.remove('border-emerald-500/80', 'bg-emerald-950/25');
-                botao.className = 'ml-auto bg-slate-900 border border-slate-800 text-slate-400 px-2.5 py-1 rounded-lg text-xs font-bold btn-check-serie';
+                botao.className = 'bg-slate-900 border border-slate-800 text-slate-400 px-2.5 py-1 rounded-lg text-xs font-bold btn-check-serie';
                 botao.innerText = '✔';
             }
             calcularVolumeTotal();
@@ -277,7 +368,8 @@
             let volumeTotal = 0;
             document.querySelectorAll('.serie-item').forEach(serie => {
                 const carga = parseFloat(serie.querySelector('.input-carga')?.value) || 0;
-                volumeTotal += carga;
+                const reps = parseFloat(serie.querySelector('.input-reps-reais')?.value) || 0;
+                volumeTotal += carga * reps;
             });
             document.getElementById('volume-total-aluno').innerText = `${volumeTotal.toLocaleString('pt-BR')} kg`;
         }
@@ -290,7 +382,7 @@
             if (salvandoTreino) return;
             let todasValidadas = true;
             document.querySelectorAll('.serie-item').forEach(s => { if (s.getAttribute('data-serie-concluida') !== 'true') todasValidadas = false; });
-            if (!todasValidadas) { alert('Valide todas as séries antes de finalizar!'); return; }
+            if (!todasValidadas) { alert('Valide todas as séries preenchendo carga e repetições reais antes de finalizar!'); return; }
 
             let volumeSessao = 0;
             let exerciciosRealizados = [];
@@ -301,11 +393,12 @@
                 let series = [];
                 cardEx.querySelectorAll('.serie-item').forEach(s => {
                     const carga = parseFloat(s.querySelector('.input-carga')?.value) || 0;
+                    const reps = parseFloat(s.querySelector('.input-reps-reais')?.value) || 0;
                     const rpe = s.querySelector('.input-rpe')?.value || 'N/A';
-                    volumeSessao += carga;
-                    series.push({ carga, rpe });
+                    volumeSessao += carga * reps;
+                    series.push({ carga, reps, rpe });
                 });
-                exerciciosRealizados.push({ nome, musculo, series });
+                exerciciosRealizados.push({ nome, musculo, volume: series.reduce((a, b) => a + (b.carga * b.reps), 0), series });
             });
 
             const novoRegistro = {
@@ -324,7 +417,7 @@
                 const hist = Array.isArray(data?.historico) ? data.historico : [];
                 hist.push(novoRegistro);
                 await supabaseClient.from('alunos').update({ historico: hist }).eq('id', alunoAtualId);
-                alert('Treino finalizado com sucesso! 🚀');
+                alert('Treino finalizado e salvo com sucesso! 🚀');
                 window.location.reload();
             } catch (e) {
                 salvandoTreino = false;
@@ -334,6 +427,6 @@
 
         window.onload = carregarDadosAluno;
     </script>
-<div style="position:fixed;bottom:2px;left:6px;font-size:9px;color:#475569;opacity:.6;pointer-events:none;z-index:50">v6-aluno-completo</div>
+<div style="position:fixed;bottom:2px;left:6px;font-size:9px;color:#475569;opacity:.6;pointer-events:none;z-index:50">v8-aluno-completo-timer</div>
 </body>
 </html>
