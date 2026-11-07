@@ -162,7 +162,7 @@
             </div>
         </div>
 
-        <!-- TELA 3: MONTAGEM DE EXERCÍCIOS (COM MÉTODOS COMPLETOS E REGRAS DE PESO CORPORAL) -->
+        <!-- TELA 3: MONTAGEM DE EXERCÍCIOS -->
         <div id="view-montar-exercicios" class="hidden space-y-4 no-print">
             <div class="flex items-center justify-between bg-af-card border border-slate-800 rounded-2xl p-4">
                 <button onclick="voltarParaTreinos()" class="bg-black text-slate-400 px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-800">← Voltar</button>
@@ -222,7 +222,6 @@
                         </div>
                     </div>
 
-                    <!-- Exigir RPE (Desativado automaticamente se for corporal livre sem carga) -->
                     <div id="bloco-exigir-rpe">
                         <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Exigir RPE do Aluno?</label>
                         <select id="select-exige-rpe" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-slate-200 font-bold">
@@ -370,9 +369,13 @@
         }
 
         function calcularEvolucaoRecenteAdmin() {
+            // Filtro rigoroso: desconta sessões de treinos que já foram excluídos
+            const idsTreinosAtivos = new Set(treinosDoAluno.map(t => t.id));
+            const historicoValido = historicoTreinosAluno.filter(h => !h.treinoId || idsTreinosAtivos.has(h.treinoId));
+
             let mais = 0, mesmo = 0, menos = 0;
-            if (historicoTreinosAluno && historicoTreinosAluno.length > 0) {
-                historicoTreinosAluno.forEach(h => {
+            if (historicoValido && historicoValido.length > 0) {
+                historicoValido.forEach(h => {
                     if (h.comparativo === 'mais') mais++;
                     else if (h.comparativo === 'menos') menos++;
                     else mesmo++;
@@ -387,6 +390,7 @@
             if (!alunoSelecionado) return;
             const { data, error } = await supabaseClient.from('alunos').select('treinos, historico').eq('id', alunoSelecionado.id).single();
             if (error) return;
+            treinosDoAluno = (data && data.treinos) ? data.treinos : [];
             historicoTreinosAluno = (data && data.historico && Array.isArray(data.historico)) ? data.historico : [];
             atualizarHoraSincronizacao();
         }
@@ -433,11 +437,15 @@
         }
 
         function atualizarRelatoriosAdmin() {
+            // Ignora automaticamente sessões de treinos que foram apagados do painel
+            const idsTreinosAtivos = new Set(treinosDoAluno.map(t => t.id));
+            const historicoValido = historicoTreinosAluno.filter(h => !h.treinoId || idsTreinosAtivos.has(h.treinoId));
+
             const mapaMusculo = {};
             treinosDoAluno.forEach(t => (t.exercicios || []).forEach(e => { if (e.musculo) mapaMusculo[e.nome.toLowerCase()] = e.musculo; }));
 
             const agora = new Date();
-            const historicoFiltrado = historicoTreinosAluno.filter(h => {
+            const historicoFiltrado = historicoValido.filter(h => {
                 if (!h.data) return false;
                 const d = new Date(h.data);
                 if (periodoRelatorioAtual === 'semanal') {
@@ -518,7 +526,11 @@
             const select = document.getElementById('select-exercicio-progresso');
             const exerciciosUnicos = new Set();
             treinosDoAluno.forEach(t => (t.exercicios || []).forEach(e => exerciciosUnicos.add(e.nome)));
-            historicoTreinosAluno.forEach(h => (h.exerciciosRealizados || []).forEach(e => exerciciosUnicos.add(e.nome)));
+            
+            const idsTreinosAtivos = new Set(treinosDoAluno.map(t => t.id));
+            const historicoValido = historicoTreinosAluno.filter(h => !h.treinoId || idsTreinosAtivos.has(h.treinoId));
+            historicoValido.forEach(h => (h.exerciciosRealizados || []).forEach(e => exerciciosUnicos.add(e.nome)));
+            
             select.innerHTML = `<option value="">Selecione um exercício...</option>` + Array.from(exerciciosUnicos).map(ex => `<option value="${ex}">${ex}</option>`).join('');
         }
 
@@ -527,8 +539,11 @@
             const container = document.getElementById('container-progresso-detalhe');
             if (!nomeEx) { container.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">Selecione um exercício acima.</p>`; return; }
 
+            const idsTreinosAtivos = new Set(treinosDoAluno.map(t => t.id));
+            const historicoValido = historicoTreinosAluno.filter(h => !h.treinoId || idsTreinosAtivos.has(h.treinoId));
+
             let registros = [];
-            historicoTreinosAluno.forEach(h => {
+            historicoValido.forEach(h => {
                 const exR = (h.exerciciosRealizados || []).find(e => e.nome.toLowerCase() === nomeEx.toLowerCase());
                 if (exR) {
                     const dataFmt = new Date(h.data).toLocaleDateString('pt-BR');
@@ -789,10 +804,12 @@
         }
 
         async function excluirTreino(treinoId) {
-            if (!confirm("Deseja realmente apagar esta divisão?")) return;
+            if (!confirm("Deseja realmente apagar esta divisão? O histórico vinculado a ela será debitado dos relatórios.")) return;
             treinosDoAluno = treinosDoAluno.filter(t => t.id !== treinoId);
             await salvarTreinosNoSupabase();
             renderizarTreinosAluno();
+            atualizarRelatoriosAdmin();
+            calcularEvolucaoRecenteAdmin();
         }
 
         async function salvarTreinosNoSupabase() {
@@ -848,7 +865,7 @@
             if (!texto.trim()) { box.classList.add('hidden'); return; }
             const filtrados = baseExerciciosGlobais.filter(e => e.toLowerCase().includes(texto.toLowerCase()));
             if (filtrados.length === 0) { box.classList.add('hidden'); return; }
-            box.innerHTML = filtrados.map(f => `<div onclick="selecionarSugestaoExercicio('${f}')" class="p-2.5 hover:bg-slate-800 cursor-pointer text-xs text-slate-200">${f}</div>`).join('');
+            box.innerHTML = filtrados.map(f => `<div onclick="selecionarSugestaoExercicio('${f}')" class="p-2.5 hover:bg-slate-800 cursor-pointer text-xs text-slate-200 border-b border-slate-800/50">${f}</div>`).join('');
             box.classList.remove('hidden');
         }
 
@@ -859,6 +876,6 @@
 
         window.onload = carregarAlunos;
     </script>
-<div style="position:fixed;bottom:2px;left:6px;font-size:9px;color:#475569;opacity:.6;pointer-events:none;z-index:50">v7-metodos-restaurados</div>
+<div style="position:fixed;bottom:2px;left:6px;font-size:9px;color:#475569;opacity:.6;pointer-events:none;z-index:50">v12-painel-debito-automatico</div>
 </body>
 </html>
