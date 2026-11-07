@@ -38,7 +38,7 @@
         </div>
     </header>
 
-    <!-- BARRA DE TIMER FLUTUANTE SEM BOTÃO PARAR -->
+    <!-- BARRA DE TIMER FLUTUANTE -->
     <div id="bar-timer-descanso" class="hidden fixed top-24 left-0 right-0 z-30 bg-orange-950/95 border-b border-af-orange backdrop-blur p-3 shadow-2xl">
         <div class="max-w-md mx-auto flex justify-between items-center text-xs">
             <span class="text-white font-bold flex items-center gap-1.5">
@@ -270,6 +270,20 @@
             body.classList.toggle('hidden');
         }
 
+        // BUSCA O HISTÓRICO ANTERIOR DAQUELA SÉRIE ESPECÍFICA DO EXERCÍCIO
+        function buscarDadosAnterioresSerie(nomeExercicio, numeroSerie) {
+            if (!historicoTreinosAluno || historicoTreinosAluno.length === 0) return null;
+            // Percorre do mais recente para o mais antigo
+            for (let i = historicoTreinosAluno.length - 1; i >= 0; i--) {
+                const sessao = historicoTreinosAluno[i];
+                const exRealizado = (sessao.exerciciosRealizados || []).find(e => e.nome.toLowerCase() === nomeExercicio.toLowerCase());
+                if (exRealizado && exRealizado.series && exRealizado.series[numeroSerie - 1]) {
+                    return exRealizado.series[numeroSerie - 1];
+                }
+            }
+            return null;
+        }
+
         function renderizarExerciciosAluno(exercicios) {
             const container = document.getElementById('lista-exercicios-aluno');
             container.innerHTML = exercicios.map((ex, index) => {
@@ -288,6 +302,10 @@
                         badgeSerieHtml = `<span onclick="mostrarExplicacaoMetodo('${metodoSerie}')" class="text-[9px] bg-slate-900 text-af-orange border border-slate-800 px-1.5 py-0.5 rounded font-bold cursor-pointer">${metodoSerie} ℹ️</span>`;
                     }
 
+                    // Busca dados anteriores salvos para esta série
+                    const anterior = buscarDadosAnterioresSerie(ex.nome, s.num);
+                    const textoAnterior = anterior ? `Último: ${anterior.carga}kg • ${anterior.reps} reps (RPE ${anterior.rpe})` : 'Sem registro anterior';
+
                     return `
                         <div class="bg-black border border-slate-800 p-2.5 rounded-xl space-y-2 serie-item" data-serie-concluida="false" data-exige-rpe="${exigeRpe}">
                             <div class="flex items-center gap-1.5 flex-wrap">
@@ -296,6 +314,9 @@
                                 <span class="text-[10px] text-slate-400">Meta: <strong>${s.repsSugeridas}</strong></span>
                                 <button onclick="iniciarTimer(${s.descanso || 90})" class="ml-auto bg-slate-900 border border-slate-800 text-af-orange text-[10px] px-2 py-0.5 rounded-lg font-bold">⏱️ ${s.descanso || 90}s</button>
                                 <button onclick="toggleValidarSerie(this)" class="bg-slate-900 border border-slate-800 text-slate-400 px-2.5 py-1 rounded-lg text-xs font-bold btn-check-serie">✔</button>
+                            </div>
+                            <div class="text-[10px] text-emerald-400 font-medium bg-emerald-950/30 px-2 py-1 rounded border border-emerald-900/40">
+                                📊 ${textoAnterior}
                             </div>
                             <div class="grid grid-cols-${exigeRpe ? '3' : '2'} gap-2 items-center">
                                 <input type="number" step="0.5" oninput="calcularVolumeTotal()" class="w-full h-9 bg-slate-900 border border-slate-800 rounded-lg p-1 text-center text-xs font-bold text-white input-carga" placeholder="${ex.equipamento === 'Corporal' ? 'Corporal (0)' : 'Carga (kg)'}">
@@ -354,27 +375,21 @@
 
         function fecharModalMetodo() { document.getElementById('modal-explicacao-metodo').classList.add('hidden'); }
 
-        // GERENCIADOR DE ÁUDIO BEM ALTO E DISPARO
         function prepararAudioContext() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
         }
 
         function tocarAlarmeAlto() {
             try {
                 prepararAudioContext();
-                // Toca um bipe duplo bem alto e agudo
                 [0, 350, 700].forEach(delay => {
                     setTimeout(() => {
                         const osc = audioCtx.createOscillator();
                         const gain = audioCtx.createGain();
-                        osc.type = 'sawtooth'; // Som forte
-                        osc.frequency.setValueAtTime(1050, audioCtx.currentTime); // Agudo
-                        gain.gain.setValueAtTime(1.0, audioCtx.currentTime); // Volume máximo
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(1050, audioCtx.currentTime);
+                        gain.gain.setValueAtTime(1.0, audioCtx.currentTime);
                         gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
                         osc.connect(gain);
                         gain.connect(audioCtx.destination);
@@ -516,7 +531,6 @@
                 hist.push(novoRegistro);
                 await supabaseClient.from('alunos').update({ historico: hist }).eq('id', alunoAtualId);
 
-                // EXIBIR O RELATÓRIO PÓS-TREINO NA TELA
                 document.getElementById('relatorio-nome-treino').innerText = treinoExecucaoAtual?.nome || 'Treino';
                 document.getElementById('relatorio-data-hora').innerText = new Date().toLocaleString('pt-BR');
                 document.getElementById('relatorio-volume-total').innerText = `${volumeSessao.toLocaleString('pt-BR')} kg`;
@@ -551,6 +565,6 @@
 
         window.onload = carregarDadosAluno;
     </script>
-<div style="position:fixed;bottom:2px;left:6px;font-size:9px;color:#475569;opacity:.6;pointer-events:none;z-index:50">v10-aluno-relatorio-som</div>
+<div style="position:fixed;bottom:2px;left:6px;font-size:9px;color:#475569;opacity:.6;pointer-events:none;z-index:50">v11-aluno-historico-anterior</div>
 </body>
 </html>
