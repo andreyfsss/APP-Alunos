@@ -281,6 +281,8 @@
         let subAbaRelatorioAtual = 'peso';
         let grupoMuscularFiltroAtivo = null;
 
+        const MUSCULOS_SEM_CARGA = ['Abdômen', 'Alongamentos'];
+
         function atualizarHoraSincronizacao() {
             const agora = new Date();
             document.getElementById('status-sincronizacao').innerText = `Sincronizado ${agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
@@ -540,6 +542,14 @@
             select.innerHTML = `<option value="">Selecione um exercício...</option>` + Array.from(exerciciosUnicos).map(ex => `<option value="${ex}">${ex}</option>`).join('');
         }
 
+        function formatarTempo(seg) {
+            seg = Math.max(0, Math.round(seg || 0));
+            const m = Math.floor(seg / 60), s = seg % 60;
+            if (m && s) return `${m}min ${s}s`;
+            if (m) return `${m}min`;
+            return `${s}s`;
+        }
+
         function renderizarGraficoProgressaoExercicio() {
             const nomeEx = document.getElementById('select-exercicio-progresso').value;
             const container = document.getElementById('container-progresso-detalhe');
@@ -600,7 +610,6 @@
                 blocoMetodoGeral.classList.remove('hidden');
                 blocoRpe.classList.remove('hidden');
             }
-            // as caixinhas por série dependem do grupamento (abdômen não tem método/carga)
             const qtd = parseInt(document.getElementById('input-qtd-series-ex').value) || 4;
             gerarCamposSeriesAdmin(qtd, lerSeriesAdminAtuais());
         }
@@ -629,17 +638,6 @@
             }
         }
 
-        const MUSCULOS_SEM_CARGA = ['Abdômen', 'Alongamentos'];
-
-        function formatarTempo(seg) {
-            seg = Math.max(0, Math.round(seg || 0));
-            const m = Math.floor(seg / 60), s = seg % 60;
-            if (m && s) return `${m}min ${s}s`;
-            if (m) return `${m}min`;
-            return `${s}s`;
-        }
-
-        // aceita "30s", "1min 30s", "1:30", "90"
         function parseTempoTexto(txt) {
             if (txt === undefined || txt === null) return 30;
             const t = String(txt).toLowerCase().trim();
@@ -667,7 +665,7 @@
             item.querySelector('.bloco-meta-tempo').classList.toggle('hidden', tipo !== 'tempo');
             item.querySelectorAll('.btn-tipo').forEach(b => {
                 const ativo = b.getAttribute('data-tipo') === tipo;
-                b.className = 'btn-tipo px-3 py-1.5 rounded-lg transition-all ' + (ativo ? 'bg-af-orange text-black' : 'text-slate-400');
+                b.className = 'btn-tipo px-3 py-1.5 rounded-lg transition-all ' + (ativo ? 'bg-af-orange text-black font-bold' : 'text-slate-400 font-semibold');
             });
         }
 
@@ -709,7 +707,7 @@
                                 <option value="Cluster Set" ${metodoSel==='Cluster Set'?'selected':''}>Cluster Set</option>
                                 <option value="FST-7" ${metodoSel==='FST-7'?'selected':''}>FST-7</option>
                             </select>`}
-                            <div class="flex shrink-0 bg-black border border-slate-700 rounded-xl p-0.5 text-[11px] font-bold">
+                            <div class="flex shrink-0 bg-black border border-slate-700 rounded-xl p-0.5 text-[11px]">
                                 <button type="button" data-tipo="reps" onclick="definirTipoMeta(this,'reps')" class="btn-tipo">Reps</button>
                                 <button type="button" data-tipo="tempo" onclick="definirTipoMeta(this,'tempo')" class="btn-tipo">Tempo</button>
                             </div>
@@ -1009,6 +1007,6 @@
 
         window.onload = carregarAlunos;
     </script>
-<div style="position:fixed;bottom:2px;left:6px;font-size:9px;color:#475569;opacity:.6;pointer-events:none;z-index:50">v14-abdomen-reps-tempo</div>
+<div style="position:fixed;bottom:2px;left:6px;font-size:9px;color:#475569;opacity:.6;pointer-events:none;z-index:50">v15-painel-tempo-corrigido</div>
 </body>
 </html>

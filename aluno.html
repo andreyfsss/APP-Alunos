@@ -48,10 +48,10 @@
         </div>
     </div>
 
-    <!-- MODAL RELATÓRIO PÓS-TREINO -->
+    <!-- MODAL RELATÓRIO PÓS-TREINO (ESTILO DASHBOARD) -->
     <div id="modal-relatorio-pos-treino" class="fixed inset-0 bg-black/95 backdrop-blur-md hidden z-50 flex flex-col p-4 overflow-y-auto">
         <div class="max-w-md w-full mx-auto space-y-4 my-auto">
-            <div class="bg-af-card border border-slate-800 rounded-3xl p-5 space-y-4 text-center shadow-2xl">
+            <div class="bg-af-card border border-slate-800 rounded-3xl p-5 space-y-4 shadow-2xl">
                 <div class="w-12 h-12 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-2xl flex items-center justify-center text-2xl mx-auto">
                     🏆
                 </div>
@@ -62,18 +62,18 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-2 pt-2">
-                    <div class="bg-black border border-slate-800 p-3 rounded-2xl">
-                        <span class="text-[9px] uppercase font-bold text-slate-500 block">Volume da Sessão</span>
-                        <strong id="relatorio-volume-total" class="text-base font-black text-af-orange">0 kg</strong>
+                    <div class="bg-black border border-slate-800 p-3.5 rounded-2xl text-center">
+                        <span class="text-[9px] uppercase font-bold text-slate-500 block mb-1">Volume da Sessão</span>
+                        <strong id="relatorio-volume-total" class="text-lg font-black text-af-orange">0 kg</strong>
                     </div>
-                    <div class="bg-black border border-slate-800 p-3 rounded-2xl">
-                        <span class="text-[9px] uppercase font-bold text-slate-500 block">Séries Feitas</span>
-                        <strong id="relatorio-qtd-series" class="text-base font-black text-white">0</strong>
+                    <div class="bg-black border border-slate-800 p-3.5 rounded-2xl text-center">
+                        <span class="text-[9px] uppercase font-bold text-slate-500 block mb-1">Séries Validadas</span>
+                        <strong id="relatorio-qtd-series" class="text-lg font-black text-white">0</strong>
                     </div>
                 </div>
 
                 <div class="text-left space-y-2 pt-2 border-t border-slate-800">
-                    <h3 class="font-bold text-xs uppercase text-slate-300">Resumo por Exercício</h3>
+                    <h3 class="font-bold text-xs uppercase text-slate-300">Painel de Resumo por Exercício</h3>
                     <div id="relatorio-lista-exercicios" class="space-y-1.5 text-xs max-h-52 overflow-y-auto pr-1"></div>
                 </div>
 
@@ -120,6 +120,7 @@
     </div>
 
     <main class="flex-1 max-w-md w-full mx-auto p-3 md:p-4 space-y-4 pb-24">
+        <!-- ABA TREINOS -->
         <div id="aba-atleta-treinos" class="space-y-4">
             <div id="view-divisoes-aluno" class="space-y-3">
                 <h2 class="font-bold text-xs uppercase tracking-wider text-slate-400 px-1">Seu Treino de Hoje</h2>
@@ -150,19 +151,54 @@
             </div>
         </div>
 
+        <!-- ABA RELATÓRIOS DO ATLETA (ESTILO DASHBOARD COMPLETO) -->
         <div id="aba-atleta-relatorios" class="hidden space-y-4">
-            <div class="bg-af-card border border-slate-800 rounded-2xl p-5 space-y-3 text-center">
-                <h3 class="font-bold text-sm text-af-orange uppercase">Resumo Mensal do Atleta</h3>
-                <p class="text-xs text-slate-400">Acompanhe seu volume e constância nos treinos.</p>
-                <div class="grid grid-cols-2 gap-2 pt-2">
-                    <div class="bg-black p-3 rounded-xl border border-slate-800">
-                        <span class="text-[10px] uppercase text-slate-500 font-bold block">Treinos Realizados</span>
-                        <strong class="text-lg text-white" id="stat-qtd-treinos">0</strong>
+            <!-- PAINEL GERAL DO MÊS -->
+            <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3 shadow-lg">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                    <h3 class="font-black text-xs uppercase tracking-wider text-af-orange">📊 Dashboard do Atleta</h3>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase bg-black px-2 py-0.5 rounded border border-slate-800">Mês Atual</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="bg-black p-3.5 rounded-xl border border-slate-800 text-center">
+                        <span class="text-[9px] uppercase text-slate-500 font-bold block mb-1">Treinos Realizados</span>
+                        <strong class="text-xl font-black text-white" id="stat-qtd-treinos">0</strong>
                     </div>
-                    <div class="bg-black p-3 rounded-xl border border-slate-800">
-                        <span class="text-[10px] uppercase text-slate-500 font-bold block">Volume Total (Mês)</span>
-                        <strong class="text-lg text-af-orange" id="stat-vol-treinos">0 kg</strong>
+                    <div class="bg-black p-3.5 rounded-xl border border-slate-800 text-center">
+                        <span class="text-[9px] uppercase text-slate-500 font-bold block mb-1">Volume Total (Mês)</span>
+                        <strong class="text-xl font-black text-af-orange" id="stat-vol-treinos">0 kg</strong>
                     </div>
+                </div>
+            </div>
+
+            <!-- FILTRO DE PERÍODO E SUB-ABAS DO DASHBOARD -->
+            <div class="flex gap-1.5 bg-black p-1 rounded-xl border border-slate-800 text-xs font-bold text-center">
+                <button onclick="mudarPeriodoAtletaRelatorio('semanal')" id="btn-atleta-semanal" class="flex-1 py-1.5 rounded-lg bg-af-orange text-black transition-all">📅 Semanal</button>
+                <button onclick="mudarPeriodoAtletaRelatorio('mensal')" id="btn-atleta-mensal" class="flex-1 py-1.5 rounded-lg text-slate-400 transition-all">📆 Mensal</button>
+            </div>
+
+            <div class="flex gap-1 bg-af-card p-1 rounded-xl border border-slate-800 text-[10px] font-bold text-center">
+                <button onclick="mudarSubAbaAtletaRelatorio('peso')" id="subtab-atleta-peso" class="flex-1 py-1.5 rounded-lg bg-af-orange text-black">🏋️ Volume</button>
+                <button onclick="mudarSubAbaAtletaRelatorio('series')" id="subtab-atleta-series" class="flex-1 py-1.5 rounded-lg text-slate-400">🔢 Séries</button>
+                <button onclick="mudarSubAbaAtletaRelatorio('grupos')" id="subtab-atleta-grupos" class="flex-1 py-1.5 rounded-lg text-slate-400">🎯 Grupamentos</button>
+            </div>
+
+            <!-- CONTAINER DINÂMICO DO DASHBOARD DE RELATÓRIO -->
+            <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3">
+                <div class="text-center border-b border-slate-800 pb-2.5">
+                    <span id="atleta-label-periodo-ativo" class="text-[10px] font-bold text-af-orange uppercase tracking-wider block">Relatório Semanal</span>
+                </div>
+                <div id="atleta-relatorio-conteudo-dinamico" class="space-y-2.5"></div>
+            </div>
+
+            <!-- DASHBOARD DE PROGRESSÃO POR EXERCÍCIO -->
+            <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3">
+                <h3 class="font-bold text-xs uppercase text-af-orange">📈 Progresso por Exercício</h3>
+                <select id="select-atleta-exercicio-progresso" onchange="renderizarAtletaGraficoProgressoExercicio()" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-slate-200 text-xs">
+                    <option value="">Selecione um exercício...</option>
+                </select>
+                <div id="container-atleta-progresso-detalhe" class="space-y-2 pt-2">
+                    <p class="text-xs text-slate-500 text-center py-4">Selecione um exercício acima para ver o seu histórico.</p>
                 </div>
             </div>
         </div>
@@ -185,8 +221,6 @@
         let audioCtx = null;
         let folegoUsado = false;
 
-        // Alarme com tela travada: toca um áudio (silêncio + bipes) que o iOS mantém rodando em segundo plano.
-        // Efeito colateral: pausa a música do celular durante o descanso. Troque para false para desligar.
         const ALARME_COM_TELA_TRAVADA = true;
         let fimTimerMs = 0;
         let alarmeTocado = true;
@@ -194,6 +228,10 @@
         let audioAlarme = null;
         let urlAudioAlarme = null;
         let audioAlarmeAtivo = false;
+
+        let periodoAtletaRelatorioAtual = 'semanal';
+        let subAbaAtletaRelatorioAtual = 'peso';
+        let grupoMuscularAtletaFiltroAtivo = null;
 
         const MUSCULOS_SEM_CARGA = ['Abdômen', 'Alongamentos'];
 
@@ -214,7 +252,6 @@
             return txt;
         }
 
-        // só conta o histórico de treinos que ainda existem na ficha (igual ao painel do personal)
         function historicoValidoDoAluno() {
             const ids = new Set((treinosDoAlunoCarregados || []).map(t => t.id));
             return (historicoTreinosAluno || []).filter(h => !h.treinoId || ids.has(h.treinoId));
@@ -232,6 +269,8 @@
                 document.getElementById('tab-atleta-relatorios').className = 'flex-1 py-1.5 px-3 rounded-xl font-bold bg-af-orange text-black';
                 document.getElementById('tab-atleta-treinos').className = 'flex-1 py-1.5 px-3 rounded-xl font-bold bg-black text-slate-400 border border-slate-800';
                 atualizarEstatisticasRelatorio();
+                popularSelectAtletaExerciciosProgresso();
+                atualizarRelatoriosAtletaDashboard();
             }
         }
 
@@ -266,6 +305,154 @@
             }
             document.getElementById('stat-qtd-treinos').innerText = totalTreinos;
             document.getElementById('stat-vol-treinos').innerText = `${volumeTotalMes.toLocaleString('pt-BR')} kg`;
+        }
+
+        function mudarPeriodoAtletaRelatorio(periodo) {
+            periodoAtletaRelatorioAtual = periodo;
+            document.getElementById('btn-atleta-semanal').className = periodo === 'semanal' ? 'flex-1 py-1.5 rounded-lg bg-af-orange text-black font-bold transition-all' : 'flex-1 py-1.5 rounded-lg text-slate-400 font-bold transition-all';
+            document.getElementById('btn-atleta-mensal').className = periodo === 'mensal' ? 'flex-1 py-1.5 rounded-lg bg-af-orange text-black font-bold transition-all' : 'flex-1 py-1.5 rounded-lg text-slate-400 font-bold transition-all';
+            document.getElementById('atleta-label-periodo-ativo').innerText = periodo === 'semanal' ? 'Relatório Semanal (Últimos 7 dias)' : 'Relatório Mensal (Mês Atual)';
+            atualizarRelatoriosAtletaDashboard();
+        }
+
+        function mudarSubAbaAtletaRelatorio(sub) {
+            subAbaAtletaRelatorioAtual = sub;
+            grupoMuscularAtletaFiltroAtivo = null;
+            ['peso', 'series', 'grupos'].forEach(s => {
+                document.getElementById(`subtab-atleta-${s}`).className = s === sub ? 'flex-1 py-1.5 rounded-lg bg-af-orange text-black font-bold' : 'flex-1 py-1.5 rounded-lg text-slate-400 font-bold';
+            });
+            atualizarRelatoriosAtletaDashboard();
+        }
+
+        function atualizarRelatoriosAtletaDashboard() {
+            const validos = historicoValidoDoAluno();
+            const mapaMusculo = {};
+            treinosDoAlunoCarregados.forEach(t => (t.exercicios || []).forEach(e => { if (e.musculo) mapaMusculo[e.nome.toLowerCase()] = e.musculo; }));
+
+            const agora = new Date();
+            const historicoFiltrado = validos.filter(h => {
+                if (!h.data) return false;
+                const d = new Date(h.data);
+                if (periodoAtletaRelatorioAtual === 'semanal') {
+                    const seteDiasAtras = new Date();
+                    seteDiasAtras.setDate(agora.getDate() - 7);
+                    return d >= seteDiasAtras && d <= agora;
+                } else {
+                    return d.getMonth() === agora.getMonth() && d.getFullYear() === agora.getFullYear();
+                }
+            });
+
+            const grupos = {};
+            let volTotal = 0, totalSeries = 0;
+
+            historicoFiltrado.forEach(h => {
+                volTotal += h.volume || 0;
+                totalSeries += h.qtdSeriesValidadas || 0;
+                (h.exerciciosRealizados || []).forEach(exR => {
+                    const musculo = exR.musculo || mapaMusculo[(exR.nome || '').toLowerCase()] || 'Outros';
+                    const g = grupos[musculo] || (grupos[musculo] = { volume: 0, series: 0 });
+                    const volEx = (typeof exR.volume === 'number') ? exR.volume : (exR.series || []).reduce((s, x) => s + (x.carga || 0) * (x.reps || 0), 0);
+                    g.volume += volEx;
+                    g.series += (exR.series || []).length;
+                });
+            });
+
+            const container = document.getElementById('atleta-relatorio-conteudo-dinamico');
+
+            if (subAbaAtletaRelatorioAtual === 'peso') {
+                container.innerHTML = `
+                    <div class="bg-black p-4 rounded-xl border border-slate-800 text-center space-y-1">
+                        <span class="text-[10px] uppercase text-slate-500 font-bold block">Volume Total (Carga × Reps)</span>
+                        <strong class="text-xl font-black text-af-orange">${volTotal.toLocaleString('pt-BR')} kg</strong>
+                        <p class="text-[10px] text-slate-400">Sessões no período: ${historicoFiltrado.length}</p>
+                    </div>
+                `;
+            } else if (subAbaAtletaRelatorioAtual === 'series') {
+                container.innerHTML = `
+                    <div class="bg-black p-4 rounded-xl border border-slate-800 text-center space-y-1">
+                        <span class="text-[10px] uppercase text-slate-500 font-bold block">Total de Séries Validadas</span>
+                        <strong class="text-xl font-black text-white">${totalSeries} séries</strong>
+                    </div>
+                `;
+            } else {
+                const nomesGrupos = Object.keys(grupos);
+                if (nomesGrupos.length === 0) {
+                    container.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">Nenhum grupamento registrado no período.</p>`;
+                } else if (grupoMuscularAtletaFiltroAtivo) {
+                    const gData = grupos[grupoMuscularAtletaFiltroAtivo];
+                    container.innerHTML = `
+                        <div class="flex items-center justify-between bg-black p-2.5 rounded-xl border border-slate-800">
+                            <button onclick="grupoMuscularAtletaFiltroAtivo=null; atualizarRelatoriosAtletaDashboard();" class="text-xs text-af-orange font-bold">← Voltar para Grupos</button>
+                            <span class="text-xs text-white font-bold uppercase">${grupoMuscularAtletaFiltroAtivo}</span>
+                        </div>
+                        <div class="bg-black p-3 rounded-xl border border-slate-800 space-y-2 text-xs">
+                            ${MUSCULOS_SEM_CARGA.includes(grupoMuscularAtletaFiltroAtivo) ? '' : `<div class="flex justify-between text-slate-300"><span>Volume:</span><strong class="text-af-orange">${gData.volume.toLocaleString('pt-BR')} kg</strong></div>`}
+                            <div class="flex justify-between text-slate-300"><span>Séries Totais:</span><strong class="text-white">${gData.series} séries</strong></div>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = `
+                        <p class="text-[10px] text-slate-400">Toque em um grupamento para ver detalhes:</p>
+                        <div class="space-y-2">
+                            ${nomesGrupos.map(n => `
+                                <div onclick="grupoMuscularAtletaFiltroAtivo='${n}'; atualizarRelatoriosAtletaDashboard();" class="bg-black border border-slate-800 p-3 rounded-xl flex justify-between items-center cursor-pointer hover:border-af-orange">
+                                    <span class="font-bold text-sm text-af-orange">${n}</span>
+                                    <span class="text-xs text-slate-200">${MUSCULOS_SEM_CARGA.includes(n) ? '' : grupos[n].volume.toLocaleString('pt-BR') + ' kg • '}${grupos[n].series} séries</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        function popularSelectAtletaExerciciosProgresso() {
+            const select = document.getElementById('select-atleta-exercicio-progresso');
+            const exerciciosUnicos = new Set();
+            treinosDoAlunoCarregados.forEach(t => (t.exercicios || []).forEach(e => exerciciosUnicos.add(e.nome)));
+            historicoValidoDoAluno().forEach(h => (h.exerciciosRealizados || []).forEach(e => exerciciosUnicos.add(e.nome)));
+            select.innerHTML = `<option value="">Selecione um exercício...</option>` + Array.from(exerciciosUnicos).map(ex => `<option value="${ex}">${ex}</option>`).join('');
+        }
+
+        function renderizarAtletaGraficoProgressoExercicio() {
+            const nomeEx = document.getElementById('select-atleta-exercicio-progresso').value;
+            const container = document.getElementById('container-atleta-progresso-detalhe');
+            if (!nomeEx) { container.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">Selecione um exercício acima.</p>`; return; }
+
+            const validos = historicoValidoDoAluno();
+            let registros = [];
+            validos.forEach(h => {
+                const exR = (h.exerciciosRealizados || []).find(e => e.nome.toLowerCase() === nomeEx.toLowerCase());
+                if (exR) {
+                    const dataFmt = new Date(h.data).toLocaleDateString('pt-BR');
+                    const cargaMax = Math.max(...(exR.series || []).map(s => s.carga || 0), 0);
+                    const volEx = exR.volume || (exR.series || []).reduce((acc, s) => acc + (s.carga || 0) * (s.reps || 0), 0);
+                    const ss = exR.series || [];
+                    const semCarga = exR.semCarga === true || MUSCULOS_SEM_CARGA.includes(exR.musculo);
+                    registros.push({
+                        data: dataFmt, cargaMax, volume: volEx, series: ss.length, semCarga,
+                        melhorReps: Math.max(...ss.map(s => s.reps || 0), 0),
+                        melhorTempo: Math.max(...ss.map(s => s.tempoSeg || 0), 0)
+                    });
+                }
+            });
+
+            if (registros.length === 0) { container.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">Nenhum registro encontrado.</p>`; return; }
+
+            container.innerHTML = registros.map(r => `
+                <div class="bg-black border border-slate-800 p-3 rounded-xl flex justify-between items-center text-xs">
+                    <div>
+                        <span class="text-[10px] text-slate-500 font-bold block">${r.data}</span>
+                        <span class="font-bold text-white">${r.series} séries</span>
+                    </div>
+                    <div class="text-right">
+                        ${r.semCarga
+                            ? `<strong class="text-af-orange block text-sm">Melhor: ${(r.melhorTempo > 0 && r.melhorReps === 0) ? formatarTempo(r.melhorTempo) : r.melhorReps + ' reps'}</strong>`
+                            : `<strong class="text-af-orange block text-sm">Carga Máx: ${r.cargaMax}kg</strong>
+                        <span class="text-[10px] text-slate-400">Vol: ${r.volume.toLocaleString('pt-BR')}kg</span>`}
+                    </div>
+                </div>
+            `).join('');
         }
 
         function renderizarDivisoesTreino(treinos) {
@@ -306,7 +493,6 @@
             body.classList.toggle('hidden');
         }
 
-        // BUSCA O HISTÓRICO ANTERIOR DAQUELA SÉRIE ESPECÍFICA DO EXERCÍCIO
         function buscarDadosAnterioresSerie(nomeExercicio, numeroSerie) {
             const validos = historicoValidoDoAluno();
             for (let i = validos.length - 1; i >= 0; i--) {
@@ -404,21 +590,13 @@
             titulo.innerText = metodo;
 
             let desc = '';
-            if (metodo === 'Pirâmide Crescente') {
-                desc = 'Na Pirâmide Crescente, você aumenta a carga a cada série e diminui um pouco as repetições, priorizando picos de força.';
-            } else if (metodo === 'Pirâmide Decrescente') {
-                desc = 'Na Pirâmide Decrescente, você começa com mais carga nas primeiras séries e vai reduzindo o peso nas séries seguintes.';
-            } else if (metodo === 'Drop Set') {
-                desc = 'No Drop Set, ao atingir a falha, você reduz a carga imediatamente (20% a 30%) e continua executando até a nova falha.';
-            } else if (metodo === 'Rest Pause') {
-                desc = 'No Rest Pause, você executa até a falha, descansa 10 a 15 segundos respirando fundo e faz mais algumas repetições.';
-            } else if (metodo === 'Cluster Set') {
-                desc = 'No Cluster Set, a série é dividida em mini-blocos com pequenos intervalos programados de 10 a 15 segundos.';
-            } else if (metodo === 'FST-7') {
-                desc = 'O FST-7 consiste em realizar 7 séries no final do exercício com intervalos curtos (30 a 45s) para o máximo pump.';
-            } else {
-                desc = 'Série Normal com execução padrão orientada pelo seu personal trainer.';
-            }
+            if (metodo === 'Pirâmide Crescente') desc = 'Na Pirâmide Crescente, você aumenta a carga a cada série e diminui um pouco as repetições, priorizando picos de força.';
+            else if (metodo === 'Pirâmide Decrescente') desc = 'Na Pirâmide Decrescente, você começa com mais carga nas primeiras séries e vai reduzindo o peso nas séries seguintes.';
+            else if (metodo === 'Drop Set') desc = 'No Drop Set, ao atingir a falha, você reduz a carga imediatamente (20% a 30%) e continua executando até a nova falha.';
+            else if (metodo === 'Rest Pause') desc = 'No Rest Pause, você executa até a falha, descansa 10 a 15 segundos respirando fundo e faz mais algumas repetições.';
+            else if (metodo === 'Cluster Set') desc = 'No Cluster Set, a série é dividida em mini-blocos com pequenos intervalos programados de 10 a 15 segundos.';
+            else if (metodo === 'FST-7') desc = 'O FST-7 consiste em realizar 7 séries no final do exercício com intervalos curtos (30 a 45s) para o máximo pump.';
+            else desc = 'Série Normal com execução padrão orientada pelo seu personal trainer.';
             texto.innerText = desc;
             modal.classList.remove('hidden');
         }
@@ -428,6 +606,14 @@
         function prepararAudioContext() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function dispararVibracaoCelular() {
+            try {
+                if ('vibrate' in navigator) {
+                    navigator.vibrate([500, 200, 500, 200, 800]);
+                }
+            } catch (e) {}
         }
 
         function tocarAlarmeAlto() {
@@ -534,7 +720,6 @@
             timerInterval = setInterval(tickTimer, 500);
         }
 
-        // o tempo é calculado pelo horário de término, então continua certo mesmo se o iOS congelar a página
         function tickTimer() {
             segundosRestantes = Math.max(0, Math.ceil((fimTimerMs - Date.now()) / 1000));
             atualizarDisplayTimer();
@@ -547,6 +732,7 @@
             alarmeTocado = true;
             liberarTela();
             document.title = '🚨 ZEROU O TEMPO!';
+            dispararVibracaoCelular();
             if (audioAlarmeAtivo) {
                 setTimeout(pararAlarmeBackground, 5000);
             } else {
@@ -580,7 +766,6 @@
             document.title = `⏱️ ${textoTempo} - Descanso`;
         }
 
-        // ao voltar para o app: corrige o relógio na hora e reativa a tela acesa
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible' && !alarmeTocado) {
                 tickTimer();
@@ -723,6 +908,6 @@
 
         window.onload = carregarDadosAluno;
     </script>
-<div style="position:fixed;bottom:2px;left:6px;font-size:9px;color:#475569;opacity:.6;pointer-events:none;z-index:50">v12-aluno-relatorio-tempo-alarme</div>
+<div style="position:fixed;bottom:2px;left:6px;font-size:9px;color:#475569;opacity:.6;pointer-events:none;z-index:50">v13-aluno-dashboard-vibracao</div>
 </body>
 </html>
