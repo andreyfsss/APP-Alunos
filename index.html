@@ -181,8 +181,8 @@
 
                     <div class="grid grid-cols-2 gap-2">
                         <div>
-                            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Músculo Alvo</label>
-                            <select id="select-musculo-ex" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-slate-200">
+                            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Músculo Alvo / Tipo</label>
+                            <select id="select-musculo-ex" onchange="verificarRegrasMusculo()" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-slate-200">
                                 <option value="Quadríceps">Quadríceps</option>
                                 <option value="Peitoral">Peitoral</option>
                                 <option value="Costas">Costas</option>
@@ -193,6 +193,7 @@
                                 <option value="Posterior">Posterior de Coxa</option>
                                 <option value="Panturrilhas">Panturrilhas</option>
                                 <option value="Abdômen">Abdômen</option>
+                                <option value="Alongamentos">Alongamentos</option>
                             </select>
                         </div>
                         <div>
@@ -212,7 +213,7 @@
                             <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Qtd de Séries</label>
                             <input type="number" id="input-qtd-series-ex" value="4" oninput="validarApenasNumeros(this)" onchange="gerarCamposSeriesAdmin(this.value)" min="1" max="10" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-white text-center font-bold">
                         </div>
-                        <div>
+                        <div id="bloco-select-metodo-geral">
                             <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Método Geral</label>
                             <select id="select-metodo-geral-ex" onchange="alternarVisibilidadeMetodoMacro(this.value)" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-af-orange font-bold">
                                 <option value="Nulo">Nulo (Modular por Série)</option>
@@ -236,7 +237,7 @@
                     </div>
 
                     <div id="bloco-configuracao-modular" class="space-y-2 pt-2 border-t border-slate-800">
-                        <label class="block text-[11px] font-bold text-slate-300">Configuração de Métodos & Repetições por Série</label>
+                        <label class="block text-[11px] font-bold text-slate-300">Configuração de Métodos & Repetições/Tempo por Série</label>
                         <div id="container-config-series-admin" class="space-y-2"></div>
                     </div>
 
@@ -266,7 +267,7 @@
         let alunoSelecionado = null;
         let treinoAtivoId = null;
         let indiceExercicioEditando = null;
-        let baseExerciciosGlobais = ['Agachamento Livre', 'Supino Reto', 'Leg Press 45', 'Panturrilha em Pé', 'Prancha Abdominal'];
+        let baseExerciciosGlobais = ['Agachamento Livre', 'Supino Reto', 'Leg Press 45', 'Abdominal Supra', 'Prancha Abdominal', 'Alongamento Posterior'];
         let treinosDoAluno = [];
         let historicoTreinosAluno = [];
         let periodoRelatorioAtual = 'semanal';
@@ -369,7 +370,6 @@
         }
 
         function calcularEvolucaoRecenteAdmin() {
-            // Filtro rigoroso: desconta sessões de treinos que já foram excluídos
             const idsTreinosAtivos = new Set(treinosDoAluno.map(t => t.id));
             const historicoValido = historicoTreinosAluno.filter(h => !h.treinoId || idsTreinosAtivos.has(h.treinoId));
 
@@ -437,7 +437,6 @@
         }
 
         function atualizarRelatoriosAdmin() {
-            // Ignora automaticamente sessões de treinos que foram apagados do painel
             const idsTreinosAtivos = new Set(treinosDoAluno.map(t => t.id));
             const historicoValido = historicoTreinosAluno.filter(h => !h.treinoId || idsTreinosAtivos.has(h.treinoId));
 
@@ -569,10 +568,30 @@
             `).join('');
         }
 
+        function verificarRegrasMusculo() {
+            const musculo = document.getElementById('select-musculo-ex').value;
+            const blocoMetodoGeral = document.getElementById('bloco-select-metodo-geral');
+            const blocoRpe = document.getElementById('bloco-exigir-rpe');
+            const selectEquip = document.getElementById('select-equipamento-ex');
+
+            if (musculo === 'Abdômen' || musculo === 'Alongamentos') {
+                blocoMetodoGeral.classList.add('hidden');
+                blocoRpe.classList.add('hidden');
+                document.getElementById('select-metodo-geral-ex').value = 'Nulo';
+                document.getElementById('select-exige-rpe').value = 'nao';
+                alternarVisibilidadeMetodoMacro('Nulo');
+                selectEquip.value = 'Corporal';
+            } else {
+                blocoMetodoGeral.classList.remove('hidden');
+                blocoRpe.classList.remove('hidden');
+            }
+        }
+
         function verificarRegrasEquipamento() {
             const eq = document.getElementById('select-equipamento-ex').value;
+            const musculo = document.getElementById('select-musculo-ex').value;
             const blocoRpe = document.getElementById('bloco-exigir-rpe');
-            if (eq === 'Corporal') {
+            if (eq === 'Corporal' || musculo === 'Abdômen' || musculo === 'Alongamentos') {
                 blocoRpe.classList.add('hidden');
                 document.getElementById('select-exige-rpe').value = 'nao';
             } else {
@@ -594,25 +613,34 @@
 
         function gerarCamposSeriesAdmin(qtd, valoresExistentes = []) {
             const container = document.getElementById('container-config-series-admin');
+            const musculo = document.getElementById('select-musculo-ex').value;
+            const escondeMetodo = (musculo === 'Abdômen' || musculo === 'Alongamentos');
+
             let html = '';
             for (let i = 1; i <= qtd; i++) {
                 const sData = valoresExistentes[i - 1] || {};
                 const metodoSel = sData.metodo || 'Série Normal';
                 const repsSel = sData.repsSugeridas || '10 a 12';
+                const tipoMetaSel = sData.tipoMeta || 'reps'; // 'reps' ou 'tempo'
                 const descansoSel = sData.descanso || 90;
 
                 html += `
                     <div class="bg-black border border-slate-800 p-2.5 rounded-xl space-y-1.5 serie-config-item" data-serie="${i}">
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 flex-wrap">
                             <span class="font-bold text-slate-400 text-xs w-4">${i}ª</span>
+                            ${!escondeMetodo ? `
                             <select onchange="atualizarMetodoSerieAdmin(this)" class="select-metodo-serie flex-1 bg-slate-900 border border-slate-800 rounded-lg p-1 text-[11px] text-slate-200 focus:outline-none">
                                 <option value="Série Normal" ${metodoSel==='Série Normal'?'selected':''}>Série Normal</option>
                                 <option value="Drop Set" ${metodoSel==='Drop Set'?'selected':''}>Drop-Set</option>
                                 <option value="Rest Pause" ${metodoSel==='Rest Pause'?'selected':''}>Rest-Pause</option>
                                 <option value="Cluster Set" ${metodoSel==='Cluster Set'?'selected':''}>Cluster Set</option>
                                 <option value="FST-7" ${metodoSel==='FST-7'?'selected':''}>FST-7</option>
+                            </select>` : ''}
+                            <select class="select-tipo-meta bg-slate-900 border border-slate-800 rounded-lg p-1 text-[10px] text-af-orange font-bold">
+                                <option value="reps" ${tipoMetaSel==='reps'?'selected':''}>Reps</option>
+                                <option value="tempo" ${tipoMetaSel==='tempo'?'selected':''}>Tempo (s)</option>
                             </select>
-                            <input type="text" value="${repsSel}" placeholder="Reps (ex: 10 a 12)" class="input-reps-sugeridas w-28 bg-slate-900 border border-slate-800 rounded p-1 text-center text-[10px] text-white">
+                            <input type="text" value="${repsSel}" placeholder="Ex: 10 a 12 ou 30s" class="input-reps-sugeridas w-24 bg-slate-900 border border-slate-800 rounded p-1 text-center text-[10px] text-white">
                             <div class="flex items-center gap-1">
                                 <input type="number" value="${descansoSel}" oninput="validarApenasNumeros(this)" class="input-descanso-serie w-10 bg-slate-900 border border-slate-800 rounded p-1 text-center text-xs text-af-orange font-bold">
                                 <span class="text-[9px] text-slate-500">s</span>
@@ -623,7 +651,9 @@
                 `;
             }
             container.innerHTML = html;
-            document.querySelectorAll('.select-metodo-serie').forEach(sel => atualizarMetodoSerieAdmin(sel));
+            if (!escondeMetodo) {
+                document.querySelectorAll('.select-metodo-serie').forEach(sel => atualizarMetodoSerieAdmin(sel));
+            }
         }
 
         function atualizarMetodoSerieAdmin(select) {
@@ -656,6 +686,8 @@
             document.getElementById('input-qtd-series-ex').value = ex.qtdSeries;
             document.getElementById('select-metodo-geral-ex').value = ex.metodoGeral || 'Nulo';
             document.getElementById('select-exige-rpe').value = ex.exigeRpe !== false ? 'sim' : 'nao';
+            
+            verificarRegrasMusculo();
             alternarVisibilidadeMetodoMacro(ex.metodoGeral || 'Nulo');
 
             if (ex.metodoGeral && ex.metodoGeral !== 'Nulo') {
@@ -675,8 +707,11 @@
             indiceExercicioEditando = null;
             document.getElementById('input-busca-ex').value = '';
             document.getElementById('input-qtd-series-ex').value = '4';
+            document.getElementById('select-musculo-ex').value = 'Quadríceps';
+            document.getElementById('select-equipamento-ex').value = 'Barra';
             document.getElementById('select-metodo-geral-ex').value = 'Nulo';
             document.getElementById('select-exige-rpe').value = 'sim';
+            verificarRegrasMusculo();
             alternarVisibilidadeMetodoMacro('Nulo');
             gerarCamposSeriesAdmin(4);
             verificarRegrasEquipamento();
@@ -690,8 +725,8 @@
             const musculo = document.getElementById('select-musculo-ex').value;
             const equipamento = document.getElementById('select-equipamento-ex').value;
             const qtdSeries = parseInt(document.getElementById('input-qtd-series-ex').value) || 4;
-            const metodoGeral = document.getElementById('select-metodo-geral-ex').value;
-            const exigeRpe = equipamento === 'Corporal' ? false : (document.getElementById('select-exige-rpe').value === 'sim');
+            const metodoGeral = (musculo === 'Abdômen' || musculo === 'Alongamentos') ? 'Nulo' : document.getElementById('select-metodo-geral-ex').value;
+            const exigeRpe = (equipamento === 'Corporal' || musculo === 'Abdômen' || musculo === 'Alongamentos') ? false : (document.getElementById('select-exige-rpe').value === 'sim');
 
             if (!nome) { alert('Digite o nome do exercício!'); return; }
             if (!baseExerciciosGlobais.includes(nome)) baseExerciciosGlobais.push(nome);
@@ -702,15 +737,16 @@
             if (metodoGeral !== 'Nulo') {
                 repsPiramide = document.getElementById('input-reps-piramide').value.trim() || '10 a 12';
                 for (let i = 1; i <= qtdSeries; i++) {
-                    seriesConfig.push({ num: i, metodo: 'Série Normal', descanso: 90, repsSugeridas: repsPiramide });
+                    seriesConfig.push({ num: i, metodo: 'Série Normal', tipoMeta: 'reps', descanso: 90, repsSugeridas: repsPiramide });
                 }
             } else {
                 document.querySelectorAll('.serie-config-item').forEach(item => {
                     const num = item.getAttribute('data-serie');
-                    const metodo = item.querySelector('.select-metodo-serie').value;
+                    const metodo = item.querySelector('.select-metodo-serie')?.value || 'Série Normal';
+                    const tipoMeta = item.querySelector('.select-tipo-meta').value;
                     const descanso = parseInt(item.querySelector('.input-descanso-serie').value) || 90;
                     const repsSugeridas = item.querySelector('.input-reps-sugeridas')?.value || '10 a 12';
-                    seriesConfig.push({ num, metodo, descanso, repsSugeridas });
+                    seriesConfig.push({ num, metodo, tipoMeta, descanso, repsSugeridas });
                 });
             }
 
@@ -876,6 +912,6 @@
 
         window.onload = carregarAlunos;
     </script>
-<div style="position:fixed;bottom:2px;left:6px;font-size:9px;color:#475569;opacity:.6;pointer-events:none;z-index:50">v12-painel-debito-automatico</div>
+<div style="position:fixed;bottom:2px;left:6px;font-size:9px;color:#475569;opacity:.6;pointer-events:none;z-index:50">v13-painel-alongamentos-tempo</div>
 </body>
 </html>
