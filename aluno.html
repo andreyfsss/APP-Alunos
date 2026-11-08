@@ -185,6 +185,41 @@
         let audioCtx = null;
         let folegoUsado = false;
 
+        // Alarme com tela travada: toca um áudio (silêncio + bipes) que o iOS mantém rodando em segundo plano.
+        // Efeito colateral: pausa a música do celular durante o descanso. Troque para false para desligar.
+        const ALARME_COM_TELA_TRAVADA = true;
+        let fimTimerMs = 0;
+        let alarmeTocado = true;
+        let wakeLock = null;
+        let audioAlarme = null;
+        let urlAudioAlarme = null;
+        let audioAlarmeAtivo = false;
+
+        const MUSCULOS_SEM_CARGA = ['Abdômen', 'Alongamentos'];
+
+        function formatarTempo(seg) {
+            seg = Math.max(0, Math.round(seg || 0));
+            const m = Math.floor(seg / 60), s = seg % 60;
+            if (m && s) return `${m}min ${s}s`;
+            if (m) return `${m}min`;
+            return `${s}s`;
+        }
+
+        function descreverSerieRealizada(sr, semCarga) {
+            const partes = [];
+            if (!semCarga) partes.push(`${sr.carga}kg`);
+            partes.push(sr.tipoMeta === 'tempo' ? formatarTempo(sr.tempoSeg) : `${sr.reps} reps`);
+            let txt = partes.join(' • ');
+            if (sr.rpe && sr.rpe !== 'N/A') txt += ` (RPE ${sr.rpe})`;
+            return txt;
+        }
+
+        // só conta o histórico de treinos que ainda existem na ficha (igual ao painel do personal)
+        function historicoValidoDoAluno() {
+            const ids = new Set((treinosDoAlunoCarregados || []).map(t => t.id));
+            return (historicoTreinosAluno || []).filter(h => !h.treinoId || ids.has(h.treinoId));
+        }
+
         function mudarAbaAtiva(aba) {
             if (aba === 'treinos') {
                 document.getElementById('aba-atleta-treinos').classList.remove('hidden');
@@ -218,9 +253,10 @@
 
         function atualizarEstatisticasRelatorio() {
             let totalTreinos = 0, volumeTotalMes = 0;
-            if (historicoTreinosAluno && historicoTreinosAluno.length > 0) {
+            const validos = historicoValidoDoAluno();
+            if (validos.length > 0) {
                 const agora = new Date();
-                const doMes = historicoTreinosAluno.filter(h => {
+                const doMes = validos.filter(h => {
                     if (!h.data) return false;
                     const d = new Date(h.data);
                     return d.getMonth() === agora.getMonth() && d.getFullYear() === agora.getFullYear();
@@ -272,10 +308,9 @@
 
         // BUSCA O HISTÓRICO ANTERIOR DAQUELA SÉRIE ESPECÍFICA DO EXERCÍCIO
         function buscarDadosAnterioresSerie(nomeExercicio, numeroSerie) {
-            if (!historicoTreinosAluno || historicoTreinosAluno.length === 0) return null;
-            // Percorre do mais recente para o mais antigo
-            for (let i = historicoTreinosAluno.length - 1; i >= 0; i--) {
-                const sessao = historicoTreinosAluno[i];
+            const validos = historicoValidoDoAluno();
+            for (let i = validos.length - 1; i >= 0; i--) {
+                const sessao = validos[i];
                 const exRealizado = (sessao.exerciciosRealizados || []).find(e => e.nome.toLowerCase() === nomeExercicio.toLowerCase());
                 if (exRealizado && exRealizado.series && exRealizado.series[numeroSerie - 1]) {
                     return exRealizado.series[numeroSerie - 1];
@@ -286,49 +321,64 @@
 
         function renderizarExerciciosAluno(exercicios) {
             const container = document.getElementById('lista-exercicios-aluno');
+            const inputBase = 'w-full h-9 bg-slate-900 border border-slate-800 rounded-lg p-1 text-center text-xs font-bold text-white';
             container.innerHTML = exercicios.map((ex, index) => {
-                const exigeRpe = ex.exigeRpe !== false;
+                const semCarga = MUSCULOS_SEM_CARGA.includes(ex.musculo);
+                const exigeRpe = ex.exigeRpe !== false && !semCarga;
                 const metodoGeral = ex.metodoGeral || 'Nulo';
-                
+
                 let badgeMetodoHtml = '';
                 if (metodoGeral !== 'Nulo') {
                     badgeMetodoHtml = `<span onclick="event.stopPropagation(); mostrarExplicacaoMetodo('${metodoGeral}')" class="text-[9px] bg-amber-950/80 text-amber-400 border border-amber-600/40 px-2 py-0.5 rounded font-black cursor-pointer uppercase">${metodoGeral} ℹ️</span>`;
                 }
 
                 const htmlSeries = (ex.seriesConfig || []).map(s => {
+                    const tipo = s.tipoMeta === 'tempo' ? 'tempo' : 'reps';
+                    const metaTxt = (tipo === 'tempo' && s.metaSeg) ? formatarTempo(s.metaSeg) : s.repsSugeridas;
                     const metodoSerie = s.metodo || 'Série Normal';
                     let badgeSerieHtml = '';
-                    if (metodoGeral === 'Nulo') {
+                    if (metodoGeral === 'Nulo' && !semCarga) {
                         badgeSerieHtml = `<span onclick="mostrarExplicacaoMetodo('${metodoSerie}')" class="text-[9px] bg-slate-900 text-af-orange border border-slate-800 px-1.5 py-0.5 rounded font-bold cursor-pointer">${metodoSerie} ℹ️</span>`;
                     }
 
-                    // Busca dados anteriores salvos para esta série
                     const anterior = buscarDadosAnterioresSerie(ex.nome, s.num);
-                    const textoAnterior = anterior ? `Último: ${anterior.carga}kg • ${anterior.reps} reps (RPE ${anterior.rpe})` : 'Sem registro anterior';
+                    const textoAnterior = anterior ? `Último: ${descreverSerieRealizada(anterior, semCarga)}` : 'Sem registro anterior';
+
+                    const campos = [];
+                    if (!semCarga) {
+                        campos.push(`<input type="number" step="0.5" oninput="calcularVolumeTotal()" class="${inputBase} input-carga" placeholder="${ex.equipamento === 'Corporal' ? 'Corporal (0)' : 'Carga (kg)'}">`);
+                    }
+                    if (tipo === 'tempo') {
+                        campos.push(`<input type="number" inputmode="numeric" min="0" oninput="this.value=this.value.replace(/[^0-9]/g,'')" class="${inputBase} input-tempo-min" placeholder="min">`);
+                        campos.push(`<input type="number" inputmode="numeric" min="0" oninput="this.value=this.value.replace(/[^0-9]/g,'')" class="${inputBase} input-tempo-seg" placeholder="seg">`);
+                    } else {
+                        campos.push(`<input type="number" inputmode="numeric" oninput="calcularVolumeTotal()" class="${inputBase} input-reps-reais" placeholder="Reps feitas">`);
+                    }
+                    if (exigeRpe) {
+                        campos.push(`<input readonly onclick="abrirRPEFullScreen(this)" type="text" class="${inputBase} !text-af-orange cursor-pointer input-rpe" placeholder="RPE">`);
+                    }
 
                     return `
-                        <div class="bg-black border border-slate-800 p-2.5 rounded-xl space-y-2 serie-item" data-serie-concluida="false" data-exige-rpe="${exigeRpe}">
+                        <div class="bg-black border border-slate-800 p-2.5 rounded-xl space-y-2 serie-item" data-serie-concluida="false" data-exige-rpe="${exigeRpe}" data-tipo="${tipo}" data-sem-carga="${semCarga}">
                             <div class="flex items-center gap-1.5 flex-wrap">
                                 <span class="w-4 text-center font-bold text-xs text-slate-400">${s.num}ª</span>
                                 ${badgeSerieHtml}
-                                <span class="text-[10px] text-slate-400">Meta: <strong>${s.repsSugeridas}</strong></span>
+                                <span class="text-[10px] text-slate-400">${tipo === 'tempo' ? '⏱ Meta' : 'Meta'}: <strong>${metaTxt}</strong></span>
                                 <button onclick="iniciarTimer(${s.descanso || 90})" class="ml-auto bg-slate-900 border border-slate-800 text-af-orange text-[10px] px-2 py-0.5 rounded-lg font-bold">⏱️ ${s.descanso || 90}s</button>
                                 <button onclick="toggleValidarSerie(this)" class="bg-slate-900 border border-slate-800 text-slate-400 px-2.5 py-1 rounded-lg text-xs font-bold btn-check-serie">✔</button>
                             </div>
                             <div class="text-[10px] text-emerald-400 font-medium bg-emerald-950/30 px-2 py-1 rounded border border-emerald-900/40">
                                 📊 ${textoAnterior}
                             </div>
-                            <div class="grid grid-cols-${exigeRpe ? '3' : '2'} gap-2 items-center">
-                                <input type="number" step="0.5" oninput="calcularVolumeTotal()" class="w-full h-9 bg-slate-900 border border-slate-800 rounded-lg p-1 text-center text-xs font-bold text-white input-carga" placeholder="${ex.equipamento === 'Corporal' ? 'Corporal (0)' : 'Carga (kg)'}">
-                                <input type="number" oninput="calcularVolumeTotal()" class="w-full h-9 bg-slate-900 border border-slate-800 rounded-lg p-1 text-center text-xs font-bold text-white input-reps-reais" placeholder="Reps feitas">
-                                ${exigeRpe ? '<input readonly onclick="abrirRPEFullScreen(this)" type="text" class="w-full h-9 bg-slate-900 border border-slate-800 rounded-lg p-1 text-center text-xs font-bold text-af-orange cursor-pointer input-rpe" placeholder="RPE">' : ''}
+                            <div class="grid grid-cols-${campos.length} gap-2 items-center">
+                                ${campos.join('')}
                             </div>
                         </div>
                     `;
                 }).join('');
 
                 return `
-                    <div class="bg-af-card border border-slate-800 rounded-2xl overflow-hidden shadow-md" data-nome-exercicio="${ex.nome}" data-musculo="${ex.musculo || ''}">
+                    <div class="bg-af-card border border-slate-800 rounded-2xl overflow-hidden shadow-md" data-nome-exercicio="${ex.nome}" data-musculo="${ex.musculo || ''}" data-sem-carga="${semCarga}">
                         <div onclick="alternarColapsoExercicio(this)" class="p-3.5 bg-af-card flex justify-between items-center cursor-pointer select-none">
                             <div class="flex items-center gap-2">
                                 <div>
@@ -400,41 +450,121 @@
             } catch (e) {}
         }
 
+        function gerarWavAlarme(segSilencio) {
+            const sr = 8000;
+            const nSil = Math.max(0, Math.round(segSilencio * sr));
+            const beepN = Math.round(0.3 * sr), gapN = Math.round(0.2 * sr), reps = 6;
+            const n = nSil + reps * (beepN + gapN);
+            const buf = new ArrayBuffer(44 + n);
+            const v = new DataView(buf);
+            const wr = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+            wr(0, 'RIFF'); v.setUint32(4, 36 + n, true); wr(8, 'WAVE'); wr(12, 'fmt ');
+            v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+            v.setUint32(24, sr, true); v.setUint32(28, sr, true); v.setUint16(32, 1, true); v.setUint16(34, 8, true);
+            wr(36, 'data'); v.setUint32(40, n, true);
+            const dados = new Uint8Array(buf, 44);
+            dados.fill(128);
+            for (let b = 0; b < reps; b++) {
+                const ini = nSil + b * (beepN + gapN);
+                for (let i = 0; i < beepN; i++) {
+                    const s = Math.max(-1, Math.min(1, Math.sin(2 * Math.PI * 1050 * i / sr) * 1.4));
+                    dados[ini + i] = 128 + Math.round(s * 120);
+                }
+            }
+            return new Blob([buf], { type: 'audio/wav' });
+        }
+
+        function pararAlarmeBackground() {
+            try { if (audioAlarme) { audioAlarme.pause(); audioAlarme.src = ''; } } catch (e) {}
+            if (urlAudioAlarme) { try { URL.revokeObjectURL(urlAudioAlarme); } catch (e) {} }
+            audioAlarme = null; urlAudioAlarme = null; audioAlarmeAtivo = false;
+        }
+
+        function agendarAlarmeEmBackground() {
+            if (!ALARME_COM_TELA_TRAVADA) return;
+            pararAlarmeBackground();
+            try {
+                const restante = Math.max(0, (fimTimerMs - Date.now()) / 1000);
+                urlAudioAlarme = URL.createObjectURL(gerarWavAlarme(restante));
+                audioAlarme = new Audio(urlAudioAlarme);
+                audioAlarme.setAttribute('playsinline', '');
+                const p = audioAlarme.play();
+                if (p && p.then) {
+                    p.then(() => {
+                        audioAlarmeAtivo = true;
+                        if ('mediaSession' in navigator && window.MediaMetadata) {
+                            navigator.mediaSession.metadata = new MediaMetadata({ title: 'Descanso entre séries', artist: 'AF Pro' });
+                        }
+                    }).catch(() => { audioAlarmeAtivo = false; });
+                }
+            } catch (e) { audioAlarmeAtivo = false; }
+        }
+
+        async function manterTelaAcesa() {
+            try {
+                if ('wakeLock' in navigator && !wakeLock) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    wakeLock.addEventListener('release', () => { wakeLock = null; });
+                }
+            } catch (e) {}
+        }
+
+        function liberarTela() {
+            try { if (wakeLock) wakeLock.release(); } catch (e) {}
+            wakeLock = null;
+        }
+
         function iniciarTimer(segundos) {
             prepararAudioContext();
             clearInterval(timerInterval);
+            fimTimerMs = Date.now() + segundos * 1000;
             segundosRestantes = segundos;
             folegoUsado = false;
+            alarmeTocado = false;
 
             const btnFolego = document.getElementById('btn-folego-extra');
             btnFolego.disabled = false;
             btnFolego.className = 'bg-black text-af-orange text-[10px] px-3 py-1.5 rounded-lg font-bold border border-slate-800 transition-all';
             btnFolego.innerText = '+30s (1x)';
 
-            const barra = document.getElementById('bar-timer-descanso');
-            barra.classList.remove('hidden');
+            document.getElementById('bar-timer-descanso').classList.remove('hidden');
             atualizarDisplayTimer();
+            agendarAlarmeEmBackground();
+            manterTelaAcesa();
+            timerInterval = setInterval(tickTimer, 500);
+        }
 
-            timerInterval = setInterval(() => {
-                segundosRestantes--;
-                atualizarDisplayTimer();
-                if (segundosRestantes <= 0) {
-                    clearInterval(timerInterval);
-                    document.title = '🚨 ZEROU O TEMPO!';
-                    tocarAlarmeAlto();
-                    setTimeout(() => {
-                        barra.classList.add('hidden');
-                        document.title = 'AF Pro - Meu Treino';
-                    }, 3000);
-                }
-            }, 1000);
+        // o tempo é calculado pelo horário de término, então continua certo mesmo se o iOS congelar a página
+        function tickTimer() {
+            segundosRestantes = Math.max(0, Math.ceil((fimTimerMs - Date.now()) / 1000));
+            atualizarDisplayTimer();
+            if (segundosRestantes <= 0) finalizarTimer();
+        }
+
+        function finalizarTimer() {
+            clearInterval(timerInterval);
+            if (alarmeTocado) return;
+            alarmeTocado = true;
+            liberarTela();
+            document.title = '🚨 ZEROU O TEMPO!';
+            if (audioAlarmeAtivo) {
+                setTimeout(pararAlarmeBackground, 5000);
+            } else {
+                pararAlarmeBackground();
+                tocarAlarmeAlto();
+            }
+            setTimeout(() => {
+                document.getElementById('bar-timer-descanso').classList.add('hidden');
+                document.title = 'AF Pro - Meu Treino';
+            }, 3000);
         }
 
         function adicionarTempoTimer(seg) {
-            if (folegoUsado) return;
+            if (folegoUsado || alarmeTocado) return;
             folegoUsado = true;
-            segundosRestantes += seg;
-            atualizarDisplayTimer();
+            fimTimerMs += seg * 1000;
+            tickTimer();
+            agendarAlarmeEmBackground();
 
             const btnFolego = document.getElementById('btn-folego-extra');
             btnFolego.disabled = true;
@@ -450,20 +580,36 @@
             document.title = `⏱️ ${textoTempo} - Descanso`;
         }
 
+        // ao voltar para o app: corrige o relógio na hora e reativa a tela acesa
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && !alarmeTocado) {
+                tickTimer();
+                manterTelaAcesa();
+            }
+        });
+
+        function lerTempoSerie(serieItem) {
+            return (parseInt(serieItem.querySelector('.input-tempo-min')?.value) || 0) * 60 +
+                   (parseInt(serieItem.querySelector('.input-tempo-seg')?.value) || 0);
+        }
+
         function toggleValidarSerie(botao) {
             const serieItem = botao.closest('.serie-item');
-            const exigeRpe = serieItem.getAttribute('data-exige-rpe') === 'true';
-            const carga = serieItem.querySelector('.input-carga').value;
-            const reps = serieItem.querySelector('.input-reps-reais').value;
-            const rpe = exigeRpe ? serieItem.querySelector('.input-rpe').value : 'N/A';
-
-            if (carga === '' || !reps || (exigeRpe && !rpe)) {
-                alert('Preencha a carga, as repetições reais e o RPE antes de validar a série!');
-                return;
-            }
-
             const concluida = serieItem.getAttribute('data-serie-concluida') === 'true';
+
             if (!concluida) {
+                const exigeRpe = serieItem.getAttribute('data-exige-rpe') === 'true';
+                const tipo = serieItem.getAttribute('data-tipo');
+                const semCarga = serieItem.getAttribute('data-sem-carga') === 'true';
+                const faltando = [];
+                if (!semCarga && serieItem.querySelector('.input-carga').value === '') faltando.push('a carga');
+                if (tipo === 'tempo') { if (lerTempoSerie(serieItem) <= 0) faltando.push('o tempo'); }
+                else if (!serieItem.querySelector('.input-reps-reais').value) faltando.push('as repetições');
+                if (exigeRpe && !serieItem.querySelector('.input-rpe').value) faltando.push('o RPE');
+                if (faltando.length) {
+                    alert(`Preencha ${faltando.join(', ')} antes de validar a série!`);
+                    return;
+                }
                 serieItem.setAttribute('data-serie-concluida', 'true');
                 serieItem.classList.add('border-emerald-500/80', 'bg-emerald-950/25');
                 botao.className = 'bg-emerald-500 text-black px-2.5 py-1 rounded-lg text-xs font-bold btn-check-serie';
@@ -503,15 +649,18 @@
             document.querySelectorAll('[data-nome-exercicio]').forEach(cardEx => {
                 const nome = cardEx.getAttribute('data-nome-exercicio');
                 const musculo = cardEx.getAttribute('data-musculo');
+                const semCarga = cardEx.getAttribute('data-sem-carga') === 'true';
                 let series = [];
                 cardEx.querySelectorAll('.serie-item').forEach(s => {
-                    const carga = parseFloat(s.querySelector('.input-carga')?.value) || 0;
-                    const reps = parseFloat(s.querySelector('.input-reps-reais')?.value) || 0;
+                    const tipoMeta = s.getAttribute('data-tipo') === 'tempo' ? 'tempo' : 'reps';
+                    const carga = semCarga ? 0 : (parseFloat(s.querySelector('.input-carga')?.value) || 0);
+                    const reps = tipoMeta === 'reps' ? (parseFloat(s.querySelector('.input-reps-reais')?.value) || 0) : 0;
+                    const tempoSeg = tipoMeta === 'tempo' ? lerTempoSerie(s) : 0;
                     const rpe = s.querySelector('.input-rpe')?.value || 'N/A';
                     volumeSessao += carga * reps;
-                    series.push({ carga, reps, rpe });
+                    series.push({ carga, reps, tempoSeg, tipoMeta, rpe });
                 });
-                exerciciosRealizados.push({ nome, musculo, volume: series.reduce((a, b) => a + (b.carga * b.reps), 0), series });
+                exerciciosRealizados.push({ nome, musculo, semCarga, volume: series.reduce((a, b) => a + (b.carga * b.reps), 0), series });
             });
 
             const novoRegistro = {
@@ -538,14 +687,23 @@
 
                 const listaExHtml = exerciciosRealizados.map(e => {
                     const maxCarga = Math.max(...e.series.map(s => s.carga), 0);
-                    const totalReps = e.series.reduce((a, b) => a + b.reps, 0);
+                    const maxReps = Math.max(...e.series.map(s => s.reps || 0), 0);
+                    const maxTempo = Math.max(...e.series.map(s => s.tempoSeg || 0), 0);
+                    const totalReps = e.series.reduce((a, b) => a + (b.reps || 0), 0);
+                    const totalTempo = e.series.reduce((a, b) => a + (b.tempoSeg || 0), 0);
+                    const partes = [`${e.series.length} séries`];
+                    if (totalReps > 0) partes.push(`${totalReps} reps totais`);
+                    if (totalTempo > 0) partes.push(`${formatarTempo(totalTempo)} no total`);
+                    const direita = e.semCarga
+                        ? `Melhor: ${(maxTempo > 0 && maxReps === 0) ? formatarTempo(maxTempo) : maxReps + ' reps'}`
+                        : `Máx: ${maxCarga} kg`;
                     return `
                         <div class="bg-black border border-slate-800 p-2.5 rounded-xl flex justify-between items-center">
                             <div>
                                 <strong class="text-white block">${e.nome}</strong>
-                                <span class="text-[10px] text-slate-400">${e.series.length} séries • ${totalReps} reps totais</span>
+                                <span class="text-[10px] text-slate-400">${partes.join(' • ')}</span>
                             </div>
-                            <span class="text-af-orange font-bold text-xs">Máx: ${maxCarga} kg</span>
+                            <span class="text-af-orange font-bold text-xs">${direita}</span>
                         </div>
                     `;
                 }).join('');
@@ -565,6 +723,6 @@
 
         window.onload = carregarDadosAluno;
     </script>
-<div style="position:fixed;bottom:2px;left:6px;font-size:9px;color:#475569;opacity:.6;pointer-events:none;z-index:50">v11-aluno-historico-anterior</div>
+<div style="position:fixed;bottom:2px;left:6px;font-size:9px;color:#475569;opacity:.6;pointer-events:none;z-index:50">v12-aluno-relatorio-tempo-alarme</div>
 </body>
 </html>

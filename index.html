@@ -211,7 +211,7 @@
                     <div class="grid grid-cols-2 gap-2">
                         <div>
                             <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Qtd de Séries</label>
-                            <input type="number" id="input-qtd-series-ex" value="4" oninput="validarApenasNumeros(this)" onchange="gerarCamposSeriesAdmin(this.value)" min="1" max="10" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-white text-center font-bold">
+                            <input type="number" id="input-qtd-series-ex" value="4" oninput="validarApenasNumeros(this)" onchange="gerarCamposSeriesAdmin(this.value, lerSeriesAdminAtuais())" min="1" max="10" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-white text-center font-bold">
                         </div>
                         <div id="bloco-select-metodo-geral">
                             <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Método Geral</label>
@@ -237,7 +237,14 @@
                     </div>
 
                     <div id="bloco-configuracao-modular" class="space-y-2 pt-2 border-t border-slate-800">
-                        <label class="block text-[11px] font-bold text-slate-300">Configuração de Métodos & Repetições/Tempo por Série</label>
+                        <div class="flex items-center justify-between gap-2">
+                            <label class="block text-[11px] font-bold text-slate-300">Configuração por Série</label>
+                            <div class="flex items-center gap-1.5 text-[10px] font-bold">
+                                <span class="text-slate-500 uppercase">Todas por:</span>
+                                <button type="button" onclick="definirTipoTodasSeries('reps')" class="px-2.5 py-1 rounded-lg bg-black border border-slate-700 text-slate-300">Reps</button>
+                                <button type="button" onclick="definirTipoTodasSeries('tempo')" class="px-2.5 py-1 rounded-lg bg-black border border-slate-700 text-slate-300">Tempo</button>
+                            </div>
+                        </div>
                         <div id="container-config-series-admin" class="space-y-2"></div>
                     </div>
 
@@ -501,7 +508,7 @@
                             <span class="text-xs text-white font-bold uppercase">${grupoMuscularFiltroAtivo}</span>
                         </div>
                         <div class="bg-black p-3 rounded-xl border border-slate-800 space-y-2 text-xs">
-                            <div class="flex justify-between text-slate-300"><span>Volume do Grupo:</span><strong class="text-af-orange">${gData.volume.toLocaleString('pt-BR')} kg</strong></div>
+                            ${MUSCULOS_SEM_CARGA.includes(grupoMuscularFiltroAtivo) ? '' : `<div class="flex justify-between text-slate-300"><span>Volume do Grupo:</span><strong class="text-af-orange">${gData.volume.toLocaleString('pt-BR')} kg</strong></div>`}
                             <div class="flex justify-between text-slate-300"><span>Séries Totais:</span><strong class="text-white">${gData.series} séries</strong></div>
                         </div>
                     `;
@@ -512,7 +519,7 @@
                             ${nomesGrupos.map(n => `
                                 <div onclick="grupoMuscularFiltroAtivo='${n}'; atualizarRelatoriosAdmin();" class="bg-black border border-slate-800 p-3 rounded-xl flex justify-between items-center cursor-pointer hover:border-af-orange">
                                     <span class="font-bold text-sm text-af-orange">${n}</span>
-                                    <span class="text-xs text-slate-200">${grupos[n].volume.toLocaleString('pt-BR')} kg • ${grupos[n].series} séries</span>
+                                    <span class="text-xs text-slate-200">${MUSCULOS_SEM_CARGA.includes(n) ? '' : grupos[n].volume.toLocaleString('pt-BR') + ' kg • '}${grupos[n].series} séries</span>
                                 </div>
                             `).join('')}
                         </div>
@@ -548,7 +555,13 @@
                     const dataFmt = new Date(h.data).toLocaleDateString('pt-BR');
                     const cargaMax = Math.max(...(exR.series || []).map(s => s.carga || 0), 0);
                     const volEx = exR.volume || (exR.series || []).reduce((acc, s) => acc + (s.carga || 0) * (s.reps || 0), 0);
-                    registros.push({ data: dataFmt, cargaMax, volume: volEx, series: (exR.series || []).length });
+                    const ss = exR.series || [];
+                    const semCarga = exR.semCarga === true || MUSCULOS_SEM_CARGA.includes(exR.musculo);
+                    registros.push({
+                        data: dataFmt, cargaMax, volume: volEx, series: ss.length, semCarga,
+                        melhorReps: Math.max(...ss.map(s => s.reps || 0), 0),
+                        melhorTempo: Math.max(...ss.map(s => s.tempoSeg || 0), 0)
+                    });
                 }
             });
 
@@ -561,8 +574,10 @@
                         <span class="font-bold text-white">${r.series} séries</span>
                     </div>
                     <div class="text-right">
-                        <strong class="text-af-orange block text-sm">Carga Máx: ${r.cargaMax}kg</strong>
-                        <span class="text-[10px] text-slate-400">Vol: ${r.volume.toLocaleString('pt-BR')}kg</span>
+                        ${r.semCarga
+                            ? `<strong class="text-af-orange block text-sm">Melhor: ${(r.melhorTempo > 0 && r.melhorReps === 0) ? formatarTempo(r.melhorTempo) : r.melhorReps + ' reps'}</strong>`
+                            : `<strong class="text-af-orange block text-sm">Carga Máx: ${r.cargaMax}kg</strong>
+                        <span class="text-[10px] text-slate-400">Vol: ${r.volume.toLocaleString('pt-BR')}kg</span>`}
                     </div>
                 </div>
             `).join('');
@@ -585,6 +600,9 @@
                 blocoMetodoGeral.classList.remove('hidden');
                 blocoRpe.classList.remove('hidden');
             }
+            // as caixinhas por série dependem do grupamento (abdômen não tem método/carga)
+            const qtd = parseInt(document.getElementById('input-qtd-series-ex').value) || 4;
+            gerarCamposSeriesAdmin(qtd, lerSeriesAdminAtuais());
         }
 
         function verificarRegrasEquipamento() {
@@ -611,48 +629,121 @@
             }
         }
 
+        const MUSCULOS_SEM_CARGA = ['Abdômen', 'Alongamentos'];
+
+        function formatarTempo(seg) {
+            seg = Math.max(0, Math.round(seg || 0));
+            const m = Math.floor(seg / 60), s = seg % 60;
+            if (m && s) return `${m}min ${s}s`;
+            if (m) return `${m}min`;
+            return `${s}s`;
+        }
+
+        // aceita "30s", "1min 30s", "1:30", "90"
+        function parseTempoTexto(txt) {
+            if (txt === undefined || txt === null) return 30;
+            const t = String(txt).toLowerCase().trim();
+            let m = t.match(/(\d+)\s*:\s*(\d+)/);
+            if (m) return parseInt(m[1]) * 60 + parseInt(m[2]);
+            m = t.match(/(\d+)\s*min\w*\s*(?:(\d+)\s*s?)?/);
+            if (m) return parseInt(m[1]) * 60 + (parseInt(m[2]) || 0);
+            m = t.match(/(\d+)/);
+            return m ? parseInt(m[1]) : 30;
+        }
+
+        function lerSeriesAdminAtuais() {
+            return Array.from(document.querySelectorAll('#container-config-series-admin .serie-config-item')).map(item => ({
+                metodo: item.querySelector('.select-metodo-serie')?.value,
+                tipoMeta: item.querySelector('.input-tipo-meta').value,
+                repsSugeridas: item.querySelector('.input-reps-sugeridas').value,
+                metaSeg: (parseInt(item.querySelector('.input-tempo-min').value) || 0) * 60 + (parseInt(item.querySelector('.input-tempo-seg').value) || 0),
+                descanso: parseInt(item.querySelector('.input-descanso-serie').value) || 90
+            }));
+        }
+
+        function aplicarTipoMetaNoItem(item, tipo) {
+            item.querySelector('.input-tipo-meta').value = tipo;
+            item.querySelector('.bloco-meta-reps').classList.toggle('hidden', tipo !== 'reps');
+            item.querySelector('.bloco-meta-tempo').classList.toggle('hidden', tipo !== 'tempo');
+            item.querySelectorAll('.btn-tipo').forEach(b => {
+                const ativo = b.getAttribute('data-tipo') === tipo;
+                b.className = 'btn-tipo px-3 py-1.5 rounded-lg transition-all ' + (ativo ? 'bg-af-orange text-black' : 'text-slate-400');
+            });
+        }
+
+        function definirTipoMeta(btn, tipo) {
+            aplicarTipoMetaNoItem(btn.closest('.serie-config-item'), tipo);
+        }
+
+        function definirTipoTodasSeries(tipo) {
+            document.querySelectorAll('#container-config-series-admin .serie-config-item').forEach(i => aplicarTipoMetaNoItem(i, tipo));
+        }
+
         function gerarCamposSeriesAdmin(qtd, valoresExistentes = []) {
+            qtd = parseInt(qtd) || 0;
             const container = document.getElementById('container-config-series-admin');
             const musculo = document.getElementById('select-musculo-ex').value;
-            const escondeMetodo = (musculo === 'Abdômen' || musculo === 'Alongamentos');
+            const escondeMetodo = MUSCULOS_SEM_CARGA.includes(musculo);
+            const inputBase = 'w-full bg-black border border-slate-700 rounded-xl px-2.5 py-2 text-center text-white font-bold focus:border-af-orange focus:outline-none';
+            const labelBase = 'block text-[9px] text-slate-500 uppercase font-bold mb-1 tracking-wider';
 
             let html = '';
             for (let i = 1; i <= qtd; i++) {
                 const sData = valoresExistentes[i - 1] || {};
                 const metodoSel = sData.metodo || 'Série Normal';
-                const repsSel = sData.repsSugeridas || '10 a 12';
-                const tipoMetaSel = sData.tipoMeta || 'reps'; // 'reps' ou 'tempo'
+                const tipoMetaSel = sData.tipoMeta === 'tempo' ? 'tempo' : 'reps';
+                const repsSel = (tipoMetaSel === 'reps' && sData.repsSugeridas) ? sData.repsSugeridas : '10 a 12';
+                const metaSeg = sData.metaSeg || (tipoMetaSel === 'tempo' ? parseTempoTexto(sData.repsSugeridas) : 30);
+                const tMin = Math.floor(metaSeg / 60), tSeg = metaSeg % 60;
                 const descansoSel = sData.descanso || 90;
 
                 html += `
-                    <div class="bg-black border border-slate-800 p-2.5 rounded-xl space-y-1.5 serie-config-item" data-serie="${i}">
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <span class="font-bold text-slate-400 text-xs w-4">${i}ª</span>
-                            ${!escondeMetodo ? `
-                            <select onchange="atualizarMetodoSerieAdmin(this)" class="select-metodo-serie flex-1 bg-slate-900 border border-slate-800 rounded-lg p-1 text-[11px] text-slate-200 focus:outline-none">
+                    <div class="serie-config-item bg-slate-900/60 border border-slate-800 rounded-2xl p-3 space-y-3" data-serie="${i}">
+                        <div class="flex items-center gap-2">
+                            <div class="w-7 h-7 shrink-0 rounded-full bg-af-orange text-black font-black text-xs flex items-center justify-center">${i}</div>
+                            ${escondeMetodo ? `<span class="flex-1 text-[11px] font-bold text-slate-300 uppercase tracking-wider">Série ${i}</span>` : `
+                            <select onchange="atualizarMetodoSerieAdmin(this)" class="select-metodo-serie flex-1 min-w-0 bg-black border border-slate-700 rounded-xl px-2.5 py-1.5 text-slate-100 font-semibold focus:border-af-orange focus:outline-none">
                                 <option value="Série Normal" ${metodoSel==='Série Normal'?'selected':''}>Série Normal</option>
                                 <option value="Drop Set" ${metodoSel==='Drop Set'?'selected':''}>Drop-Set</option>
                                 <option value="Rest Pause" ${metodoSel==='Rest Pause'?'selected':''}>Rest-Pause</option>
                                 <option value="Cluster Set" ${metodoSel==='Cluster Set'?'selected':''}>Cluster Set</option>
                                 <option value="FST-7" ${metodoSel==='FST-7'?'selected':''}>FST-7</option>
-                            </select>` : ''}
-                            <select class="select-tipo-meta bg-slate-900 border border-slate-800 rounded-lg p-1 text-[10px] text-af-orange font-bold">
-                                <option value="reps" ${tipoMetaSel==='reps'?'selected':''}>Reps</option>
-                                <option value="tempo" ${tipoMetaSel==='tempo'?'selected':''}>Tempo (s)</option>
-                            </select>
-                            <input type="text" value="${repsSel}" placeholder="Ex: 10 a 12 ou 30s" class="input-reps-sugeridas w-24 bg-slate-900 border border-slate-800 rounded p-1 text-center text-[10px] text-white">
-                            <div class="flex items-center gap-1">
-                                <input type="number" value="${descansoSel}" oninput="validarApenasNumeros(this)" class="input-descanso-serie w-10 bg-slate-900 border border-slate-800 rounded p-1 text-center text-xs text-af-orange font-bold">
-                                <span class="text-[9px] text-slate-500">s</span>
+                            </select>`}
+                            <div class="flex shrink-0 bg-black border border-slate-700 rounded-xl p-0.5 text-[11px] font-bold">
+                                <button type="button" data-tipo="reps" onclick="definirTipoMeta(this,'reps')" class="btn-tipo">Reps</button>
+                                <button type="button" data-tipo="tempo" onclick="definirTipoMeta(this,'tempo')" class="btn-tipo">Tempo</button>
+                            </div>
+                            <input type="hidden" class="input-tipo-meta" value="${tipoMetaSel}">
+                        </div>
+                        <div class="grid grid-cols-5 gap-2.5">
+                            <div class="col-span-3">
+                                <div class="bloco-meta-reps">
+                                    <label class="${labelBase}">Meta de repetições</label>
+                                    <input type="text" value="${repsSel}" placeholder="Ex: 10 a 12" class="input-reps-sugeridas ${inputBase}">
+                                </div>
+                                <div class="bloco-meta-tempo">
+                                    <label class="${labelBase}">Meta de tempo</label>
+                                    <div class="grid grid-cols-2 gap-1.5">
+                                        <input type="number" inputmode="numeric" min="0" value="${tMin || ''}" placeholder="min" oninput="this.value=this.value.replace(/[^0-9]/g,'')" class="input-tempo-min ${inputBase}">
+                                        <input type="number" inputmode="numeric" min="0" value="${tSeg}" placeholder="seg" oninput="this.value=this.value.replace(/[^0-9]/g,'')" class="input-tempo-seg ${inputBase}">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-span-2">
+                                <label class="${labelBase}">Descanso (s)</label>
+                                <input type="number" inputmode="numeric" value="${descansoSel}" oninput="validarApenasNumeros(this)" class="input-descanso-serie ${inputBase} !text-af-orange">
                             </div>
                         </div>
-                        <div class="box-detalhe-metodo hidden text-[10px] text-slate-400 pl-6"></div>
+                        <div class="box-detalhe-metodo hidden text-[11px] text-slate-400"></div>
                     </div>
                 `;
             }
             container.innerHTML = html;
+            container.querySelectorAll('.serie-config-item').forEach(item => {
+                aplicarTipoMetaNoItem(item, item.querySelector('.input-tipo-meta').value);
+            });
             if (!escondeMetodo) {
-                document.querySelectorAll('.select-metodo-serie').forEach(sel => atualizarMetodoSerieAdmin(sel));
+                container.querySelectorAll('.select-metodo-serie').forEach(sel => atualizarMetodoSerieAdmin(sel));
             }
         }
 
@@ -740,13 +831,18 @@
                     seriesConfig.push({ num: i, metodo: 'Série Normal', tipoMeta: 'reps', descanso: 90, repsSugeridas: repsPiramide });
                 }
             } else {
-                document.querySelectorAll('.serie-config-item').forEach(item => {
-                    const num = item.getAttribute('data-serie');
+                document.querySelectorAll('#container-config-series-admin .serie-config-item').forEach(item => {
+                    const num = parseInt(item.getAttribute('data-serie'));
                     const metodo = item.querySelector('.select-metodo-serie')?.value || 'Série Normal';
-                    const tipoMeta = item.querySelector('.select-tipo-meta').value;
+                    const tipoMeta = item.querySelector('.input-tipo-meta').value === 'tempo' ? 'tempo' : 'reps';
                     const descanso = parseInt(item.querySelector('.input-descanso-serie').value) || 90;
-                    const repsSugeridas = item.querySelector('.input-reps-sugeridas')?.value || '10 a 12';
-                    seriesConfig.push({ num, metodo, tipoMeta, descanso, repsSugeridas });
+                    if (tipoMeta === 'tempo') {
+                        const metaSeg = ((parseInt(item.querySelector('.input-tempo-min').value) || 0) * 60 + (parseInt(item.querySelector('.input-tempo-seg').value) || 0)) || 30;
+                        seriesConfig.push({ num, metodo, tipoMeta, descanso, repsSugeridas: formatarTempo(metaSeg), metaSeg });
+                    } else {
+                        const repsSugeridas = item.querySelector('.input-reps-sugeridas').value.trim() || '10 a 12';
+                        seriesConfig.push({ num, metodo, tipoMeta, descanso, repsSugeridas });
+                    }
                 });
             }
 
@@ -778,6 +874,7 @@
                         <span class="text-[10px] text-af-orange font-bold uppercase">${ex.musculo} • ${ex.equipamento}</span>
                         <div class="font-bold text-slate-200">${idx + 1}. ${ex.nome} (${ex.qtdSeries} Séries)</div>
                         ${ex.metodoGeral && ex.metodoGeral !== 'Nulo' ? `<span class="text-[9px] text-amber-400 font-bold">Método: ${ex.metodoGeral}</span>` : ''}
+                        ${(() => { const sc = ex.seriesConfig || []; if (!sc.length) return ''; const t = sc.filter(s => s.tipoMeta === 'tempo').length; return t === sc.length ? '<span class="text-[9px] text-sky-400 font-bold">⏱ Por tempo</span>' : (t > 0 ? '<span class="text-[9px] text-sky-400 font-bold">⏱ Reps + tempo</span>' : ''); })()}
                     </div>
                     <div class="flex gap-1.5">
                         <button onclick="prepararEdicaoExercicio(${idx})" class="text-xs text-slate-300 bg-slate-900 border border-slate-800 px-2 py-1 rounded-lg">✏️</button>
@@ -912,6 +1009,6 @@
 
         window.onload = carregarAlunos;
     </script>
-<div style="position:fixed;bottom:2px;left:6px;font-size:9px;color:#475569;opacity:.6;pointer-events:none;z-index:50">v13-painel-alongamentos-tempo</div>
+<div style="position:fixed;bottom:2px;left:6px;font-size:9px;color:#475569;opacity:.6;pointer-events:none;z-index:50">v14-abdomen-reps-tempo</div>
 </body>
 </html>
