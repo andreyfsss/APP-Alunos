@@ -31,7 +31,7 @@
             <div>
                 <div class="flex items-center gap-1.5">
                     <span class="font-black text-xl text-white tracking-tighter">ANDREY FRANCO</span>
-                    <span class="font-black text-xs text-af-orange tracking-widest bg-orange-950/60 px-1.5 py-0.5 rounded border border-orange-600/40">PERSONAL</span>
+                    <span class="font-black text-xs text-af-orange tracking-widest bg-orange-950/60 px-1.5 py-0.5 rounded border border-orange-600/40">PERSONAL ADMIN</span>
                 </div>
                 <div class="flex items-center gap-2 mt-1">
                     <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -59,14 +59,14 @@
             </div>
         </div>
 
-        <!-- TELA 2: VISÃO DO ALUNO -->
+        <!-- TELA 2: VISÃO DO ALUNO (ADMIN) -->
         <div id="view-detalhe-aluno" class="hidden space-y-4 w-full">
             <div class="flex items-center justify-between bg-af-card border border-slate-800 rounded-2xl p-4 no-print">
                 <div class="flex items-center gap-3">
                     <button onclick="voltarParaLista()" class="bg-black text-slate-400 px-3 py-2 rounded-xl text-xs font-bold border border-slate-800">← Voltar</button>
                     <div>
                         <h2 id="detalhe-nome-aluno" class="font-bold text-base text-white">Aluno</h2>
-                        <p class="text-[10px] text-af-orange font-bold uppercase">Painel Gerencial</p>
+                        <p class="text-[10px] text-af-orange font-bold uppercase">Painel Bi / Análise Avançada</p>
                     </div>
                 </div>
                 <div class="flex gap-1.5">
@@ -77,7 +77,7 @@
 
             <div class="flex gap-1 bg-af-card p-1.5 rounded-2xl border border-slate-800 text-[11px] font-bold text-center no-print">
                 <button onclick="mudarAbaAdminAluno('treinos')" id="tab-admin-treinos" class="flex-1 py-2 rounded-xl bg-af-orange text-black transition-all">🏋️ Treinos</button>
-                <button onclick="mudarAbaAdminAluno('relatorios')" id="tab-admin-relatorios" class="flex-1 py-2 rounded-xl text-slate-400 hover:text-white transition-all">📊 Dashboard</button>
+                <button onclick="mudarAbaAdminAluno('relatorios')" id="tab-admin-relatorios" class="flex-1 py-2 rounded-xl text-slate-400 hover:text-white transition-all">📊 BI / Dashboard</button>
             </div>
 
             <!-- ABA 1: TREINOS -->
@@ -117,27 +117,47 @@
                 </div>
             </div>
 
-            <!-- ABA 2: DASHBOARD EXECUTIVO DO ADMIN -->
+            <!-- ABA 2: DASHBOARD BI & ANÁLISE PROFUNDA (EXCLUSIVO ADMIN) -->
             <div id="sec-admin-relatorios" class="hidden space-y-4">
                 <div class="flex justify-between items-center bg-af-card border border-slate-800 rounded-2xl p-4 no-print">
                     <div>
-                        <h3 class="font-bold text-xs text-af-orange uppercase">Dashboard Executivo</h3>
-                        <p class="text-[10px] text-slate-400">Métricas analíticas detalhadas</p>
+                        <h3 class="font-bold text-xs text-af-orange uppercase">BI & Análise Executiva</h3>
+                        <p class="text-[10px] text-slate-400">Métricas analíticas e evolução completa</p>
                     </div>
                     <button onclick="gerarRelatorioPDF()" class="bg-af-orange text-black font-black px-3.5 py-2 rounded-xl text-xs shadow-md">📄 Imprimir PDF</button>
                 </div>
 
+                <!-- FERRAMENTA EXCLUSIVA ADMIN: ANÁLISE DE EXERCÍCIO ESPECÍFICO DESDE O DIA 1 -->
+                <div class="bg-af-card border border-af-orange/40 rounded-2xl p-4 space-y-3 shadow-xl">
+                    <div class="flex items-center gap-2">
+                        <span class="text-base">📈</span>
+                        <div>
+                            <h4 class="font-bold text-xs text-af-orange uppercase">Raio-X de Exercício (Histórico Completo)</h4>
+                            <p class="text-[10px] text-slate-400">Acompanhe a evolução em um exercício específico desde o primeiro treino</p>
+                        </div>
+                    </div>
+                    <select id="select-analise-exercicio-admin" onchange="renderizarRaioXExercicioAdmin()" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-slate-200 text-xs focus:border-af-orange focus:outline-none">
+                        <option value="">Selecione um exercício para auditar...</option>
+                    </select>
+                    <div id="container-raio-x-admin" class="space-y-2 pt-1">
+                        <p class="text-[11px] text-slate-500 text-center py-2">Selecione um exercício acima para carregar a curva de progressão.</p>
+                    </div>
+                </div>
+
+                <!-- SELETOR DE PERÍODO (SEMANAL / MENSAL) -->
                 <div class="flex gap-1.5 bg-black p-1.5 rounded-xl border border-slate-800 text-xs font-bold text-center no-print">
                     <button onclick="mudarPeriodoRelatorio('semanal')" id="btn-periodo-semanal" class="flex-1 py-1.5 rounded-lg bg-af-orange text-black transition-all">📅 Semanal</button>
                     <button onclick="mudarPeriodoRelatorio('mensal')" id="btn-periodo-mensal" class="flex-1 py-1.5 rounded-lg text-slate-400 transition-all">📆 Mensal</button>
                 </div>
 
+                <!-- SUB-ABAS (VOLUME, SÉRIES, GRUPAMENTOS) -->
                 <div class="flex gap-1 bg-af-card p-1 rounded-xl border border-slate-800 text-[10px] font-bold text-center no-print">
                     <button onclick="mudarSubAbaRelatorio('peso')" id="subtab-peso" class="flex-1 py-1.5 rounded-lg bg-af-orange text-black">🏋️ Volume</button>
                     <button onclick="mudarSubAbaRelatorio('series')" id="subtab-series" class="flex-1 py-1.5 rounded-lg text-slate-400">🔢 Séries</button>
                     <button onclick="mudarSubAbaRelatorio('grupos')" id="subtab-grupos" class="flex-1 py-1.5 rounded-lg text-slate-400">🎯 Grupamentos</button>
                 </div>
 
+                <!-- CONTAINER DO DASHBOARD BI -->
                 <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-4 print-container">
                     <div class="text-center border-b border-slate-800 pb-3">
                         <span id="label-periodo-ativo" class="text-[10px] font-bold text-af-orange uppercase tracking-wider block">Relatório Semanal</span>
@@ -335,6 +355,7 @@
                 historicoTreinosAluno = [];
                 calcularEvolucaoRecenteAdmin();
                 atualizarRelatoriosAdmin();
+                popularSelectRaioXAdmin();
                 atualizarHoraSincronizacao();
                 alert('Histórico limpo com sucesso!');
             } catch (err) { alert('Erro: ' + err.message); }
@@ -355,6 +376,7 @@
                 historicoTreinosAluno = (data && data.historico && Array.isArray(data.historico)) ? data.historico : [];
                 atualizarHoraSincronizacao();
                 calcularEvolucaoRecenteAdmin();
+                popularSelectRaioXAdmin();
                 atualizarRelatoriosAdmin();
             } catch (e) {
                 treinosDoAluno = [];
@@ -403,8 +425,68 @@
                 document.getElementById('tab-admin-relatorios').className = 'flex-1 py-2 rounded-xl bg-af-orange text-black font-bold transition-all';
                 await recarregarHistoricoAdmin();
                 calcularEvolucaoRecenteAdmin();
+                popularSelectRaioXAdmin();
                 atualizarRelatoriosAdmin();
             }
+        }
+
+        function popularSelectRaioXAdmin() {
+            const select = document.getElementById('select-analise-exercicio-admin');
+            const exerciciosUnicos = new Set();
+            treinosDoAluno.forEach(t => (t.exercicios || []).forEach(e => exerciciosUnicos.add(e.nome)));
+            historicoTreinosAluno.forEach(h => (h.exerciciosRealizados || []).forEach(e => exerciciosUnicos.add(e.nome)));
+            select.innerHTML = `<option value="">Selecione um exercício para auditar...</option>` + Array.from(exerciciosUnicos).map(ex => `<option value="${ex}">${ex}</option>`).join('');
+        }
+
+        function renderizarRaioXExercicioAdmin() {
+            const nomeEx = document.getElementById('select-analise-exercicio-admin').value;
+            const container = document.getElementById('container-raio-x-admin');
+            if (!nomeEx) {
+                container.innerHTML = `<p class="text-[11px] text-slate-500 text-center py-2">Selecione um exercício acima para carregar a curva de progressão.</p>`;
+                return;
+            }
+
+            const registros = [];
+            historicoTreinosAluno.forEach(h => {
+                const exR = (h.exerciciosRealizados || []).find(e => e.nome.toLowerCase() === nomeEx.toLowerCase());
+                if (exR) {
+                    const dataFmt = new Date(h.data).toLocaleDateString('pt-BR');
+                    const ss = exR.series || [];
+                    const cargaMax = Math.max(...ss.map(s => s.carga || 0), 0);
+                    const volEx = exR.volume || ss.reduce((acc, s) => acc + (s.carga || 0) * (s.reps || 0), 0);
+                    const semCarga = exR.semCarga === true || MUSCULOS_SEM_CARGA.includes(exR.musculo);
+                    registros.push({
+                        data: dataFmt, cargaMax, volume: volEx, series: ss.length, semCarga,
+                        melhorReps: Math.max(...ss.map(s => s.reps || 0), 0),
+                        melhorTempo: Math.max(...ss.map(s => s.tempoSeg || 0), 0)
+                    });
+                }
+            });
+
+            if (registros.length === 0) {
+                container.innerHTML = `<p class="text-[11px] text-slate-500 text-center py-2">Nenhum registro encontrado para "${nomeEx}" no histórico.</p>`;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="space-y-1.5 max-h-48 overflow-y-auto pr-1 pt-1">
+                    ${registros.map(r => `
+                        <div class="bg-black border border-slate-800 p-2.5 rounded-xl flex justify-between items-center text-xs">
+                            <div>
+                                <span class="text-[10px] text-slate-500 font-bold block">📅 ${r.data}</span>
+                                <span class="text-slate-300 font-bold">${r.series} séries realizadas</span>
+                            </div>
+                            <div class="text-right">
+                                ${r.semCarga 
+                                    ? `<strong class="text-af-orange block">Melhor: ${(r.melhorTempo > 0 && r.melhorReps === 0) ? formatarTempo(r.melhorTempo) : r.melhorReps + ' reps'}</strong>`
+                                    : `<strong class="text-af-orange block">Carga Máx: ${r.cargaMax}kg</strong>
+                                       <span class="text-[10px] text-slate-400">Vol: ${r.volume.toLocaleString('pt-BR')}kg</span>`
+                                }
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
         }
 
         function mudarPeriodoRelatorio(periodo) {
