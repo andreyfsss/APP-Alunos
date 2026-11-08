@@ -34,7 +34,7 @@
         </div>
         <div class="max-w-md mx-auto px-3 pb-2 flex gap-2 text-xs">
             <button onclick="mudarAbaAtiva('treinos')" id="tab-atleta-treinos" class="flex-1 py-1.5 px-3 rounded-xl font-bold bg-af-orange text-black">🏋️ Treinos</button>
-            <button onclick="mudarAbaAtiva('relatorios')" id="tab-atleta-relatorios" class="flex-1 py-1.5 px-3 rounded-xl font-bold bg-black text-slate-400 border border-slate-800">📊 Relatórios</button>
+            <button onclick="mudarAbaAtiva('relatorios')" id="tab-atleta-relatorios" class="flex-1 py-1.5 px-3 rounded-xl font-bold bg-black text-slate-400 border border-slate-800">📊 Dashboard</button>
         </div>
     </header>
 
@@ -48,7 +48,7 @@
         </div>
     </div>
 
-    <!-- MODAL RELATÓRIO PÓS-TREINO (ESTILO DASHBOARD) -->
+    <!-- MODAL RELATÓRIO PÓS-TREINO -->
     <div id="modal-relatorio-pos-treino" class="fixed inset-0 bg-black/95 backdrop-blur-md hidden z-50 flex flex-col p-4 overflow-y-auto">
         <div class="max-w-md w-full mx-auto space-y-4 my-auto">
             <div class="bg-af-card border border-slate-800 rounded-3xl p-5 space-y-4 shadow-2xl">
@@ -56,7 +56,7 @@
                     🏆
                 </div>
                 <div>
-                    <span class="text-[10px] font-bold text-af-orange uppercase tracking-widest block">Treino Finalizado com Sucesso</span>
+                    <span class="text-[10px] font-bold text-af-orange uppercase tracking-widest block">Treino Concluído com Sucesso</span>
                     <h2 id="relatorio-nome-treino" class="text-lg font-black text-white">Treino A</h2>
                     <p id="relatorio-data-hora" class="text-[10px] text-slate-400 mt-0.5">Hoje</p>
                 </div>
@@ -73,7 +73,7 @@
                 </div>
 
                 <div class="text-left space-y-2 pt-2 border-t border-slate-800">
-                    <h3 class="font-bold text-xs uppercase text-slate-300">Painel de Resumo por Exercício</h3>
+                    <h3 class="font-bold text-xs uppercase text-slate-300">Resumo por Exercício</h3>
                     <div id="relatorio-lista-exercicios" class="space-y-1.5 text-xs max-h-52 overflow-y-auto pr-1"></div>
                 </div>
 
@@ -84,7 +84,7 @@
         </div>
     </div>
 
-    <!-- MODAL EXPLICATIVO DE TÉCNICAS E MÉTODOS -->
+    <!-- MODAL EXPLICATIVO DE MÉTODOS -->
     <div id="modal-explicacao-metodo" class="fixed inset-0 bg-black/90 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
         <div class="bg-af-card border border-slate-800 rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-2xl">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -96,11 +96,11 @@
         </div>
     </div>
 
-    <!-- MODAL RPE COMPLETO (1 A 10) -->
+    <!-- MODAL RPE -->
     <div id="modal-rpe-fullscreen" class="fixed inset-0 bg-black/95 backdrop-blur-md hidden z-50 flex flex-col justify-between p-4 overflow-y-auto">
         <div class="flex justify-between items-center border-b border-slate-800 pb-3">
             <div>
-                <span class="text-[10px] uppercase font-bold text-af-orange">Escala de Esforço Percebido (Borg)</span>
+                <span class="text-[10px] uppercase font-bold text-af-orange">Escala de Esforço (Borg)</span>
                 <h3 class="text-sm font-bold text-white">Selecione o nível de esforço da série</h3>
             </div>
             <button onclick="fecharRPEFullScreen()" class="bg-black text-slate-300 px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-800">✕ Fechar</button>
@@ -151,27 +151,8 @@
             </div>
         </div>
 
-        <!-- ABA RELATÓRIOS DO ATLETA (ESTILO DASHBOARD COMPLETO) -->
+        <!-- ABA DASHBOARD DO ATLETA -->
         <div id="aba-atleta-relatorios" class="hidden space-y-4">
-            <!-- PAINEL GERAL DO MÊS -->
-            <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3 shadow-lg">
-                <div class="flex justify-between items-center border-b border-slate-800 pb-2">
-                    <h3 class="font-black text-xs uppercase tracking-wider text-af-orange">📊 Dashboard do Atleta</h3>
-                    <span class="text-[10px] font-bold text-slate-400 uppercase bg-black px-2 py-0.5 rounded border border-slate-800">Mês Atual</span>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div class="bg-black p-3.5 rounded-xl border border-slate-800 text-center">
-                        <span class="text-[9px] uppercase text-slate-500 font-bold block mb-1">Treinos Realizados</span>
-                        <strong class="text-xl font-black text-white" id="stat-qtd-treinos">0</strong>
-                    </div>
-                    <div class="bg-black p-3.5 rounded-xl border border-slate-800 text-center">
-                        <span class="text-[9px] uppercase text-slate-500 font-bold block mb-1">Volume Total (Mês)</span>
-                        <strong class="text-xl font-black text-af-orange" id="stat-vol-treinos">0 kg</strong>
-                    </div>
-                </div>
-            </div>
-
-            <!-- FILTRO DE PERÍODO E SUB-ABAS DO DASHBOARD -->
             <div class="flex gap-1.5 bg-black p-1 rounded-xl border border-slate-800 text-xs font-bold text-center">
                 <button onclick="mudarPeriodoAtletaRelatorio('semanal')" id="btn-atleta-semanal" class="flex-1 py-1.5 rounded-lg bg-af-orange text-black transition-all">📅 Semanal</button>
                 <button onclick="mudarPeriodoAtletaRelatorio('mensal')" id="btn-atleta-mensal" class="flex-1 py-1.5 rounded-lg text-slate-400 transition-all">📆 Mensal</button>
@@ -183,23 +164,11 @@
                 <button onclick="mudarSubAbaAtletaRelatorio('grupos')" id="subtab-atleta-grupos" class="flex-1 py-1.5 rounded-lg text-slate-400">🎯 Grupamentos</button>
             </div>
 
-            <!-- CONTAINER DINÂMICO DO DASHBOARD DE RELATÓRIO -->
             <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3">
                 <div class="text-center border-b border-slate-800 pb-2.5">
                     <span id="atleta-label-periodo-ativo" class="text-[10px] font-bold text-af-orange uppercase tracking-wider block">Relatório Semanal</span>
                 </div>
                 <div id="atleta-relatorio-conteudo-dinamico" class="space-y-2.5"></div>
-            </div>
-
-            <!-- DASHBOARD DE PROGRESSÃO POR EXERCÍCIO -->
-            <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3">
-                <h3 class="font-bold text-xs uppercase text-af-orange">📈 Progresso por Exercício</h3>
-                <select id="select-atleta-exercicio-progresso" onchange="renderizarAtletaGraficoProgressoExercicio()" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-slate-200 text-xs">
-                    <option value="">Selecione um exercício...</option>
-                </select>
-                <div id="container-atleta-progresso-detalhe" class="space-y-2 pt-2">
-                    <p class="text-xs text-slate-500 text-center py-4">Selecione um exercício acima para ver o seu histórico.</p>
-                </div>
             </div>
         </div>
     </main>
@@ -268,8 +237,6 @@
                 document.getElementById('aba-atleta-treinos').classList.add('hidden');
                 document.getElementById('tab-atleta-relatorios').className = 'flex-1 py-1.5 px-3 rounded-xl font-bold bg-af-orange text-black';
                 document.getElementById('tab-atleta-treinos').className = 'flex-1 py-1.5 px-3 rounded-xl font-bold bg-black text-slate-400 border border-slate-800';
-                atualizarEstatisticasRelatorio();
-                popularSelectAtletaExerciciosProgresso();
                 atualizarRelatoriosAtletaDashboard();
             }
         }
@@ -286,29 +253,12 @@
                 treinosDoAlunoCarregados = aluno.treinos || [];
                 historicoTreinosAluno = Array.isArray(aluno.historico) ? aluno.historico : [];
                 renderizarDivisoesTreino(treinosDoAlunoCarregados);
-                atualizarEstatisticasRelatorio();
             } catch (err) {}
-        }
-
-        function atualizarEstatisticasRelatorio() {
-            let totalTreinos = 0, volumeTotalMes = 0;
-            const validos = historicoValidoDoAluno();
-            if (validos.length > 0) {
-                const agora = new Date();
-                const doMes = validos.filter(h => {
-                    if (!h.data) return false;
-                    const d = new Date(h.data);
-                    return d.getMonth() === agora.getMonth() && d.getFullYear() === agora.getFullYear();
-                });
-                totalTreinos = doMes.length;
-                volumeTotalMes = doMes.reduce((acc, h) => acc + (h.volume || 0), 0);
-            }
-            document.getElementById('stat-qtd-treinos').innerText = totalTreinos;
-            document.getElementById('stat-vol-treinos').innerText = `${volumeTotalMes.toLocaleString('pt-BR')} kg`;
         }
 
         function mudarPeriodoAtletaRelatorio(periodo) {
             periodoAtletaRelatorioAtual = periodo;
+            grupoMuscularAtletaFiltroAtivo = null;
             document.getElementById('btn-atleta-semanal').className = periodo === 'semanal' ? 'flex-1 py-1.5 rounded-lg bg-af-orange text-black font-bold transition-all' : 'flex-1 py-1.5 rounded-lg text-slate-400 font-bold transition-all';
             document.getElementById('btn-atleta-mensal').className = periodo === 'mensal' ? 'flex-1 py-1.5 rounded-lg bg-af-orange text-black font-bold transition-all' : 'flex-1 py-1.5 rounded-lg text-slate-400 font-bold transition-all';
             document.getElementById('atleta-label-periodo-ativo').innerText = periodo === 'semanal' ? 'Relatório Semanal (Últimos 7 dias)' : 'Relatório Mensal (Mês Atual)';
@@ -350,10 +300,22 @@
                 totalSeries += h.qtdSeriesValidadas || 0;
                 (h.exerciciosRealizados || []).forEach(exR => {
                     const musculo = exR.musculo || mapaMusculo[(exR.nome || '').toLowerCase()] || 'Outros';
-                    const g = grupos[musculo] || (grupos[musculo] = { volume: 0, series: 0 });
+                    const g = grupos[musculo] || (grupos[musculo] = { volume: 0, series: 0, exercicios: {} });
                     const volEx = (typeof exR.volume === 'number') ? exR.volume : (exR.series || []).reduce((s, x) => s + (x.carga || 0) * (x.reps || 0), 0);
                     g.volume += volEx;
                     g.series += (exR.series || []).length;
+
+                    const exNome = exR.nome;
+                    if (!g.exercicios[exNome]) g.exercicios[exNome] = [];
+                    g.exercicios[exNome].push({
+                        data: new Date(h.data).toLocaleDateString('pt-BR'),
+                        cargaMax: Math.max(...(exR.series || []).map(s => s.carga || 0), 0),
+                        volume: volEx,
+                        series: (exR.series || []).length,
+                        semCarga: exR.semCarga === true || MUSCULOS_SEM_CARGA.includes(musculo),
+                        melhorReps: Math.max(...(exR.series || []).map(s => s.reps || 0), 0),
+                        melhorTempo: Math.max(...(exR.series || []).map(s => s.tempoSeg || 0), 0)
+                    });
                 });
             });
 
@@ -380,19 +342,39 @@
                     container.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">Nenhum grupamento registrado no período.</p>`;
                 } else if (grupoMuscularAtletaFiltroAtivo) {
                     const gData = grupos[grupoMuscularAtletaFiltroAtivo];
+                    const exerciciosDoGrupo = Object.keys(gData.exercicios);
                     container.innerHTML = `
                         <div class="flex items-center justify-between bg-black p-2.5 rounded-xl border border-slate-800">
                             <button onclick="grupoMuscularAtletaFiltroAtivo=null; atualizarRelatoriosAtletaDashboard();" class="text-xs text-af-orange font-bold">← Voltar para Grupos</button>
                             <span class="text-xs text-white font-bold uppercase">${grupoMuscularAtletaFiltroAtivo}</span>
                         </div>
-                        <div class="bg-black p-3 rounded-xl border border-slate-800 space-y-2 text-xs">
-                            ${MUSCULOS_SEM_CARGA.includes(grupoMuscularAtletaFiltroAtivo) ? '' : `<div class="flex justify-between text-slate-300"><span>Volume:</span><strong class="text-af-orange">${gData.volume.toLocaleString('pt-BR')} kg</strong></div>`}
-                            <div class="flex justify-between text-slate-300"><span>Séries Totais:</span><strong class="text-white">${gData.series} séries</strong></div>
+                        <div class="space-y-3 pt-1">
+                            <div class="bg-black p-3 rounded-xl border border-slate-800 space-y-1 text-xs">
+                                ${MUSCULOS_SEM_CARGA.includes(grupoMuscularAtletaFiltroAtivo) ? '' : `<div class="flex justify-between text-slate-300"><span>Volume:</span><strong class="text-af-orange">${gData.volume.toLocaleString('pt-BR')} kg</strong></div>`}
+                                <div class="flex justify-between text-slate-300"><span>Séries Totais:</span><strong class="text-white">${gData.series} séries</strong></div>
+                            </div>
+                            <h4 class="text-[10px] uppercase font-bold text-slate-400">Progresso por Exercício:</h4>
+                            ${exerciciosDoGrupo.map(exNome => {
+                                const registros = gData.exercicios[exNome];
+                                return `
+                                    <div class="bg-black border border-slate-800 p-3 rounded-xl space-y-2">
+                                        <span class="font-bold text-xs text-white block">${exNome}</span>
+                                        <div class="space-y-1.5">
+                                            ${registros.map(r => `
+                                                <div class="flex justify-between items-center text-[11px] border-t border-slate-900 pt-1.5">
+                                                    <span class="text-slate-400">${r.data} (${r.series} séries)</span>
+                                                    <span class="text-af-orange font-bold">${r.semCarga ? ((r.melhorTempo > 0 && r.melhorReps === 0) ? formatarTempo(r.melhorTempo) : r.melhorReps + ' reps') : r.cargaMax + 'kg máx'}</span>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
                         </div>
                     `;
                 } else {
                     container.innerHTML = `
-                        <p class="text-[10px] text-slate-400">Toque em um grupamento para ver detalhes:</p>
+                        <p class="text-[10px] text-slate-400">Toque em um grupamento para ver o progresso detalhado:</p>
                         <div class="space-y-2">
                             ${nomesGrupos.map(n => `
                                 <div onclick="grupoMuscularAtletaFiltroAtivo='${n}'; atualizarRelatoriosAtletaDashboard();" class="bg-black border border-slate-800 p-3 rounded-xl flex justify-between items-center cursor-pointer hover:border-af-orange">
@@ -404,55 +386,6 @@
                     `;
                 }
             }
-        }
-
-        function popularSelectAtletaExerciciosProgresso() {
-            const select = document.getElementById('select-atleta-exercicio-progresso');
-            const exerciciosUnicos = new Set();
-            treinosDoAlunoCarregados.forEach(t => (t.exercicios || []).forEach(e => exerciciosUnicos.add(e.nome)));
-            historicoValidoDoAluno().forEach(h => (h.exerciciosRealizados || []).forEach(e => exerciciosUnicos.add(e.nome)));
-            select.innerHTML = `<option value="">Selecione um exercício...</option>` + Array.from(exerciciosUnicos).map(ex => `<option value="${ex}">${ex}</option>`).join('');
-        }
-
-        function renderizarAtletaGraficoProgressoExercicio() {
-            const nomeEx = document.getElementById('select-atleta-exercicio-progresso').value;
-            const container = document.getElementById('container-atleta-progresso-detalhe');
-            if (!nomeEx) { container.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">Selecione um exercício acima.</p>`; return; }
-
-            const validos = historicoValidoDoAluno();
-            let registros = [];
-            validos.forEach(h => {
-                const exR = (h.exerciciosRealizados || []).find(e => e.nome.toLowerCase() === nomeEx.toLowerCase());
-                if (exR) {
-                    const dataFmt = new Date(h.data).toLocaleDateString('pt-BR');
-                    const cargaMax = Math.max(...(exR.series || []).map(s => s.carga || 0), 0);
-                    const volEx = exR.volume || (exR.series || []).reduce((acc, s) => acc + (s.carga || 0) * (s.reps || 0), 0);
-                    const ss = exR.series || [];
-                    const semCarga = exR.semCarga === true || MUSCULOS_SEM_CARGA.includes(exR.musculo);
-                    registros.push({
-                        data: dataFmt, cargaMax, volume: volEx, series: ss.length, semCarga,
-                        melhorReps: Math.max(...ss.map(s => s.reps || 0), 0),
-                        melhorTempo: Math.max(...ss.map(s => s.tempoSeg || 0), 0)
-                    });
-                }
-            });
-
-            if (registros.length === 0) { container.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">Nenhum registro encontrado.</p>`; return; }
-
-            container.innerHTML = registros.map(r => `
-                <div class="bg-black border border-slate-800 p-3 rounded-xl flex justify-between items-center text-xs">
-                    <div>
-                        <span class="text-[10px] text-slate-500 font-bold block">${r.data}</span>
-                        <span class="font-bold text-white">${r.series} séries</span>
-                    </div>
-                    <div class="text-right">
-                        ${r.semCarga
-                            ? `<strong class="text-af-orange block text-sm">Melhor: ${(r.melhorTempo > 0 && r.melhorReps === 0) ? formatarTempo(r.melhorTempo) : r.melhorReps + ' reps'}</strong>`
-                            : `<strong class="text-af-orange block text-sm">Carga Máx: ${r.cargaMax}kg</strong>
-                        <span class="text-[10px] text-slate-400">Vol: ${r.volume.toLocaleString('pt-BR')}kg</span>`}
-                    </div>
-                </div>
-            `).join('');
         }
 
         function renderizarDivisoesTreino(treinos) {
@@ -590,12 +523,12 @@
             titulo.innerText = metodo;
 
             let desc = '';
-            if (metodo === 'Pirâmide Crescente') desc = 'Na Pirâmide Crescente, você aumenta a carga a cada série e diminui um pouco as repetições, priorizando picos de força.';
-            else if (metodo === 'Pirâmide Decrescente') desc = 'Na Pirâmide Decrescente, você começa com mais carga nas primeiras séries e vai reduzindo o peso nas séries seguintes.';
-            else if (metodo === 'Drop Set') desc = 'No Drop Set, ao atingir a falha, você reduz a carga imediatamente (20% a 30%) e continua executando até a nova falha.';
-            else if (metodo === 'Rest Pause') desc = 'No Rest Pause, você executa até a falha, descansa 10 a 15 segundos respirando fundo e faz mais algumas repetições.';
-            else if (metodo === 'Cluster Set') desc = 'No Cluster Set, a série é dividida em mini-blocos com pequenos intervalos programados de 10 a 15 segundos.';
-            else if (metodo === 'FST-7') desc = 'O FST-7 consiste em realizar 7 séries no final do exercício com intervalos curtos (30 a 45s) para o máximo pump.';
+            if (metodo === 'Pirâmide Crescente') desc = 'Na Pirâmide Crescente, você aumenta a carga a cada série e diminui um pouco as repetições.';
+            else if (metodo === 'Pirâmide Decrescente') desc = 'Na Pirâmide Decrescente, você começa com mais carga e vai reduzindo nas séries seguintes.';
+            else if (metodo === 'Drop Set') desc = 'No Drop Set, ao atingir a falha, você reduz a carga imediatamente e continua executando.';
+            else if (metodo === 'Rest Pause') desc = 'No Rest Pause, você executa até a falha, descansa 10 a 15 segundos e faz mais algumas repetições.';
+            else if (metodo === 'Cluster Set') desc = 'No Cluster Set, a série é dividida em mini-blocos com pequenos intervalos programados.';
+            else if (metodo === 'FST-7') desc = 'O FST-7 consiste em realizar 7 séries no final do exercício com intervalos curtos.';
             else desc = 'Série Normal com execução padrão orientada pelo seu personal trainer.';
             texto.innerText = desc;
             modal.classList.remove('hidden');
@@ -609,11 +542,7 @@
         }
 
         function dispararVibracaoCelular() {
-            try {
-                if ('vibrate' in navigator) {
-                    navigator.vibrate([500, 200, 500, 200, 800]);
-                }
-            } catch (e) {}
+            try { if ('vibrate' in navigator) navigator.vibrate([500, 200, 500, 200, 800]); } catch (e) {}
         }
 
         function tocarAlarmeAlto() {
@@ -908,6 +837,5 @@
 
         window.onload = carregarDadosAluno;
     </script>
-<div style="position:fixed;bottom:2px;left:6px;font-size:9px;color:#475569;opacity:.6;pointer-events:none;z-index:50">v13-aluno-dashboard-vibracao</div>
 </body>
 </html>
