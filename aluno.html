@@ -256,138 +256,6 @@
             } catch (err) {}
         }
 
-        function mudarPeriodoAtletaRelatorio(periodo) {
-            periodoAtletaRelatorioAtual = periodo;
-            grupoMuscularAtletaFiltroAtivo = null;
-            document.getElementById('btn-atleta-semanal').className = periodo === 'semanal' ? 'flex-1 py-1.5 rounded-lg bg-af-orange text-black font-bold transition-all' : 'flex-1 py-1.5 rounded-lg text-slate-400 font-bold transition-all';
-            document.getElementById('btn-atleta-mensal').className = periodo === 'mensal' ? 'flex-1 py-1.5 rounded-lg bg-af-orange text-black font-bold transition-all' : 'flex-1 py-1.5 rounded-lg text-slate-400 font-bold transition-all';
-            document.getElementById('atleta-label-periodo-ativo').innerText = periodo === 'semanal' ? 'Relatório Semanal (Últimos 7 dias)' : 'Relatório Mensal (Mês Atual)';
-            atualizarRelatoriosAtletaDashboard();
-        }
-
-        function mudarSubAbaAtletaRelatorio(sub) {
-            subAbaAtletaRelatorioAtual = sub;
-            grupoMuscularAtletaFiltroAtivo = null;
-            ['peso', 'series', 'grupos'].forEach(s => {
-                document.getElementById(`subtab-atleta-${s}`).className = s === sub ? 'flex-1 py-1.5 rounded-lg bg-af-orange text-black font-bold' : 'flex-1 py-1.5 rounded-lg text-slate-400 font-bold';
-            });
-            atualizarRelatoriosAtletaDashboard();
-        }
-
-        function atualizarRelatoriosAtletaDashboard() {
-            const validos = historicoValidoDoAluno();
-            const mapaMusculo = {};
-            treinosDoAlunoCarregados.forEach(t => (t.exercicios || []).forEach(e => { if (e.musculo) mapaMusculo[e.nome.toLowerCase()] = e.musculo; }));
-
-            const agora = new Date();
-            const historicoFiltrado = validos.filter(h => {
-                if (!h.data) return false;
-                const d = new Date(h.data);
-                if (periodoAtletaRelatorioAtual === 'semanal') {
-                    const seteDiasAtras = new Date();
-                    seteDiasAtras.setDate(agora.getDate() - 7);
-                    return d >= seteDiasAtras && d <= agora;
-                } else {
-                    return d.getMonth() === agora.getMonth() && d.getFullYear() === agora.getFullYear();
-                }
-            });
-
-            const grupos = {};
-            let volTotal = 0, totalSeries = 0;
-
-            historicoFiltrado.forEach(h => {
-                volTotal += h.volume || 0;
-                totalSeries += h.qtdSeriesValidadas || 0;
-                (h.exerciciosRealizados || []).forEach(exR => {
-                    const musculo = exR.musculo || mapaMusculo[(exR.nome || '').toLowerCase()] || 'Outros';
-                    const g = grupos[musculo] || (grupos[musculo] = { volume: 0, series: 0, exercicios: {} });
-                    const volEx = (typeof exR.volume === 'number') ? exR.volume : (exR.series || []).reduce((s, x) => s + (x.carga || 0) * (x.reps || 0), 0);
-                    g.volume += volEx;
-                    g.series += (exR.series || []).length;
-
-                    const exNome = exR.nome;
-                    if (!g.exercicios[exNome]) g.exercicios[exNome] = [];
-                    g.exercicios[exNome].push({
-                        data: new Date(h.data).toLocaleDateString('pt-BR'),
-                        cargaMax: Math.max(...(exR.series || []).map(s => s.carga || 0), 0),
-                        volume: volEx,
-                        series: (exR.series || []).length,
-                        semCarga: exR.semCarga === true || MUSCULOS_SEM_CARGA.includes(musculo),
-                        melhorReps: Math.max(...(exR.series || []).map(s => s.reps || 0), 0),
-                        melhorTempo: Math.max(...(exR.series || []).map(s => s.tempoSeg || 0), 0)
-                    });
-                });
-            });
-
-            const container = document.getElementById('atleta-relatorio-conteudo-dinamico');
-
-            if (subAbaAtletaRelatorioAtual === 'peso') {
-                container.innerHTML = `
-                    <div class="bg-black p-4 rounded-xl border border-slate-800 text-center space-y-1">
-                        <span class="text-[10px] uppercase text-slate-500 font-bold block">Volume Total (Carga × Reps)</span>
-                        <strong class="text-xl font-black text-af-orange">${volTotal.toLocaleString('pt-BR')} kg</strong>
-                        <p class="text-[10px] text-slate-400">Sessões no período: ${historicoFiltrado.length}</p>
-                    </div>
-                `;
-            } else if (subAbaAtletaRelatorioAtual === 'series') {
-                container.innerHTML = `
-                    <div class="bg-black p-4 rounded-xl border border-slate-800 text-center space-y-1">
-                        <span class="text-[10px] uppercase text-slate-500 font-bold block">Total de Séries Validadas</span>
-                        <strong class="text-xl font-black text-white">${totalSeries} séries</strong>
-                    </div>
-                `;
-            } else {
-                const nomesGrupos = Object.keys(grupos);
-                if (nomesGrupos.length === 0) {
-                    container.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">Nenhum grupamento registrado no período.</p>`;
-                } else if (grupoMuscularAtletaFiltroAtivo) {
-                    const gData = grupos[grupoMuscularAtletaFiltroAtivo];
-                    const exerciciosDoGrupo = Object.keys(gData.exercicios);
-                    container.innerHTML = `
-                        <div class="flex items-center justify-between bg-black p-2.5 rounded-xl border border-slate-800">
-                            <button onclick="grupoMuscularAtletaFiltroAtivo=null; atualizarRelatoriosAtletaDashboard();" class="text-xs text-af-orange font-bold">← Voltar para Grupos</button>
-                            <span class="text-xs text-white font-bold uppercase">${grupoMuscularAtletaFiltroAtivo}</span>
-                        </div>
-                        <div class="space-y-3 pt-1">
-                            <div class="bg-black p-3 rounded-xl border border-slate-800 space-y-1 text-xs">
-                                ${MUSCULOS_SEM_CARGA.includes(grupoMuscularAtletaFiltroAtivo) ? '' : `<div class="flex justify-between text-slate-300"><span>Volume:</span><strong class="text-af-orange">${gData.volume.toLocaleString('pt-BR')} kg</strong></div>`}
-                                <div class="flex justify-between text-slate-300"><span>Séries Totais:</span><strong class="text-white">${gData.series} séries</strong></div>
-                            </div>
-                            <h4 class="text-[10px] uppercase font-bold text-slate-400">Progresso por Exercício:</h4>
-                            ${exerciciosDoGrupo.map(exNome => {
-                                const registros = gData.exercicios[exNome];
-                                return `
-                                    <div class="bg-black border border-slate-800 p-3 rounded-xl space-y-2">
-                                        <span class="font-bold text-xs text-white block">${exNome}</span>
-                                        <div class="space-y-1.5">
-                                            ${registros.map(r => `
-                                                <div class="flex justify-between items-center text-[11px] border-t border-slate-900 pt-1.5">
-                                                    <span class="text-slate-400">${r.data} (${r.series} séries)</span>
-                                                    <span class="text-af-orange font-bold">${r.semCarga ? ((r.melhorTempo > 0 && r.melhorReps === 0) ? formatarTempo(r.melhorTempo) : r.melhorReps + ' reps') : r.cargaMax + 'kg máx'}</span>
-                                                </div>
-                                            `).join('')}
-                                        </div>
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
-                    `;
-                } else {
-                    container.innerHTML = `
-                        <p class="text-[10px] text-slate-400">Toque em um grupamento para ver o progresso detalhado:</p>
-                        <div class="space-y-2">
-                            ${nomesGrupos.map(n => `
-                                <div onclick="grupoMuscularAtletaFiltroAtivo='${n}'; atualizarRelatoriosAtletaDashboard();" class="bg-black border border-slate-800 p-3 rounded-xl flex justify-between items-center cursor-pointer hover:border-af-orange">
-                                    <span class="font-bold text-sm text-af-orange">${n}</span>
-                                    <span class="text-xs text-slate-200">${MUSCULOS_SEM_CARGA.includes(n) ? '' : grupos[n].volume.toLocaleString('pt-BR') + ' kg • '}${grupos[n].series} séries</span>
-                                </div>
-                            `).join('')}
-                        </div>
-                    `;
-                }
-            }
-        }
-
         function renderizarDivisoesTreino(treinos) {
             const container = document.getElementById('container-lista-divisoes');
             if (!treinos || treinos.length === 0) {
@@ -445,6 +313,7 @@
                 const semCarga = MUSCULOS_SEM_CARGA.includes(ex.musculo);
                 const exigeRpe = ex.exigeRpe !== false && !semCarga;
                 const metodoGeral = ex.metodoGeral || 'Nulo';
+                const conjugado = ex.conjugado && ex.conjugado !== 'Nenhum' ? ex.conjugado : null;
 
                 let badgeMetodoHtml = '';
                 if (metodoGeral !== 'Nulo') {
@@ -497,11 +366,14 @@
                 }).join('');
 
                 return `
-                    <div class="bg-af-card border border-slate-800 rounded-2xl overflow-hidden shadow-md" data-nome-exercicio="${ex.nome}" data-musculo="${ex.musculo || ''}" data-sem-carga="${semCarga}">
+                    <div class="bg-af-card border ${conjugado ? 'border-amber-500/60' : 'border-slate-800'} rounded-2xl overflow-hidden shadow-md" data-nome-exercicio="${ex.nome}" data-musculo="${ex.musculo || ''}" data-sem-carga="${semCarga}">
                         <div onclick="alternarColapsoExercicio(this)" class="p-3.5 bg-af-card flex justify-between items-center cursor-pointer select-none">
                             <div class="flex items-center gap-2">
                                 <div>
-                                    <span class="text-[10px] font-bold uppercase text-af-orange">${ex.musculo} • ${ex.equipamento}</span>
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="text-[10px] font-bold uppercase text-af-orange">${ex.musculo} • ${ex.equipamento}</span>
+                                        ${conjugado ? `<span class="text-[9px] bg-amber-950 text-amber-400 border border-amber-600/50 px-1.5 py-0.5 rounded font-black">🔗 ${conjugado}</span>` : ''}
+                                    </div>
                                     <h3 class="font-bold text-xs text-slate-100">${index + 1}. ${ex.nome}</h3>
                                 </div>
                             </div>
@@ -831,129 +703,140 @@
             }
         }
 
-        function fecharRelatorioEAtualizar() {
-            window.location.reload();
+        function fecharRelatorioEAtualizar() { window.location.reload(); }
+        function mudarPeriodoAtletaRelatorio(periodo) {
+            periodoAtletaRelatorioAtual = periodo;
+            grupoMuscularAtletaFiltroAtivo = null;
+            document.getElementById('btn-atleta-semanal').className = periodo === 'semanal' ? 'flex-1 py-1.5 rounded-lg bg-af-orange text-black font-bold transition-all' : 'flex-1 py-1.5 rounded-lg text-slate-400 font-bold transition-all';
+            document.getElementById('btn-atleta-mensal').className = periodo === 'mensal' ? 'flex-1 py-1.5 rounded-lg bg-af-orange text-black font-bold transition-all' : 'flex-1 py-1.5 rounded-lg text-slate-400 font-bold transition-all';
+            document.getElementById('atleta-label-periodo-ativo').innerText = periodo === 'semanal' ? 'Relatório Semanal (Últimos 7 dias)' : 'Relatório Mensal (Mês Atual)';
+            atualizarRelatoriosAtletaDashboard();
+        }
+
+        function mudarSubAbaAtletaRelatorio(sub) {
+            subAbaAtletaRelatorioAtual = sub;
+            grupoMuscularAtletaFiltroAtivo = null;
+            ['peso', 'series', 'grupos'].forEach(s => {
+                document.getElementById(`subtab-atleta-${s}`).className = s === sub ? 'flex-1 py-1.5 rounded-lg bg-af-orange text-black font-bold' : 'flex-1 py-1.5 rounded-lg text-slate-400 font-bold';
+            });
+            atualizarRelatoriosAtletaDashboard();
+        }
+
+        function atualizarRelatoriosAtletaDashboard() {
+            const validos = historicoValidoDoAluno();
+            const mapaMusculo = {};
+            treinosDoAlunoCarregados.forEach(t => (t.exercicios || []).forEach(e => { if (e.musculo) mapaMusculo[e.nome.toLowerCase()] = e.musculo; }));
+
+            const agora = new Date();
+            const historicoFiltrado = validos.filter(h => {
+                if (!h.data) return false;
+                const d = new Date(h.data);
+                if (periodoAtletaRelatorioAtual === 'semanal') {
+                    const seteDiasAtras = new Date();
+                    seteDiasAtras.setDate(agora.getDate() - 7);
+                    return d >= seteDiasAtras && d <= agora;
+                } else {
+                    return d.getMonth() === agora.getMonth() && d.getFullYear() === agora.getFullYear();
+                }
+            });
+
+            const grupos = {};
+            let volTotal = 0, totalSeries = 0;
+
+            historicoFiltrado.forEach(h => {
+                volTotal += h.volume || 0;
+                totalSeries += h.qtdSeriesValidadas || 0;
+                (h.exerciciosRealizados || []).forEach(exR => {
+                    const musculo = exR.musculo || mapaMusculo[(exR.nome || '').toLowerCase()] || 'Outros';
+                    const g = grupos[musculo] || (grupos[musculo] = { volume: 0, series: 0, exercicios: {} });
+                    const volEx = (typeof exR.volume === 'number') ? exR.volume : (exR.series || []).reduce((s, x) => s + (x.carga || 0) * (x.reps || 0), 0);
+                    g.volume += volEx;
+                    g.series += (exR.series || []).length;
+
+                    const exNome = exR.nome;
+                    if (!g.exercicios[exNome]) g.exercicios[exNome] = [];
+                    g.exercicios[exNome].push({
+                        data: new Date(h.data).toLocaleDateString('pt-BR'),
+                        cargaMax: Math.max(...(exR.series || []).map(s => s.carga || 0), 0),
+                        volume: volEx,
+                        series: (exR.series || []).length,
+                        semCarga: exR.semCarga === true || MUSCULOS_SEM_CARGA.includes(musculo),
+                        melhorReps: Math.max(...(exR.series || []).map(s => s.reps || 0), 0),
+                        melhorTempo: Math.max(...(exR.series || []).map(s => s.tempoSeg || 0), 0)
+                    });
+                });
+            });
+
+            const container = document.getElementById('atleta-relatorio-conteudo-dinamico');
+
+            if (subAbaAtletaRelatorioAtual === 'peso') {
+                container.innerHTML = `
+                    <div class="bg-black p-4 rounded-xl border border-slate-800 text-center space-y-1">
+                        <span class="text-[10px] uppercase text-slate-500 font-bold block">Volume Total (Carga × Reps)</span>
+                        <strong class="text-xl font-black text-af-orange">${volTotal.toLocaleString('pt-BR')} kg</strong>
+                        <p class="text-[10px] text-slate-400">Sessões no período: ${historicoFiltrado.length}</p>
+                    </div>
+                `;
+            } else if (subAbaAtletaRelatorioAtual === 'series') {
+                container.innerHTML = `
+                    <div class="bg-black p-4 rounded-xl border border-slate-800 text-center space-y-1">
+                        <span class="text-[10px] uppercase text-slate-500 font-bold block">Total de Séries Validadas</span>
+                        <strong class="text-xl font-black text-white">${totalSeries} séries</strong>
+                    </div>
+                `;
+            } else {
+                const nomesGrupos = Object.keys(grupos);
+                if (nomesGrupos.length === 0) {
+                    container.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">Nenhum grupamento registrado no período.</p>`;
+                } else if (grupoMuscularAtletaFiltroAtivo) {
+                    const gData = grupos[grupoMuscularAtletaFiltroAtivo];
+                    const exerciciosDoGrupo = Object.keys(gData.exercicios);
+                    container.innerHTML = `
+                        <div class="flex items-center justify-between bg-black p-2.5 rounded-xl border border-slate-800">
+                            <button onclick="grupoMuscularAtletaFiltroAtivo=null; atualizarRelatoriosAtletaDashboard();" class="text-xs text-af-orange font-bold">← Voltar para Grupos</button>
+                            <span class="text-xs text-white font-bold uppercase">${grupoMuscularAtletaFiltroAtivo}</span>
+                        </div>
+                        <div class="space-y-3 pt-1">
+                            <div class="bg-black p-3 rounded-xl border border-slate-800 space-y-1 text-xs">
+                                ${MUSCULOS_SEM_CARGA.includes(grupoMuscularAtletaFiltroAtivo) ? '' : `<div class="flex justify-between text-slate-300"><span>Volume:</span><strong class="text-af-orange">${gData.volume.toLocaleString('pt-BR')} kg</strong></div>`}
+                                <div class="flex justify-between text-slate-300"><span>Séries Totais:</span><strong class="text-white">${gData.series} séries</strong></div>
+                            </div>
+                            <h4 class="text-[10px] uppercase font-bold text-slate-400">Progresso por Exercício:</h4>
+                            ${exerciciosDoGrupo.map(exNome => {
+                                const registros = gData.exercicios[exNome];
+                                return `
+                                    <div class="bg-black border border-slate-800 p-3 rounded-xl space-y-2">
+                                        <span class="font-bold text-xs text-white block">${exNome}</span>
+                                        <div class="space-y-1.5">
+                                            ${registros.map(r => `
+                                                <div class="flex justify-between items-center text-[11px] border-t border-slate-900 pt-1.5">
+                                                    <span class="text-slate-400">${r.data} (${r.series} séries)</span>
+                                                    <span class="text-af-orange font-bold">${r.semCarga ? ((r.melhorTempo > 0 && r.melhorReps === 0) ? formatarTempo(r.melhorTempo) : r.melhorReps + ' reps') : r.cargaMax + 'kg máx'}</span>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = `
+                        <p class="text-[10px] text-slate-400">Toque em um grupamento para ver o progresso detalhado:</p>
+                        <div class="space-y-2">
+                            ${nomesGrupos.map(n => `
+                                <div onclick="grupoMuscularAtletaFiltroAtivo='${n}'; atualizarRelatoriosAtletaDashboard();" class="bg-black border border-slate-800 p-3 rounded-xl flex justify-between items-center cursor-pointer hover:border-af-orange">
+                                    <span class="font-bold text-sm text-af-orange">${n}</span>
+                                    <span class="text-xs text-slate-200">${MUSCULOS_SEM_CARGA.includes(n) ? '' : grupos[n].volume.toLocaleString('pt-BR') + ' kg • '}${grupos[n].series} séries</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+            }
         }
 
         window.onload = carregarDadosAluno;
-    
-/* ===== DASHBOARD (engine compartilhado) ===== */
-const DASH_COR = '#FF6A00';
-const dashNum = n => (n || 0).toLocaleString('pt-BR');
-const dashVazio = t => `<p class="text-[11px] text-slate-500 text-center py-4">${t}</p>`;
-const dashCard = (titulo, corpo) => `<div class="bg-black border border-slate-800 rounded-2xl p-3.5 space-y-2.5"><h4 class="text-[10px] font-black uppercase tracking-wider text-slate-400">${titulo}</h4>${corpo}</div>`;
-
-function dashPeriodo(hs, per) {
-    const now = new Date(), fim = new Date(now.getTime() + 1);
-    let ini, iniAnt;
-    if (per === 'semanal') { ini = new Date(now); ini.setDate(now.getDate() - 7); iniAnt = new Date(now); iniAnt.setDate(now.getDate() - 14); }
-    else { ini = new Date(now.getFullYear(), now.getMonth(), 1); iniAnt = new Date(now.getFullYear(), now.getMonth() - 1, 1); }
-    const f = (a, b) => hs.filter(h => h.data && new Date(h.data) >= a && new Date(h.data) < b);
-    return { atual: f(ini, fim), anterior: f(iniAnt, ini) };
-}
-
-function dashResumo(hs) {
-    const r = { sessoes: hs.length, volume: 0, series: 0, reps: 0, rpe: [], grupos: {} };
-    hs.forEach(h => {
-        r.volume += h.volume || 0;
-        (h.exerciciosRealizados || []).forEach(e => {
-            const m = e.musculo || 'Outros', g = r.grupos[m] || (r.grupos[m] = { series: 0, volume: 0 });
-            (e.series || []).forEach(s => {
-                r.series++; g.series++; r.reps += s.reps || 0; g.volume += (s.carga || 0) * (s.reps || 0);
-                const x = parseFloat(s.rpe); if (!isNaN(x)) r.rpe.push(x);
-            });
-        });
-    });
-    r.rpeMedio = r.rpe.length ? r.rpe.reduce((a, b) => a + b, 0) / r.rpe.length : null;
-    return r;
-}
-
-function dashDelta(a, b) {
-    if (!b) return a ? '<span class="text-[10px] font-bold text-sky-400">novo</span>' : '<span class="text-[10px] text-slate-600">–</span>';
-    const p = Math.round((a - b) / b * 100), c = p > 0 ? 'text-emerald-400' : p < 0 ? 'text-rose-400' : 'text-slate-500';
-    return `<span class="text-[10px] font-bold ${c}">${p > 0 ? '▲' : p < 0 ? '▼' : '•'} ${Math.abs(p)}%</span>`;
-}
-
-const dashKpi = (rot, val, delta) => `<div class="bg-black border border-slate-800 rounded-2xl p-3"><span class="text-[9px] uppercase font-bold text-slate-500 block">${rot}</span><strong class="text-xl font-black text-white block leading-tight mt-0.5">${val}</strong><div class="mt-0.5">${delta || ''}</div></div>`;
-
-function dashBarras(pts) {
-    if (!pts.length) return dashVazio('Nenhum treino no período.');
-    const W = 320, H = 110, p = 12, max = Math.max(...pts.map(x => x.val), 1), step = (W - p * 2) / pts.length, bw = Math.min(30, step - 6);
-    return `<svg viewBox="0 0 ${W} ${H + 22}" class="w-full">` + pts.map((x, i) => {
-        const h = Math.max(3, x.val / max * H), cx = p + step * i + step / 2;
-        return `<rect x="${cx - bw / 2}" y="${H - h + 4}" width="${bw}" height="${h}" rx="5" fill="${DASH_COR}" opacity="${0.4 + 0.6 * x.val / max}"/><text x="${cx}" y="${H + 17}" text-anchor="middle" font-size="9" fill="#64748b">${x.rot}</text>`;
-    }).join('') + '</svg>';
-}
-
-function dashLinha(pts) {
-    if (pts.length < 2) return dashVazio('A curva aparece a partir do 2º treino com esse exercício.');
-    const W = 320, H = 110, p = 14, n = pts.length, v = pts.map(x => x.val), max = Math.max(...v), min = Math.min(...v), rng = (max - min) || 1;
-    const xy = pts.map((x, i) => [p + (W - 2 * p) * i / (n - 1), 8 + (H - 24) * (1 - (x.val - min) / rng)]);
-    const linha = xy.map(a => a.join(',')).join(' ');
-    return `<svg viewBox="0 0 ${W} ${H + 18}" class="w-full"><defs><linearGradient id="gl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${DASH_COR}" stop-opacity=".35"/><stop offset="1" stop-color="${DASH_COR}" stop-opacity="0"/></linearGradient></defs>
-        <polygon points="${p},${H} ${linha} ${W - p},${H}" fill="url(#gl)"/><polyline points="${linha}" fill="none" stroke="${DASH_COR}" stroke-width="2.5" stroke-linejoin="round"/>
-        ${xy.map(a => `<circle cx="${a[0]}" cy="${a[1]}" r="3.5" fill="#050505" stroke="${DASH_COR}" stroke-width="2"/>`).join('')}
-        <text x="${p}" y="${H + 14}" font-size="9" fill="#64748b">${pts[0].rot}</text><text x="${W - p}" y="${H + 14}" text-anchor="end" font-size="9" fill="#64748b">${pts[n - 1].rot}</text></svg>`;
-}
-
-function dashConstancia(hs) {
-    const dias = new Set(hs.map(h => h.data && new Date(h.data).toDateString()));
-    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
-    const ini = new Date(hoje); ini.setDate(hoje.getDate() - ((hoje.getDay() + 6) % 7) - 28);
-    let cel = '', treinados = 0;
-    for (let i = 0; i < 35; i++) {
-        const d = new Date(ini); d.setDate(ini.getDate() + i);
-        if (d > hoje) { cel += '<div class="aspect-square rounded-md bg-transparent"></div>'; continue; }
-        const on = dias.has(d.toDateString()); if (on) treinados++;
-        cel += `<div class="aspect-square rounded-md ${on ? 'bg-af-orange' : 'bg-slate-900'} ${d.getTime() === hoje.getTime() ? 'ring-1 ring-white/70' : ''}"></div>`;
-    }
-    return `<div class="grid grid-cols-7 gap-1 text-[8px] text-slate-600 text-center">${['S', 'T', 'Q', 'Q', 'S', 'S', 'D'].map(x => `<span>${x}</span>`).join('')}</div><div class="grid grid-cols-7 gap-1">${cel}</div><p class="text-[10px] text-slate-400">${treinados} dia(s) treinado(s) nas últimas 5 semanas</p>`;
-}
-
-function dashRecordes(hs) {
-    const melhor = {}, evs = [];
-    hs.slice().sort((a, b) => new Date(a.data) - new Date(b.data)).forEach(h => (h.exerciciosRealizados || []).forEach(e => {
-        const ss = e.series || [], sc = e.semCarga === true || MUSCULOS_SEM_CARGA.includes(e.musculo);
-        const val = sc ? Math.max(...ss.map(s => s.tempoSeg > 0 && !s.reps ? s.tempoSeg : (s.reps || 0)), 0) : Math.max(...ss.map(s => (s.carga || 0) * (1 + (s.reps || 0) / 30)), 0);
-        const k = e.nome.toLowerCase();
-        if (val > 0 && melhor[k] !== undefined && val > melhor[k]) {
-            const top = ss.slice().sort((a, b) => ((b.carga || 0) * (1 + (b.reps || 0) / 30)) - ((a.carga || 0) * (1 + (a.reps || 0) / 30)))[0] || {};
-            evs.push({ nome: e.nome, data: new Date(h.data).toLocaleDateString('pt-BR'), txt: sc ? (ss.some(s => s.tempoSeg > 0 && !s.reps) ? formatarTempo(val) : val + ' reps') : `${top.carga}kg × ${top.reps}` });
-        }
-        if (val > 0 && (melhor[k] === undefined || val > melhor[k])) melhor[k] = val;
-    }));
-    return evs.slice(-4).reverse();
-}
-
-function dashboardHTML(hs, treinos, per, admin) {
-    const P = dashPeriodo(hs, per), a = dashResumo(P.atual), b = dashResumo(P.anterior), comp = per === 'semanal' ? 'vs 7 dias anteriores' : 'vs mês anterior';
-    const kpis = dashKpi('Treinos', a.sessoes, dashDelta(a.sessoes, b.sessoes)) + dashKpi('Volume', dashNum(a.volume) + ' kg', dashDelta(a.volume, b.volume)) +
-        dashKpi('Séries', a.series, dashDelta(a.series, b.series)) +
-        (admin ? dashKpi('RPE médio', a.rpeMedio ? a.rpeMedio.toFixed(1) : '–', '<span class="text-[10px] text-slate-500">esforço percebido</span>') : dashKpi('Repetições', dashNum(a.reps), dashDelta(a.reps, b.reps)));
-    const pts = P.atual.slice().sort((x, y) => new Date(x.data) - new Date(y.data)).slice(-12).map(h => ({ rot: new Date(h.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }), val: h.volume || 0 }));
-    const gs = Object.entries(a.grupos).sort((x, y) => y[1].series - x[1].series), tot = gs.reduce((s, g) => s + g[1].series, 0) || 1;
-    const gHtml = gs.length ? gs.map(([n, g]) => `<div class="space-y-1"><div class="flex justify-between text-[11px]"><span class="font-bold text-slate-200">${n}</span><span class="text-slate-400">${g.series} séries${MUSCULOS_SEM_CARGA.includes(n) ? '' : ' • ' + dashNum(g.volume) + ' kg'} • ${Math.round(g.series / tot * 100)}%</span></div><div class="h-2 rounded-full bg-slate-900 overflow-hidden"><div class="h-full rounded-full bg-af-orange" style="width:${Math.max(4, g.series / gs[0][1].series * 100)}%"></div></div></div>`).join('') : dashVazio('Nenhum grupamento no período.');
-    let alerta = '';
-    if (admin) {
-        const prescritos = new Set(); (treinos || []).forEach(t => (t.exercicios || []).forEach(e => e.musculo && prescritos.add(e.musculo)));
-        const falt = [...prescritos].filter(m => !a.grupos[m]);
-        if (falt.length && P.atual.length) alerta = `<div class="bg-amber-950/40 border border-amber-700/40 rounded-2xl p-3 text-[11px] text-amber-300">⚠️ Na ficha, mas sem nenhuma série no período: <strong>${falt.join(', ')}</strong></div>`;
-    }
-    const rec = dashRecordes(hs);
-    const recHtml = rec.length ? rec.map(r => `<div class="flex justify-between items-center text-[11px]"><span class="text-slate-200 font-bold">🏆 ${r.nome}</span><span class="text-af-orange font-bold">${r.txt} <span class="text-slate-500 font-normal">• ${r.data}</span></span></div>`).join('') : dashVazio('Os recordes aparecem quando um exercício supera o melhor resultado anterior.');
-    return `<div class="grid grid-cols-2 gap-2">${kpis}</div><p class="text-[9px] text-slate-600 text-center -mt-1">▲▼ ${comp}</p>${alerta}` +
-        dashCard('Volume por treino (kg)', dashBarras(pts)) + dashCard('Séries por grupamento', `<div class="space-y-2.5">${gHtml}</div>`) +
-        dashCard('Constância', dashConstancia(hs)) + dashCard('Recordes recentes', `<div class="space-y-2">${recHtml}</div>`);
-}
-
-
-/* ===== Aluno: dashboard ===== */
-function atualizarRelatoriosAtletaDashboard() {
-    document.getElementById('atleta-relatorio-conteudo-dinamico').innerHTML = dashboardHTML(historicoValidoDoAluno(), treinosDoAlunoCarregados, periodoAtletaRelatorioAtual, false);
-}
-(function () { const el = document.getElementById('subtab-atleta-peso'); if (el) el.parentElement.style.display = 'none'; })();
-
     </script>
-<div style="position:fixed;bottom:2px;left:6px;font-size:9px;color:#475569;opacity:.6;pointer-events:none;z-index:50">v13-dashboard-aluno</div>
 </body>
 </html>

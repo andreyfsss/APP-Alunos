@@ -117,7 +117,7 @@
                 </div>
             </div>
 
-            <!-- ABA 2: DASHBOARD BI & ANÁLISE PROFUNDA (EXCLUSIVO ADMIN) -->
+            <!-- ABA 2: DASHBOARD BI & ANÁLISE PROFUNDA -->
             <div id="sec-admin-relatorios" class="hidden space-y-4">
                 <div class="flex justify-between items-center bg-af-card border border-slate-800 rounded-2xl p-4 no-print">
                     <div>
@@ -127,7 +127,6 @@
                     <button onclick="gerarRelatorioPDF()" class="bg-af-orange text-black font-black px-3.5 py-2 rounded-xl text-xs shadow-md">📄 Imprimir PDF</button>
                 </div>
 
-                <!-- FERRAMENTA EXCLUSIVA ADMIN: ANÁLISE DE EXERCÍCIO ESPECÍFICO DESDE O DIA 1 -->
                 <div class="bg-af-card border border-af-orange/40 rounded-2xl p-4 space-y-3 shadow-xl">
                     <div class="flex items-center gap-2">
                         <span class="text-base">📈</span>
@@ -144,20 +143,17 @@
                     </div>
                 </div>
 
-                <!-- SELETOR DE PERÍODO (SEMANAL / MENSAL) -->
                 <div class="flex gap-1.5 bg-black p-1.5 rounded-xl border border-slate-800 text-xs font-bold text-center no-print">
                     <button onclick="mudarPeriodoRelatorio('semanal')" id="btn-periodo-semanal" class="flex-1 py-1.5 rounded-lg bg-af-orange text-black transition-all">📅 Semanal</button>
                     <button onclick="mudarPeriodoRelatorio('mensal')" id="btn-periodo-mensal" class="flex-1 py-1.5 rounded-lg text-slate-400 transition-all">📆 Mensal</button>
                 </div>
 
-                <!-- SUB-ABAS (VOLUME, SÉRIES, GRUPAMENTOS) -->
                 <div class="flex gap-1 bg-af-card p-1 rounded-xl border border-slate-800 text-[10px] font-bold text-center no-print">
                     <button onclick="mudarSubAbaRelatorio('peso')" id="subtab-peso" class="flex-1 py-1.5 rounded-lg bg-af-orange text-black">🏋️ Volume</button>
                     <button onclick="mudarSubAbaRelatorio('series')" id="subtab-series" class="flex-1 py-1.5 rounded-lg text-slate-400">🔢 Séries</button>
                     <button onclick="mudarSubAbaRelatorio('grupos')" id="subtab-grupos" class="flex-1 py-1.5 rounded-lg text-slate-400">🎯 Grupamentos</button>
                 </div>
 
-                <!-- CONTAINER DO DASHBOARD BI -->
                 <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-4 print-container">
                     <div class="text-center border-b border-slate-800 pb-3">
                         <span id="label-periodo-ativo" class="text-[10px] font-bold text-af-orange uppercase tracking-wider block">Relatório Semanal</span>
@@ -214,12 +210,25 @@
                         </div>
                     </div>
 
+                    <!-- CONJUGAÇÃO / BI-SET -->
                     <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[10px] text-af-orange uppercase font-bold mb-1">Conjugado / Bi-Set</label>
+                            <select id="select-conjugado-ex" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-af-orange font-bold">
+                                <option value="Nenhum">Nenhum (Individual)</option>
+                                <option value="Bi-Set A">Bi-Set / Tri-Set A</option>
+                                <option value="Bi-Set B">Bi-Set / Tri-Set B</option>
+                                <option value="Bi-Set C">Bi-Set / Tri-Set C</option>
+                            </select>
+                        </div>
                         <div>
                             <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Qtd de Séries</label>
                             <input type="number" id="input-qtd-series-ex" value="4" oninput="validarApenasNumeros(this)" onchange="gerarCamposSeriesAdmin(this.value, lerSeriesAdminAtuais())" min="1" max="10" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-white text-center font-bold">
                         </div>
-                        <div id="bloco-select-metodo-geral">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div id="bloco-select-metodo-geral" class="col-span-2">
                             <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Método Geral</label>
                             <select id="select-metodo-geral-ex" onchange="alternarVisibilidadeMetodoMacro(this.value)" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-af-orange font-bold">
                                 <option value="Nulo">Nulo (Modular por Série)</option>
@@ -264,7 +273,7 @@
             </div>
 
             <div class="space-y-2">
-                <h3 class="font-bold text-xs uppercase tracking-wider text-slate-400 px-1">Exercícios Desta Divisão</h3>
+                <h3 class="font-bold text-xs uppercase tracking-wider text-slate-400 px-1">Exercícios Desta Divisão (Ordem de Execução)</h3>
                 <div id="container-lista-exercicios-divisao" class="space-y-2">
                     <p class="text-xs text-slate-600 text-center py-4">Nenhum exercício adicionado ainda.</p>
                 </div>
@@ -329,6 +338,21 @@
                     `;
                 }).join('');
             } catch (err) {}
+        }
+
+        async function cadastrarAluno() {
+            const input = document.getElementById('nome-novo-aluno');
+            const nome = input.value.trim();
+            if (!nome) return;
+            
+            const token = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+
+            const { error } = await supabaseClient.from('alunos').insert([{ nome, token, treinos: [], historico: [] }]);
+            if (error) alert('Erro: ' + error.message);
+            else { input.value = ''; carregarAlunos(); }
         }
 
         async function editarNomeAluno(id, nomeAtual) {
@@ -487,6 +511,176 @@
                     `).join('')}
                 </div>
             `;
+        }
+
+        function moverTreinoOrdem(idx, direcao) {
+            const novoIdx = idx + direcao;
+            if (novoIdx < 0 || novoIdx >= treinosDoAluno.length) return;
+            const temp = treinosDoAluno[idx];
+            treinosDoAluno[idx] = treinosDoAluno[novoIdx];
+            treinosDoAluno[novoIdx] = temp;
+            salvarTreinosNoSupabase();
+            renderizarTreinosAluno();
+        }
+
+        function moverExercicioOrdem(idx, direcao) {
+            const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
+            if (!treino || !treino.exercicios) return;
+            const novoIdx = idx + direcao;
+            if (novoIdx < 0 || novoIdx >= treino.exercicios.length) return;
+            const temp = treino.exercicios[idx];
+            treino.exercicios[idx] = treino.exercicios[novoIdx];
+            treino.exercicios[novoIdx] = temp;
+            salvarTreinosNoSupabase();
+            renderizarListaExerciciosDivisao();
+        }
+
+        function renderizarTreinosAluno() {
+            const container = document.getElementById('container-treinos-aluno');
+            if (!treinosDoAluno || treinosDoAluno.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-600 text-center py-6">Nenhuma divisão criada.</p>`;
+                return;
+            }
+            container.innerHTML = treinosDoAluno.map((t, idx) => `
+                <div class="bg-af-card border border-slate-800 rounded-2xl p-4 flex justify-between items-center shadow-sm">
+                    <div onclick="abrirMontagemTreino('${t.id}')" class="flex-1 cursor-pointer">
+                        <h3 class="font-bold text-xs text-af-orange uppercase tracking-wider">${t.nome}</h3>
+                        <p class="text-[10px] text-slate-500">${t.exercicios ? t.exercicios.length : 0} exercício(s)</p>
+                    </div>
+                    <div class="flex gap-1 items-center" onclick="event.stopPropagation()">
+                        <button onclick="moverTreinoOrdem(${idx}, -1)" ${idx === 0 ? 'disabled class="opacity-30 text-xs bg-black p-1.5 rounded-lg"' : 'class="text-xs bg-black text-slate-300 border border-slate-800 p-1.5 rounded-lg"'}>⬆️</button>
+                        <button onclick="moverTreinoOrdem(${idx}, 1)" ${idx === treinosDoAluno.length - 1 ? 'disabled class="opacity-30 text-xs bg-black p-1.5 rounded-lg"' : 'class="text-xs bg-black text-slate-300 border border-slate-800 p-1.5 rounded-lg"'}>⬇️</button>
+                        <button onclick="renomearTreino('${t.id}')" class="text-xs bg-black text-slate-300 border border-slate-800 px-2 py-1.5 rounded-lg">✏️</button>
+                        <button onclick="excluirTreino('${t.id}')" class="text-xs bg-black text-rose-400 border border-slate-800 px-2 py-1.5 rounded-lg">🗑️</button>
+                        <button onclick="abrirMontagemTreino('${t.id}')" class="text-xs bg-af-orange text-black px-2.5 py-1.5 rounded-lg font-black">Abrir</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderizarListaExerciciosDivisao() {
+            const container = document.getElementById('container-lista-exercicios-divisao');
+            const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
+            if (!treino || !treino.exercicios || treino.exercicios.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-600 text-center py-4">Nenhum exercício adicionado ainda.</p>`;
+                return;
+            }
+            container.innerHTML = treino.exercicios.map((ex, idx) => `
+                <div class="bg-black border border-slate-900 p-3 rounded-xl flex justify-between items-center text-xs">
+                    <div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-[10px] text-af-orange font-bold uppercase">${ex.musculo} • ${ex.equipamento}</span>
+                            ${ex.conjugado && ex.conjugado !== 'Nenhum' ? `<span class="text-[9px] bg-amber-950 text-amber-400 border border-amber-800 px-1.5 py-0.5 rounded font-black">${ex.conjugado}</span>` : ''}
+                        </div>
+                        <div class="font-bold text-slate-200">${idx + 1}. ${ex.nome} (${ex.qtdSeries} Séries)</div>
+                    </div>
+                    <div class="flex gap-1 items-center">
+                        <button onclick="moverExercicioOrdem(${idx}, -1)" ${idx === 0 ? 'disabled class="opacity-30 text-xs bg-slate-900 p-1 rounded-lg"' : 'class="text-xs bg-slate-900 text-slate-300 border border-slate-800 p-1 rounded-lg"'}>⬆️</button>
+                        <button onclick="moverExercicioOrdem(${idx}, 1)" ${idx === treino.exercicios.length - 1 ? 'disabled class="opacity-30 text-xs bg-slate-900 p-1 rounded-lg"' : 'class="text-xs bg-slate-900 text-slate-300 border border-slate-800 p-1 rounded-lg"'}>⬇️</button>
+                        <button onclick="prepararEdicaoExercicio(${idx})" class="text-xs text-slate-300 bg-slate-900 border border-slate-800 px-2 py-1 rounded-lg">✏️</button>
+                        <button onclick="removerExercicioDivisao(${idx})" class="text-xs text-rose-400 bg-slate-900 border border-slate-800 px-2 py-1 rounded-lg">✕</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function prepararEdicaoExercicio(idx) {
+            const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
+            if (!treino || !treino.exercicios[idx]) return;
+            const ex = treino.exercicios[idx];
+
+            indiceExercicioEditando = idx;
+            document.getElementById('input-busca-ex').value = ex.nome;
+            document.getElementById('select-musculo-ex').value = ex.musculo;
+            document.getElementById('select-equipamento-ex').value = ex.equipamento;
+            document.getElementById('select-conjugado-ex').value = ex.conjugado || 'Nenhum';
+            document.getElementById('input-qtd-series-ex').value = ex.qtdSeries;
+            document.getElementById('select-metodo-geral-ex').value = ex.metodoGeral || 'Nulo';
+            document.getElementById('select-exige-rpe').value = ex.exigeRpe !== false ? 'sim' : 'nao';
+            
+            verificarRegrasMusculo();
+            alternarVisibilidadeMetodoMacro(ex.metodoGeral || 'Nulo');
+
+            if (ex.metodoGeral && ex.metodoGeral !== 'Nulo') {
+                document.getElementById('input-reps-piramide').value = ex.repsPiramide || '10 a 12';
+            } else {
+                gerarCamposSeriesAdmin(ex.qtdSeries, ex.seriesConfig);
+            }
+            verificarRegrasEquipamento();
+
+            document.getElementById('titulo-modo-exercicio').innerText = 'Editar Exercício';
+            document.getElementById('btn-salvar-exercicio').innerText = 'Atualizar Exercício';
+            document.getElementById('btn-cancelar-edicao').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function cancelarEdicaoExercicio() {
+            indiceExercicioEditando = null;
+            document.getElementById('input-busca-ex').value = '';
+            document.getElementById('input-qtd-series-ex').value = '4';
+            document.getElementById('select-musculo-ex').value = 'Quadríceps';
+            document.getElementById('select-equipamento-ex').value = 'Barra';
+            document.getElementById('select-conjugado-ex').value = 'Nenhum';
+            document.getElementById('select-metodo-geral-ex').value = 'Nulo';
+            document.getElementById('select-exige-rpe').value = 'sim';
+            verificarRegrasMusculo();
+            alternarVisibilidadeMetodoMacro('Nulo');
+            gerarCamposSeriesAdmin(4);
+            verificarRegrasEquipamento();
+            document.getElementById('titulo-modo-exercicio').innerText = 'Adicionar Exercício';
+            document.getElementById('btn-salvar-exercicio').innerText = 'Salvar Exercício na Divisão';
+            document.getElementById('btn-cancelar-edicao').classList.add('hidden');
+        }
+
+        async function salvarExercicioDefinitivo() {
+            const nome = document.getElementById('input-busca-ex').value.trim();
+            const musculo = document.getElementById('select-musculo-ex').value;
+            const equipamento = document.getElementById('select-equipamento-ex').value;
+            const conjugado = document.getElementById('select-conjugado-ex').value;
+            const qtdSeries = parseInt(document.getElementById('input-qtd-series-ex').value) || 4;
+            const metodoGeral = (musculo === 'Abdômen' || musculo === 'Alongamentos') ? 'Nulo' : document.getElementById('select-metodo-geral-ex').value;
+            const exigeRpe = (equipamento === 'Corporal' || musculo === 'Abdômen' || musculo === 'Alongamentos') ? false : (document.getElementById('select-exige-rpe').value === 'sim');
+
+            if (!nome) { alert('Digite o nome do exercício!'); return; }
+            if (!baseExerciciosGlobais.includes(nome)) baseExerciciosGlobais.push(nome);
+
+            const seriesConfig = [];
+            let repsPiramide = '';
+
+            if (metodoGeral !== 'Nulo') {
+                repsPiramide = document.getElementById('input-reps-piramide').value.trim() || '10 a 12';
+                for (let i = 1; i <= qtdSeries; i++) {
+                    seriesConfig.push({ num: i, metodo: 'Série Normal', tipoMeta: 'reps', descanso: 90, repsSugeridas: repsPiramide });
+                }
+            } else {
+                document.querySelectorAll('#container-config-series-admin .serie-config-item').forEach(item => {
+                    const num = parseInt(item.getAttribute('data-serie'));
+                    const metodo = item.querySelector('.select-metodo-serie')?.value || 'Série Normal';
+                    const tipoMeta = item.querySelector('.input-tipo-meta').value === 'tempo' ? 'tempo' : 'reps';
+                    const descanso = parseInt(item.querySelector('.input-descanso-serie').value) || 90;
+                    if (tipoMeta === 'tempo') {
+                        const metaSeg = ((parseInt(item.querySelector('.input-tempo-min').value) || 0) * 60 + (parseInt(item.querySelector('.input-tempo-seg').value) || 0)) || 30;
+                        seriesConfig.push({ num, metodo, tipoMeta, descanso, repsSugeridas: formatarTempo(metaSeg), metaSeg });
+                    } else {
+                        const repsSugeridas = item.querySelector('.input-reps-sugeridas').value.trim() || '10 a 12';
+                        seriesConfig.push({ num, metodo, tipoMeta, descanso, repsSugeridas });
+                    }
+                });
+            }
+
+            const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
+            if (treino) {
+                if (!treino.exercicios) treino.exercicios = [];
+                const dadosEx = { nome, musculo, equipamento, conjugado, qtdSeries, metodoGeral, repsPiramide, exigeRpe, seriesConfig };
+                if (indiceExercicioEditando !== null) {
+                    treino.exercicios[indiceExercicioEditando] = dadosEx;
+                } else {
+                    treino.exercicios.push(dadosEx);
+                }
+                cancelarEdicaoExercicio();
+                await salvarTreinosNoSupabase();
+                renderizarListaExerciciosDivisao();
+            }
         }
 
         function mudarPeriodoRelatorio(periodo) {
@@ -801,123 +995,6 @@
             }
         }
 
-        function prepararEdicaoExercicio(idx) {
-            const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
-            if (!treino || !treino.exercicios[idx]) return;
-            const ex = treino.exercicios[idx];
-
-            indiceExercicioEditando = idx;
-            document.getElementById('input-busca-ex').value = ex.nome;
-            document.getElementById('select-musculo-ex').value = ex.musculo;
-            document.getElementById('select-equipamento-ex').value = ex.equipamento;
-            document.getElementById('input-qtd-series-ex').value = ex.qtdSeries;
-            document.getElementById('select-metodo-geral-ex').value = ex.metodoGeral || 'Nulo';
-            document.getElementById('select-exige-rpe').value = ex.exigeRpe !== false ? 'sim' : 'nao';
-            
-            verificarRegrasMusculo();
-            alternarVisibilidadeMetodoMacro(ex.metodoGeral || 'Nulo');
-
-            if (ex.metodoGeral && ex.metodoGeral !== 'Nulo') {
-                document.getElementById('input-reps-piramide').value = ex.repsPiramide || '10 a 12';
-            } else {
-                gerarCamposSeriesAdmin(ex.qtdSeries, ex.seriesConfig);
-            }
-            verificarRegrasEquipamento();
-
-            document.getElementById('titulo-modo-exercicio').innerText = 'Editar Exercício';
-            document.getElementById('btn-salvar-exercicio').innerText = 'Atualizar Exercício';
-            document.getElementById('btn-cancelar-edicao').classList.remove('hidden');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function cancelarEdicaoExercicio() {
-            indiceExercicioEditando = null;
-            document.getElementById('input-busca-ex').value = '';
-            document.getElementById('input-qtd-series-ex').value = '4';
-            document.getElementById('select-musculo-ex').value = 'Quadríceps';
-            document.getElementById('select-equipamento-ex').value = 'Barra';
-            document.getElementById('select-metodo-geral-ex').value = 'Nulo';
-            document.getElementById('select-exige-rpe').value = 'sim';
-            verificarRegrasMusculo();
-            alternarVisibilidadeMetodoMacro('Nulo');
-            gerarCamposSeriesAdmin(4);
-            verificarRegrasEquipamento();
-            document.getElementById('titulo-modo-exercicio').innerText = 'Adicionar Exercício';
-            document.getElementById('btn-salvar-exercicio').innerText = 'Salvar Exercício na Divisão';
-            document.getElementById('btn-cancelar-edicao').classList.add('hidden');
-        }
-
-        async function salvarExercicioDefinitivo() {
-            const nome = document.getElementById('input-busca-ex').value.trim();
-            const musculo = document.getElementById('select-musculo-ex').value;
-            const equipamento = document.getElementById('select-equipamento-ex').value;
-            const qtdSeries = parseInt(document.getElementById('input-qtd-series-ex').value) || 4;
-            const metodoGeral = (musculo === 'Abdômen' || musculo === 'Alongamentos') ? 'Nulo' : document.getElementById('select-metodo-geral-ex').value;
-            const exigeRpe = (equipamento === 'Corporal' || musculo === 'Abdômen' || musculo === 'Alongamentos') ? false : (document.getElementById('select-exige-rpe').value === 'sim');
-
-            if (!nome) { alert('Digite o nome do exercício!'); return; }
-            if (!baseExerciciosGlobais.includes(nome)) baseExerciciosGlobais.push(nome);
-
-            const seriesConfig = [];
-            let repsPiramide = '';
-
-            if (metodoGeral !== 'Nulo') {
-                repsPiramide = document.getElementById('input-reps-piramide').value.trim() || '10 a 12';
-                for (let i = 1; i <= qtdSeries; i++) {
-                    seriesConfig.push({ num: i, metodo: 'Série Normal', tipoMeta: 'reps', descanso: 90, repsSugeridas: repsPiramide });
-                }
-            } else {
-                document.querySelectorAll('#container-config-series-admin .serie-config-item').forEach(item => {
-                    const num = parseInt(item.getAttribute('data-serie'));
-                    const metodo = item.querySelector('.select-metodo-serie')?.value || 'Série Normal';
-                    const tipoMeta = item.querySelector('.input-tipo-meta').value === 'tempo' ? 'tempo' : 'reps';
-                    const descanso = parseInt(item.querySelector('.input-descanso-serie').value) || 90;
-                    if (tipoMeta === 'tempo') {
-                        const metaSeg = ((parseInt(item.querySelector('.input-tempo-min').value) || 0) * 60 + (parseInt(item.querySelector('.input-tempo-seg').value) || 0)) || 30;
-                        seriesConfig.push({ num, metodo, tipoMeta, descanso, repsSugeridas: formatarTempo(metaSeg), metaSeg });
-                    } else {
-                        const repsSugeridas = item.querySelector('.input-reps-sugeridas').value.trim() || '10 a 12';
-                        seriesConfig.push({ num, metodo, tipoMeta, descanso, repsSugeridas });
-                    }
-                });
-            }
-
-            const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
-            if (treino) {
-                if (!treino.exercicios) treino.exercicios = [];
-                const dadosEx = { nome, musculo, equipamento, qtdSeries, metodoGeral, repsPiramide, exigeRpe, seriesConfig };
-                if (indiceExercicioEditando !== null) {
-                    treino.exercicios[indiceExercicioEditando] = dadosEx;
-                } else {
-                    treino.exercicios.push(dadosEx);
-                }
-                cancelarEdicaoExercicio();
-                await salvarTreinosNoSupabase();
-                renderizarListaExerciciosDivisao();
-            }
-        }
-
-        function renderizarListaExerciciosDivisao() {
-            const container = document.getElementById('container-lista-exercicios-divisao');
-            const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
-            if (!treino || !treino.exercicios || treino.exercicios.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-600 text-center py-4">Nenhum exercício adicionado ainda.</p>`;
-                return;
-            }
-            container.innerHTML = treino.exercicios.map((ex, idx) => `
-                <div class="bg-black border border-slate-900 p-3 rounded-xl flex justify-between items-center text-xs">
-                    <div>
-                        <span class="text-[10px] text-af-orange font-bold uppercase">${ex.musculo} • ${ex.equipamento}</span>
-                        <div class="font-bold text-slate-200">${idx + 1}. ${ex.nome} (${ex.qtdSeries} Séries)</div>
-                    </div>
-                    <div class="flex gap-1.5">
-                        <button onclick="prepararEdicaoExercicio(${idx})" class="text-xs text-slate-300 bg-slate-900 border border-slate-800 px-2 py-1 rounded-lg">✏️</button>
-                        <button onclick="removerExercicioDivisao(${idx})" class="text-xs text-rose-400 bg-slate-900 border border-slate-800 px-2 py-1 rounded-lg">✕</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
         async function removerExercicioDivisao(idx) {
             const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
             if (treino && treino.exercicios) {
@@ -925,16 +1002,6 @@
                 await salvarTreinosNoSupabase();
                 renderizarListaExerciciosDivisao();
             }
-        }
-
-        async function cadastrarAluno() {
-            const input = document.getElementById('nome-novo-aluno');
-            const nome = input.value.trim();
-            if (!nome) return;
-            const token = 'tok_' + Math.random().toString(36).substring(2, 10);
-            const { error } = await supabaseClient.from('alunos').insert([{ nome, token, treinos: [], historico: [] }]);
-            if (error) alert('Erro: ' + error.message);
-            else { input.value = ''; carregarAlunos(); }
         }
 
         function copiarLinkDirect(link) {
@@ -987,27 +1054,6 @@
             } catch (err) {}
         }
 
-        function renderizarTreinosAluno() {
-            const container = document.getElementById('container-treinos-aluno');
-            if (!treinosDoAluno || treinosDoAluno.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-600 text-center py-6">Nenhuma divisão criada.</p>`;
-                return;
-            }
-            container.innerHTML = treinosDoAluno.map(t => `
-                <div class="bg-af-card border border-slate-800 rounded-2xl p-4 flex justify-between items-center shadow-sm">
-                    <div onclick="abrirMontagemTreino('${t.id}')" class="flex-1 cursor-pointer">
-                        <h3 class="font-bold text-xs text-af-orange uppercase tracking-wider">${t.nome}</h3>
-                        <p class="text-[10px] text-slate-500">${t.exercicios ? t.exercicios.length : 0} exercício(s)</p>
-                    </div>
-                    <div class="flex gap-1.5" onclick="event.stopPropagation()">
-                        <button onclick="renomearTreino('${t.id}')" class="text-xs bg-black text-slate-300 border border-slate-800 px-2 py-1 rounded-lg">✏️</button>
-                        <button onclick="excluirTreino('${t.id}')" class="text-xs bg-black text-rose-400 border border-slate-800 px-2 py-1 rounded-lg">🗑️</button>
-                        <button onclick="abrirMontagemTreino('${t.id}')" class="text-xs bg-af-orange text-black px-2.5 py-1 rounded-lg font-black">Abrir</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
         function abrirMontagemTreino(treinoId) {
             treinoAtivoId = treinoId;
             cancelarEdicaoExercicio();
@@ -1042,146 +1088,6 @@
         }
 
         window.onload = carregarAlunos;
-    
-/* ===== DASHBOARD (engine compartilhado) ===== */
-const DASH_COR = '#FF6A00';
-const dashNum = n => (n || 0).toLocaleString('pt-BR');
-const dashVazio = t => `<p class="text-[11px] text-slate-500 text-center py-4">${t}</p>`;
-const dashCard = (titulo, corpo) => `<div class="bg-black border border-slate-800 rounded-2xl p-3.5 space-y-2.5"><h4 class="text-[10px] font-black uppercase tracking-wider text-slate-400">${titulo}</h4>${corpo}</div>`;
-
-function dashPeriodo(hs, per) {
-    const now = new Date(), fim = new Date(now.getTime() + 1);
-    let ini, iniAnt;
-    if (per === 'semanal') { ini = new Date(now); ini.setDate(now.getDate() - 7); iniAnt = new Date(now); iniAnt.setDate(now.getDate() - 14); }
-    else { ini = new Date(now.getFullYear(), now.getMonth(), 1); iniAnt = new Date(now.getFullYear(), now.getMonth() - 1, 1); }
-    const f = (a, b) => hs.filter(h => h.data && new Date(h.data) >= a && new Date(h.data) < b);
-    return { atual: f(ini, fim), anterior: f(iniAnt, ini) };
-}
-
-function dashResumo(hs) {
-    const r = { sessoes: hs.length, volume: 0, series: 0, reps: 0, rpe: [], grupos: {} };
-    hs.forEach(h => {
-        r.volume += h.volume || 0;
-        (h.exerciciosRealizados || []).forEach(e => {
-            const m = e.musculo || 'Outros', g = r.grupos[m] || (r.grupos[m] = { series: 0, volume: 0 });
-            (e.series || []).forEach(s => {
-                r.series++; g.series++; r.reps += s.reps || 0; g.volume += (s.carga || 0) * (s.reps || 0);
-                const x = parseFloat(s.rpe); if (!isNaN(x)) r.rpe.push(x);
-            });
-        });
-    });
-    r.rpeMedio = r.rpe.length ? r.rpe.reduce((a, b) => a + b, 0) / r.rpe.length : null;
-    return r;
-}
-
-function dashDelta(a, b) {
-    if (!b) return a ? '<span class="text-[10px] font-bold text-sky-400">novo</span>' : '<span class="text-[10px] text-slate-600">–</span>';
-    const p = Math.round((a - b) / b * 100), c = p > 0 ? 'text-emerald-400' : p < 0 ? 'text-rose-400' : 'text-slate-500';
-    return `<span class="text-[10px] font-bold ${c}">${p > 0 ? '▲' : p < 0 ? '▼' : '•'} ${Math.abs(p)}%</span>`;
-}
-
-const dashKpi = (rot, val, delta) => `<div class="bg-black border border-slate-800 rounded-2xl p-3"><span class="text-[9px] uppercase font-bold text-slate-500 block">${rot}</span><strong class="text-xl font-black text-white block leading-tight mt-0.5">${val}</strong><div class="mt-0.5">${delta || ''}</div></div>`;
-
-function dashBarras(pts) {
-    if (!pts.length) return dashVazio('Nenhum treino no período.');
-    const W = 320, H = 110, p = 12, max = Math.max(...pts.map(x => x.val), 1), step = (W - p * 2) / pts.length, bw = Math.min(30, step - 6);
-    return `<svg viewBox="0 0 ${W} ${H + 22}" class="w-full">` + pts.map((x, i) => {
-        const h = Math.max(3, x.val / max * H), cx = p + step * i + step / 2;
-        return `<rect x="${cx - bw / 2}" y="${H - h + 4}" width="${bw}" height="${h}" rx="5" fill="${DASH_COR}" opacity="${0.4 + 0.6 * x.val / max}"/><text x="${cx}" y="${H + 17}" text-anchor="middle" font-size="9" fill="#64748b">${x.rot}</text>`;
-    }).join('') + '</svg>';
-}
-
-function dashLinha(pts) {
-    if (pts.length < 2) return dashVazio('A curva aparece a partir do 2º treino com esse exercício.');
-    const W = 320, H = 110, p = 14, n = pts.length, v = pts.map(x => x.val), max = Math.max(...v), min = Math.min(...v), rng = (max - min) || 1;
-    const xy = pts.map((x, i) => [p + (W - 2 * p) * i / (n - 1), 8 + (H - 24) * (1 - (x.val - min) / rng)]);
-    const linha = xy.map(a => a.join(',')).join(' ');
-    return `<svg viewBox="0 0 ${W} ${H + 18}" class="w-full"><defs><linearGradient id="gl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${DASH_COR}" stop-opacity=".35"/><stop offset="1" stop-color="${DASH_COR}" stop-opacity="0"/></linearGradient></defs>
-        <polygon points="${p},${H} ${linha} ${W - p},${H}" fill="url(#gl)"/><polyline points="${linha}" fill="none" stroke="${DASH_COR}" stroke-width="2.5" stroke-linejoin="round"/>
-        ${xy.map(a => `<circle cx="${a[0]}" cy="${a[1]}" r="3.5" fill="#050505" stroke="${DASH_COR}" stroke-width="2"/>`).join('')}
-        <text x="${p}" y="${H + 14}" font-size="9" fill="#64748b">${pts[0].rot}</text><text x="${W - p}" y="${H + 14}" text-anchor="end" font-size="9" fill="#64748b">${pts[n - 1].rot}</text></svg>`;
-}
-
-function dashConstancia(hs) {
-    const dias = new Set(hs.map(h => h.data && new Date(h.data).toDateString()));
-    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
-    const ini = new Date(hoje); ini.setDate(hoje.getDate() - ((hoje.getDay() + 6) % 7) - 28);
-    let cel = '', treinados = 0;
-    for (let i = 0; i < 35; i++) {
-        const d = new Date(ini); d.setDate(ini.getDate() + i);
-        if (d > hoje) { cel += '<div class="aspect-square rounded-md bg-transparent"></div>'; continue; }
-        const on = dias.has(d.toDateString()); if (on) treinados++;
-        cel += `<div class="aspect-square rounded-md ${on ? 'bg-af-orange' : 'bg-slate-900'} ${d.getTime() === hoje.getTime() ? 'ring-1 ring-white/70' : ''}"></div>`;
-    }
-    return `<div class="grid grid-cols-7 gap-1 text-[8px] text-slate-600 text-center">${['S', 'T', 'Q', 'Q', 'S', 'S', 'D'].map(x => `<span>${x}</span>`).join('')}</div><div class="grid grid-cols-7 gap-1">${cel}</div><p class="text-[10px] text-slate-400">${treinados} dia(s) treinado(s) nas últimas 5 semanas</p>`;
-}
-
-function dashRecordes(hs) {
-    const melhor = {}, evs = [];
-    hs.slice().sort((a, b) => new Date(a.data) - new Date(b.data)).forEach(h => (h.exerciciosRealizados || []).forEach(e => {
-        const ss = e.series || [], sc = e.semCarga === true || MUSCULOS_SEM_CARGA.includes(e.musculo);
-        const val = sc ? Math.max(...ss.map(s => s.tempoSeg > 0 && !s.reps ? s.tempoSeg : (s.reps || 0)), 0) : Math.max(...ss.map(s => (s.carga || 0) * (1 + (s.reps || 0) / 30)), 0);
-        const k = e.nome.toLowerCase();
-        if (val > 0 && melhor[k] !== undefined && val > melhor[k]) {
-            const top = ss.slice().sort((a, b) => ((b.carga || 0) * (1 + (b.reps || 0) / 30)) - ((a.carga || 0) * (1 + (a.reps || 0) / 30)))[0] || {};
-            evs.push({ nome: e.nome, data: new Date(h.data).toLocaleDateString('pt-BR'), txt: sc ? (ss.some(s => s.tempoSeg > 0 && !s.reps) ? formatarTempo(val) : val + ' reps') : `${top.carga}kg × ${top.reps}` });
-        }
-        if (val > 0 && (melhor[k] === undefined || val > melhor[k])) melhor[k] = val;
-    }));
-    return evs.slice(-4).reverse();
-}
-
-function dashboardHTML(hs, treinos, per, admin) {
-    const P = dashPeriodo(hs, per), a = dashResumo(P.atual), b = dashResumo(P.anterior), comp = per === 'semanal' ? 'vs 7 dias anteriores' : 'vs mês anterior';
-    const kpis = dashKpi('Treinos', a.sessoes, dashDelta(a.sessoes, b.sessoes)) + dashKpi('Volume', dashNum(a.volume) + ' kg', dashDelta(a.volume, b.volume)) +
-        dashKpi('Séries', a.series, dashDelta(a.series, b.series)) +
-        (admin ? dashKpi('RPE médio', a.rpeMedio ? a.rpeMedio.toFixed(1) : '–', '<span class="text-[10px] text-slate-500">esforço percebido</span>') : dashKpi('Repetições', dashNum(a.reps), dashDelta(a.reps, b.reps)));
-    const pts = P.atual.slice().sort((x, y) => new Date(x.data) - new Date(y.data)).slice(-12).map(h => ({ rot: new Date(h.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }), val: h.volume || 0 }));
-    const gs = Object.entries(a.grupos).sort((x, y) => y[1].series - x[1].series), tot = gs.reduce((s, g) => s + g[1].series, 0) || 1;
-    const gHtml = gs.length ? gs.map(([n, g]) => `<div class="space-y-1"><div class="flex justify-between text-[11px]"><span class="font-bold text-slate-200">${n}</span><span class="text-slate-400">${g.series} séries${MUSCULOS_SEM_CARGA.includes(n) ? '' : ' • ' + dashNum(g.volume) + ' kg'} • ${Math.round(g.series / tot * 100)}%</span></div><div class="h-2 rounded-full bg-slate-900 overflow-hidden"><div class="h-full rounded-full bg-af-orange" style="width:${Math.max(4, g.series / gs[0][1].series * 100)}%"></div></div></div>`).join('') : dashVazio('Nenhum grupamento no período.');
-    let alerta = '';
-    if (admin) {
-        const prescritos = new Set(); (treinos || []).forEach(t => (t.exercicios || []).forEach(e => e.musculo && prescritos.add(e.musculo)));
-        const falt = [...prescritos].filter(m => !a.grupos[m]);
-        if (falt.length && P.atual.length) alerta = `<div class="bg-amber-950/40 border border-amber-700/40 rounded-2xl p-3 text-[11px] text-amber-300">⚠️ Na ficha, mas sem nenhuma série no período: <strong>${falt.join(', ')}</strong></div>`;
-    }
-    const rec = dashRecordes(hs);
-    const recHtml = rec.length ? rec.map(r => `<div class="flex justify-between items-center text-[11px]"><span class="text-slate-200 font-bold">🏆 ${r.nome}</span><span class="text-af-orange font-bold">${r.txt} <span class="text-slate-500 font-normal">• ${r.data}</span></span></div>`).join('') : dashVazio('Os recordes aparecem quando um exercício supera o melhor resultado anterior.');
-    return `<div class="grid grid-cols-2 gap-2">${kpis}</div><p class="text-[9px] text-slate-600 text-center -mt-1">▲▼ ${comp}</p>${alerta}` +
-        dashCard('Volume por treino (kg)', dashBarras(pts)) + dashCard('Séries por grupamento', `<div class="space-y-2.5">${gHtml}</div>`) +
-        dashCard('Constância', dashConstancia(hs)) + dashCard('Recordes recentes', `<div class="space-y-2">${recHtml}</div>`);
-}
-
-
-/* ===== Admin: dashboard + Raio-X com curva ===== */
-function atualizarRelatoriosAdmin() {
-    const ids = new Set(treinosDoAluno.map(t => t.id));
-    const hv = historicoTreinosAluno.filter(h => !h.treinoId || ids.has(h.treinoId));
-    document.getElementById('relatorio-conteudo-dinamico').innerHTML = dashboardHTML(hv, treinosDoAluno, periodoRelatorioAtual, true);
-}
-function renderizarRaioXExercicioAdmin() {
-    const nomeEx = document.getElementById('select-analise-exercicio-admin').value;
-    const c = document.getElementById('container-raio-x-admin');
-    if (!nomeEx) { c.innerHTML = dashVazio('Selecione um exercício acima para carregar a curva de progressão.'); return; }
-    const reg = [];
-    historicoTreinosAluno.slice().sort((a, b) => new Date(a.data) - new Date(b.data)).forEach(h => {
-        const e = (h.exerciciosRealizados || []).find(x => x.nome.toLowerCase() === nomeEx.toLowerCase());
-        if (!e) return;
-        const ss = e.series || [], sc = e.semCarga === true || MUSCULOS_SEM_CARGA.includes(e.musculo);
-        const tempo = ss.some(s => s.tempoSeg > 0 && !s.reps);
-        const val = sc ? Math.max(...ss.map(s => tempo ? (s.tempoSeg || 0) : (s.reps || 0)), 0) : Math.max(...ss.map(s => (s.carga || 0) * (1 + (s.reps || 0) / 30)), 0);
-        reg.push({ rot: new Date(h.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }), val: Math.round(val * 10) / 10, series: ss.length, sc, tempo, cargaMax: Math.max(...ss.map(s => s.carga || 0), 0), vol: e.volume || 0 });
-    });
-    if (!reg.length) { c.innerHTML = dashVazio(`Nenhum registro de "${nomeEx}" ainda.`); return; }
-    const r0 = reg[0], rN = reg[reg.length - 1], dif = rN.val - r0.val;
-    const unid = r0.sc ? (r0.tempo ? 's' : ' reps') : ' kg (1RM estimado)';
-    c.innerHTML = `<div class="grid grid-cols-3 gap-2">${dashKpi('Sessões', reg.length)}${dashKpi('Melhor', Math.max(...reg.map(x => x.val)) + (r0.sc ? (r0.tempo ? 's' : '') : 'kg'))}${dashKpi('Evolução', (dif >= 0 ? '+' : '') + Math.round(dif * 10) / 10, '<span class="text-[10px] text-slate-500">desde o 1º treino</span>')}</div>` +
-        dashCard('Curva' + ' (' + unid.trim() + ')', dashLinha(reg)) +
-        `<div class="space-y-1.5 max-h-40 overflow-y-auto pr-1">${reg.slice().reverse().map(r => `<div class="bg-black border border-slate-800 p-2 rounded-xl flex justify-between text-[11px]"><span class="text-slate-400">${r.rot} • ${r.series} séries</span><strong class="text-af-orange">${r.sc ? (r.tempo ? formatarTempo(r.val) : r.val + ' reps') : r.cargaMax + 'kg máx • Vol ' + dashNum(r.vol) + 'kg'}</strong></div>`).join('')}</div>`;
-}
-(function () { const el = document.getElementById('subtab-peso'); if (el) el.parentElement.style.display = 'none'; })();
-
     </script>
-<div style="position:fixed;bottom:2px;left:6px;font-size:9px;color:#475569;opacity:.6;pointer-events:none;z-index:50">v15-dashboard-admin</div>
 </body>
 </html>
