@@ -57,8 +57,8 @@
         <!-- SEÇÃO ALUNOS -->
         <div id="sec-adm-alunos" class="space-y-4 no-print">
             
-            <!-- RESUMO DA AGENDA DO DIA NA TELA DE ALUNOS -->
-            <div onclick="mudarAbaPrincipalAdmin('agenda')" class="bg-af-card border border-af-orange/40 hover:border-af-orange rounded-2xl p-4 cursor-pointer transition-all space-y-3 shadow-lg">
+            <!-- RESUMO DA AGENDA DO DIA NA TELA DE ALUNOS (EXCLUSIVO DA TELA INICIAL) -->
+            <div id="bloco-agenda-hoje-admin" onclick="mudarAbaPrincipalAdmin('agenda')" class="bg-af-card border border-af-orange/40 hover:border-af-orange rounded-2xl p-4 cursor-pointer transition-all space-y-3 shadow-lg">
                 <div class="flex justify-between items-center border-b border-slate-800 pb-2">
                     <span class="font-bold text-xs text-af-orange uppercase tracking-wider" id="resumo-agenda-titulo">Agenda de Hoje</span>
                     <span class="text-[10px] text-slate-400">Ver Agenda Completa →</span>
@@ -128,31 +128,43 @@
                     <button onclick="mudarAbaAdminAluno('relatorios')" id="tab-admin-relatorios" class="flex-1 py-2 rounded-xl text-slate-400 hover:text-white transition-all">📊 BI / Dashboard</button>
                 </div>
 
+                <!-- CAIXA DE RESUMO DA EVOLUÇÃO MINIMIZÁVEL -->
+                <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3 shadow-xl">
+                    <div class="flex justify-between items-center cursor-pointer" onclick="toggleMinimizarResumoAdmin()">
+                        <div class="flex items-center gap-2">
+                            <span class="text-base">📈</span>
+                            <h3 class="font-bold text-xs text-af-orange uppercase">Resumo da Evolução (Carga Total & Exercícios)</h3>
+                        </div>
+                        <button id="btn-minimizar-resumo-admin" class="text-xs bg-black border border-slate-800 px-2.5 py-1 rounded-lg text-slate-300 font-bold">Minimizar [-]</button>
+                    </div>
+                    <div id="conteudo-resumo-evolucao-admin" class="space-y-3 pt-2 border-t border-slate-800">
+                        <div class="grid grid-cols-3 gap-2 text-center">
+                            <div class="bg-black border border-slate-800 p-2.5 rounded-xl">
+                                <div class="text-base font-black text-emerald-400" id="val-mais-peso">0</div>
+                                <div class="text-[9px] font-bold text-slate-400 uppercase">MAIS PESO</div>
+                            </div>
+                            <div class="bg-black border border-slate-800 p-2.5 rounded-xl">
+                                <div class="text-base font-black text-af-orange" id="val-mesmo-peso">0</div>
+                                <div class="text-[9px] font-bold text-slate-400 uppercase">MESMO PESO</div>
+                            </div>
+                            <div class="bg-black border border-slate-800 p-2.5 rounded-xl">
+                                <div class="text-base font-black text-rose-400" id="val-menos-peso">0</div>
+                                <div class="text-[9px] font-bold text-slate-400 uppercase">MENOS PESO</div>
+                            </div>
+                        </div>
+                        <div id="lista-evolucao-exercicios-admin" class="space-y-1.5 text-xs max-h-40 overflow-y-auto">
+                            <p class="text-[11px] text-slate-500 text-center">Nenhum exercício evoluído registrado ainda.</p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- ABA 1: TREINOS -->
                 <div id="sec-admin-treinos" class="space-y-4">
                     <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3">
                         <div class="flex justify-between items-center">
-                            <h3 class="font-black text-xs uppercase tracking-wider text-af-orange">EVOLUÇÃO RECENTE</h3>
+                            <h3 class="font-bold text-xs uppercase text-slate-300">Nova Divisão de Treino</h3>
                             <button onclick="zerarHistoricoAlunoComConfirmacao()" class="text-[9px] bg-rose-950/60 text-rose-400 border border-rose-800 px-2 py-1 rounded font-bold hover:bg-rose-900/60">🗑️ Limpar Histórico</button>
                         </div>
-                        <div class="grid grid-cols-3 gap-2">
-                            <div class="bg-black border border-slate-800 p-3 rounded-xl text-center">
-                                <div class="text-lg font-black text-emerald-400" id="val-mais-peso">0</div>
-                                <div class="text-[9px] font-bold text-slate-400 uppercase">MAIS PESO</div>
-                            </div>
-                            <div class="bg-black border border-slate-800 p-3 rounded-xl text-center">
-                                <div class="text-lg font-black text-af-orange" id="val-mesmo-peso">0</div>
-                                <div class="text-[9px] font-bold text-slate-400 uppercase">MESMO PESO</div>
-                            </div>
-                            <div class="bg-black border border-slate-800 p-3 rounded-xl text-center">
-                                <div class="text-lg font-black text-rose-400" id="val-menos-peso">0</div>
-                                <div class="text-[9px] font-bold text-slate-400 uppercase">MENOS PESO</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3">
-                        <h3 class="font-bold text-xs uppercase text-slate-300">Nova Divisão de Treino</h3>
                         <div class="flex gap-2">
                             <input type="text" id="input-nome-treino" placeholder="Ex: Treino A - Quadríceps" class="flex-1 bg-black border border-slate-800 rounded-xl px-3.5 py-2.5 text-white focus:border-af-orange focus:outline-none">
                             <button onclick="criarTreinoDivisao()" class="bg-af-orange font-bold px-4 py-2.5 rounded-xl text-black text-xs">Criar</button>
@@ -179,15 +191,15 @@
                         <div class="flex items-center gap-2">
                             <span class="text-base">📈</span>
                             <div>
-                                <h4 class="font-bold text-xs text-af-orange uppercase">Raio-X de Exercício (Histórico Completo)</h4>
-                                <p class="text-[10px] text-slate-400">Acompanhe a evolução em um exercício específico desde o primeiro treino</p>
+                                <h4 class="font-bold text-xs text-af-orange uppercase">Raio-X de Exercício & Gráfico de Evolução</h4>
+                                <p class="text-[10px] text-slate-400">Acompanhe a curva de progressão detalhada por exercício</p>
                             </div>
                         </div>
                         <select id="select-analise-exercicio-admin" onchange="renderizarRaioXExercicioAdmin()" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-slate-200 text-xs focus:border-af-orange focus:outline-none">
                             <option value="">Selecione um exercício para auditar...</option>
                         </select>
                         <div id="container-raio-x-admin" class="space-y-2 pt-1">
-                            <p class="text-[11px] text-slate-500 text-center py-2">Selecione um exercício acima para carregar a curva de progressão.</p>
+                            <p class="text-[11px] text-slate-500 text-center py-2">Selecione um exercício acima para carregar o histórico.</p>
                         </div>
                     </div>
 
@@ -262,17 +274,15 @@
 
                         <div class="grid grid-cols-2 gap-2">
                             <div>
-                                <label class="block text-[10px] text-af-orange uppercase font-bold mb-1">Conjugado / Bi-Set</label>
-                                <select id="select-conjugado-ex" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-af-orange font-bold">
-                                    <option value="Nenhum">Nenhum (Individual)</option>
-                                    <option value="Bi-Set A">Bi-Set / Tri-Set A</option>
-                                    <option value="Bi-Set B">Bi-Set / Tri-Set B</option>
-                                    <option value="Bi-Set C">Bi-Set / Tri-Set C</option>
-                                </select>
-                            </div>
-                            <div>
                                 <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Qtd de Séries</label>
                                 <input type="number" id="input-qtd-series-ex" value="4" oninput="validarApenasNumeros(this)" onchange="gerarCamposSeriesAdmin(this.value, lerSeriesAdminAtuais())" min="1" max="10" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-white text-center font-bold">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Exigir RPE do Aluno?</label>
+                                <select id="select-exige-rpe" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-slate-200 font-bold">
+                                    <option value="sim">Sim (Com RPE obrigatório)</option>
+                                    <option value="nao">Não (Sem RPE / Alongamento)</option>
+                                </select>
                             </div>
                         </div>
 
@@ -285,14 +295,6 @@
                                     <option value="Pirâmide Decrescente">Pirâmide Decrescente</option>
                                 </select>
                             </div>
-                        </div>
-
-                        <div id="bloco-exigir-rpe">
-                            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Exigir RPE do Aluno?</label>
-                            <select id="select-exige-rpe" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-slate-200 font-bold">
-                                <option value="sim">Sim (Com RPE obrigatório)</option>
-                                <option value="nao">Não (Sem RPE / Alongamento)</option>
-                            </select>
                         </div>
 
                         <div id="bloco-piramide-reps" class="hidden space-y-1">
@@ -322,7 +324,7 @@
                 </div>
 
                 <div class="space-y-2">
-                    <h3 class="font-bold text-xs uppercase tracking-wider text-slate-400 px-1">Exercícios Desta Divisão (Ordem de Execução)</h3>
+                    <h3 class="font-bold text-xs uppercase tracking-wider text-slate-400 px-1">Exercícios Desta Divisão (Ordem & Bi-Set)</h3>
                     <div id="container-lista-exercicios-divisao" class="space-y-2">
                         <p class="text-xs text-slate-600 text-center py-4">Nenhum exercício adicionado ainda.</p>
                     </div>
@@ -366,7 +368,7 @@
             </div>
         </div>
 
-        <!-- SEÇÃO AGENDA -->
+        <!-- SEÇÃO AGENDA (EXCLUSIVA DA ABA AGENDA) -->
         <div id="sec-adm-agenda" class="hidden space-y-4 no-print">
             <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3">
                 <div class="flex justify-between items-center">
@@ -426,6 +428,7 @@
         let agendaDados = {};
         let diaAgendaAtual = 'SEG';
         let slotAgendaSelecionado = null;
+        let resumoAdminMinimizado = false;
 
         const MUSCULOS_SEM_CARGA = ['Abdômen', 'Alongamentos', 'Mobilidade'];
 
@@ -443,6 +446,9 @@
             });
             document.getElementById(`sec-adm-${aba}`).classList.remove('hidden');
             document.getElementById(`tab-adm-${aba}`).className = 'flex-1 py-2.5 rounded-xl bg-af-orange text-black font-bold transition-all';
+
+            // Agenda só aparece na aba Alunos (tela inicial) e na aba Agenda
+            document.getElementById('bloco-agenda-hoje-admin').style.display = (aba === 'alunos') ? 'block' : 'none';
 
             if (aba === 'alunos') { carregarAlunos().then(atualizarResumoAgendaTelaAlunos); }
             if (aba === 'financeiro') carregarFinanceiro();
@@ -486,9 +492,6 @@
             abrirPainelAluno(aluno.id, aluno.nome, aluno.token, `${baseURL}aluno.html?token=${aluno.token}`);
         }
 
-        // ---------- AGENDA PERSISTENTE ----------
-        // Tabela esperada no Supabase: agenda (slot text primary key, aluno_id <mesmo tipo de alunos.id>, aluno_nome text)
-        // Enquanto a tabela não existir, a agenda fica salva no aparelho (localStorage) como contingência.
         const AGENDA_LS_KEY = 'afpro_agenda_v1';
         let agendaNoServidor = true;
 
@@ -503,7 +506,6 @@
             const { data, error } = await supabaseClient.from('agenda').select('slot, aluno_id, aluno_nome');
             if (error) {
                 agendaNoServidor = false;
-                console.warn('Tabela agenda indisponível, usando armazenamento local:', error.message);
                 agendaDados = lerAgendaLocal();
             } else {
                 agendaNoServidor = true;
@@ -514,9 +516,8 @@
             limparAgendaOrfa();
         }
 
-        // Remove da agenda quem foi apagado ou arquivado
         function limparAgendaOrfa() {
-            if (!alunosGlobais.length) return; // lista não carregou: não apaga nada da agenda
+            if (!alunosGlobais.length) return;
             const ativosIds = new Set(alunosGlobais.filter(a => !a.arquivado).map(a => String(a.id)));
             Object.keys(agendaDados).forEach(k => {
                 const v = agendaDados[k];
@@ -527,7 +528,7 @@
         async function carregarAlunos() {
             try {
                 const { data, error } = await supabaseClient.from('alunos').select('*').order('created_at', { ascending: false });
-                if (error) { console.error('carregarAlunos:', error); document.getElementById('status-sincronizacao').innerText = 'Erro ao sincronizar: ' + error.message; return; }
+                if (error) return;
                 alunosGlobais = data || [];
                 atualizarHoraSincronizacao();
 
@@ -562,7 +563,7 @@
                                 </div>
                                 <div class="flex items-center gap-1.5" onclick="event.stopPropagation()">
                                     <button onclick="arquivarAluno('${aluno.id}', true)" class="text-xs bg-black text-amber-400 border border-slate-800 px-2 py-1.5 rounded-xl font-bold" title="Arquivar">📁</button>
-                                    <button onclick="apagarAlunoDefinitivo('${aluno.id}')" class="text-xs bg-black text-rose-400 border border-slate-800 px-2 py-1.5 rounded-xl font-bold" title="Excluir Permanentemente">🗑️</button>
+                                    <button onclick="apagarAlunoDefinitivo('${aluno.id}')" class="text-xs bg-black text-rose-400 border border-slate-800 px-2 py-1.5 rounded-xl font-bold" title="Excluir">🗑️</button>
                                     <button onclick="copiarLinkDirect('${linkAluno}')" class="text-xs bg-af-orange text-black px-3 py-1.5 rounded-xl font-black">Copiar</button>
                                 </div>
                             </div>
@@ -610,28 +611,19 @@
         async function apagarAlunoDefinitivo(id) {
             const aluno = alunosGlobais.find(a => String(a.id) === String(id));
             const nome = aluno ? aluno.nome : 'este aluno';
-            if (!confirm(`Deseja PERMANENTEMENTE apagar o aluno "${nome}" e todo o seu banco de dados e histórico? Esta ação é irreversível!`)) return;
+            if (!confirm(`Deseja PERMANENTEMENTE apagar o aluno "${nome}" e todo o seu banco de dados e histórico?`)) return;
 
-            // .select() devolve as linhas realmente apagadas. Sem isso, o Supabase responde "ok"
-            // mesmo quando a política (RLS) bloqueia o DELETE e nada é removido.
             const { data, error } = await supabaseClient.from('alunos').delete().eq('id', aluno ? aluno.id : id).select('id');
-            if (error) {
-                alert('Erro ao apagar: ' + error.message);
-                return;
-            }
-            if (!data || data.length === 0) {
-                alert('O banco NÃO apagou este aluno (0 linhas removidas). Isso acontece quando o Supabase não tem uma política de DELETE liberada para a tabela "alunos". Nada foi alterado.');
-                await carregarAlunos();
+            if (error || !data || data.length === 0) {
+                alert('Erro ao apagar no banco.');
                 return;
             }
 
-            // limpa agenda do aluno apagado
             alunosGlobais = alunosGlobais.filter(a => String(a.id) !== String(id));
             Object.keys(agendaDados).forEach(k => { if (agendaDados[k] && String(agendaDados[k].id) === String(id)) delete agendaDados[k]; });
             gravarAgendaLocal();
             if (agendaNoServidor) await supabaseClient.from('agenda').delete().eq('aluno_id', id);
 
-            alert('Aluno apagado com sucesso do banco de dados.');
             await carregarAlunos();
             renderizarGradeAgenda();
         }
@@ -646,7 +638,6 @@
                 calcularEvolucaoRecenteAdmin();
                 atualizarRelatoriosAdmin();
                 popularSelectRaioXAdmin();
-                atualizarHoraSincronizacao();
                 alert('Histórico limpo com sucesso!');
             } catch (err) { alert('Erro: ' + err.message); }
         }
@@ -664,7 +655,6 @@
                 const { data } = await supabaseClient.from('alunos').select('treinos, historico').eq('id', id).single();
                 treinosDoAluno = (data && data.treinos) ? data.treinos : [];
                 historicoTreinosAluno = (data && data.historico && Array.isArray(data.historico)) ? data.historico : [];
-                atualizarHoraSincronizacao();
                 calcularEvolucaoRecenteAdmin();
                 popularSelectRaioXAdmin();
                 atualizarRelatoriosAdmin();
@@ -675,21 +665,66 @@
             renderizarTreinosAluno();
         }
 
+        function toggleMinimizarResumoAdmin() {
+            resumoAdminMinimizado = !resumoAdminMinimizado;
+            const conteudo = document.getElementById('conteudo-resumo-evolucao-admin');
+            const btn = document.getElementById('btn-minimizar-resumo-admin');
+            if (resumoAdminMinimizado) {
+                conteudo.classList.add('hidden');
+                btn.innerText = 'Expandir [+]';
+            } else {
+                conteudo.classList.remove('hidden');
+                btn.innerText = 'Minimizar [-]';
+            }
+        }
+
         function calcularEvolucaoRecenteAdmin() {
             const idsTreinosAtivos = new Set(treinosDoAluno.map(t => t.id));
             const historicoValido = historicoTreinosAluno.filter(h => !h.treinoId || idsTreinosAtivos.has(h.treinoId));
 
             let mais = 0, mesmo = 0, menos = 0;
+            const evolucaoExerciciosMap = {};
+
             if (historicoValido && historicoValido.length > 0) {
                 historicoValido.forEach(h => {
                     if (h.comparativo === 'mais') mais++;
                     else if (h.comparativo === 'menos') menos++;
                     else mesmo++;
+
+                    (h.exerciciosRealizados || []).forEach(exR => {
+                        const nomeEx = exR.nome;
+                        const ss = exR.series || [];
+                        const cargaMax = Math.max(...ss.map(s => s.carga || 0), 0);
+                        if (!evolucaoExerciciosMap[nomeEx]) {
+                            evolucaoExerciciosMap[nomeEx] = { inicial: cargaMax, atual: cargaMax };
+                        } else {
+                            evolucaoExerciciosMap[nomeEx].atual = cargaMax;
+                        }
+                    });
                 });
             }
+
             document.getElementById('val-mais-peso').innerText = mais;
             document.getElementById('val-mesmo-peso').innerText = mesmo;
             document.getElementById('val-menos-peso').innerText = menos;
+
+            const listaEl = document.getElementById('lista-evolucao-exercicios-admin');
+            const chavesEx = Object.keys(evolucaoExerciciosMap);
+            if (chavesEx.length === 0) {
+                listaEl.innerHTML = `<p class="text-[11px] text-slate-500 text-center">Nenhum exercício registrado ainda.</p>`;
+            } else {
+                listaEl.innerHTML = chavesEx.map(nome => {
+                    const obj = evolucaoExerciciosMap[nome];
+                    const diff = obj.atual - obj.inicial;
+                    const cor = diff > 0 ? 'text-emerald-400' : (diff < 0 ? 'text-rose-400' : 'text-slate-300');
+                    return `
+                        <div class="bg-black border border-slate-800 p-2 rounded-xl flex justify-between items-center text-[11px]">
+                            <span class="font-bold text-slate-200">${escapeHtml(nome)}</span>
+                            <span class="${cor} font-bold">${obj.inicial}kg → ${obj.atual}kg (${diff >= 0 ? '+' : ''}${diff}kg)</span>
+                        </div>
+                    `;
+                }).join('');
+            }
         }
 
         async function recarregarHistoricoAdmin() {
@@ -698,7 +733,6 @@
             if (error) return;
             treinosDoAluno = (data && data.treinos) ? data.treinos : [];
             historicoTreinosAluno = (data && data.historico && Array.isArray(data.historico)) ? data.historico : [];
-            atualizarHoraSincronizacao();
         }
 
         async function mudarAbaAdminAluno(aba) {
@@ -801,6 +835,37 @@
             renderizarListaExerciciosDivisao();
         }
 
+        // Função para conjugar exercício com o de cima
+        function conjugarExercicioComCima(idx) {
+            const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
+            if (!treino || idx <= 0) return;
+            const exAtual = treino.exercicios[idx];
+            const exAcima = treino.exercicios[idx - 1];
+            
+            let grupoAtual = exAtual.conjugado && exAtual.conjugado !== 'Nenhum' ? exAtual.conjugado : null;
+            let grupoAcima = exAcima.conjugado && exAcima.conjugado !== 'Nenhum' ? exAcima.conjugado : null;
+
+            if (!grupoAcima && !grupoAtual) {
+                exAcima.conjugado = 'Bi-Set A';
+                exAtual.conjugado = 'Bi-Set A';
+            } else if (grupoAcima) {
+                exAtual.conjugado = grupoAcima;
+            } else {
+                exAcima.conjugado = grupoAtual;
+            }
+            salvarTreinosNoSupabase();
+            renderizarListaExerciciosDivisao();
+        }
+
+        // Função para desconjugar exercício
+        function desconjugarExercicio(idx) {
+            const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
+            if (!treino || !treino.exercicios[idx]) return;
+            treino.exercicios[idx].conjugado = 'Nenhum';
+            salvarTreinosNoSupabase();
+            renderizarListaExerciciosDivisao();
+        }
+
         function renderizarTreinosAluno() {
             const container = document.getElementById('container-treinos-aluno');
             if (!treinosDoAluno || treinosDoAluno.length === 0) {
@@ -810,7 +875,7 @@
             container.innerHTML = treinosDoAluno.map((t, idx) => `
                 <div class="bg-af-card border border-slate-800 rounded-2xl p-4 flex justify-between items-center shadow-sm">
                     <div onclick="abrirMontagemTreino('${t.id}')" class="flex-1 cursor-pointer">
-                        <h3 class="font-bold text-xs text-af-orange uppercase tracking-wider">${t.nome}</h3>
+                        <h3 class="font-bold text-xs text-af-orange uppercase tracking-wider">${escapeHtml(t.nome)}</h3>
                         <p class="text-[10px] text-slate-500">${t.exercicios ? t.exercicios.length : 0} exercício(s)</p>
                     </div>
                     <div class="flex gap-1 items-center" onclick="event.stopPropagation()">
@@ -831,23 +896,28 @@
                 container.innerHTML = `<p class="text-xs text-slate-600 text-center py-4">Nenhum exercício adicionado ainda.</p>`;
                 return;
             }
-            container.innerHTML = treino.exercicios.map((ex, idx) => `
-                <div class="bg-black border border-slate-900 p-3 rounded-xl flex justify-between items-center text-xs">
-                    <div>
-                        <div class="flex items-center gap-1.5">
-                            <span class="text-[10px] text-af-orange font-bold uppercase">${ex.musculo} • ${ex.equipamento}</span>
-                            ${ex.conjugado && ex.conjugado !== 'Nenhum' ? `<span class="text-[9px] bg-amber-950 text-amber-400 border border-amber-800 px-1.5 py-0.5 rounded font-black">${ex.conjugado}</span>` : ''}
+            container.innerHTML = treino.exercicios.map((ex, idx) => {
+                const conj = ex.conjugado && ex.conjugado !== 'Nenhum' ? ex.conjugado : null;
+                return `
+                    <div class="bg-black border ${conj ? 'border-amber-500/60' : 'border-slate-900'} p-3 rounded-xl flex justify-between items-center text-xs">
+                        <div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-[10px] text-af-orange font-bold uppercase">${escapeHtml(ex.musculo)} • ${escapeHtml(ex.equipamento)}</span>
+                                ${conj ? `<span class="text-[9px] bg-amber-950 text-amber-400 border border-amber-800 px-1.5 py-0.5 rounded font-black">🔗 ${conj}</span>` : ''}
+                            </div>
+                            <div class="font-bold text-slate-200">${idx + 1}. ${escapeHtml(ex.nome)} (${ex.qtdSeries} Séries)</div>
                         </div>
-                        <div class="font-bold text-slate-200">${idx + 1}. ${ex.nome} (${ex.qtdSeries} Séries)</div>
+                        <div class="flex gap-1 items-center">
+                            ${idx > 0 ? `<button onclick="conjugarExercicioComCima(${idx})" class="text-[10px] text-amber-400 bg-slate-900 border border-slate-800 px-2 py-1 rounded-lg font-bold" title="Conjugar com o de cima">🔗 Bi-Set</button>` : ''}
+                            ${conj ? `<button onclick="desconjugarExercicio(${idx})" class="text-[10px] text-rose-400 bg-slate-900 border border-slate-800 px-1.5 py-1 rounded-lg font-bold" title="Desconjugar">🔓</button>` : ''}
+                            <button onclick="moverExercicioOrdem(${idx}, -1)" ${idx === 0 ? 'disabled class="opacity-30 text-xs bg-slate-900 p-1 rounded-lg"' : 'class="text-xs bg-slate-900 text-slate-300 border border-slate-800 p-1 rounded-lg"'}>⬆️</button>
+                            <button onclick="moverExercicioOrdem(${idx}, 1)" ${idx === treino.exercicios.length - 1 ? 'disabled class="opacity-30 text-xs bg-slate-900 p-1 rounded-lg"' : 'class="text-xs bg-slate-900 text-slate-300 border border-slate-800 p-1 rounded-lg"'}>⬇️</button>
+                            <button onclick="prepararEdicaoExercicio(${idx})" class="text-xs text-slate-300 bg-slate-900 border border-slate-800 px-2 py-1 rounded-lg">✏️</button>
+                            <button onclick="removerExercicioDivisao(${idx})" class="text-xs text-rose-400 bg-slate-900 border border-slate-800 px-2 py-1 rounded-lg">✕</button>
+                        </div>
                     </div>
-                    <div class="flex gap-1 items-center">
-                        <button onclick="moverExercicioOrdem(${idx}, -1)" ${idx === 0 ? 'disabled class="opacity-30 text-xs bg-slate-900 p-1 rounded-lg"' : 'class="text-xs bg-slate-900 text-slate-300 border border-slate-800 p-1 rounded-lg"'}>⬆️</button>
-                        <button onclick="moverExercicioOrdem(${idx}, 1)" ${idx === treino.exercicios.length - 1 ? 'disabled class="opacity-30 text-xs bg-slate-900 p-1 rounded-lg"' : 'class="text-xs bg-slate-900 text-slate-300 border border-slate-800 p-1 rounded-lg"'}>⬇️</button>
-                        <button onclick="prepararEdicaoExercicio(${idx})" class="text-xs text-slate-300 bg-slate-900 border border-slate-800 px-2 py-1 rounded-lg">✏️</button>
-                        <button onclick="removerExercicioDivisao(${idx})" class="text-xs text-rose-400 bg-slate-900 border border-slate-800 px-2 py-1 rounded-lg">✕</button>
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function prepararEdicaoExercicio(idx) {
@@ -859,7 +929,6 @@
             document.getElementById('input-busca-ex').value = ex.nome;
             document.getElementById('select-musculo-ex').value = ex.musculo;
             document.getElementById('select-equipamento-ex').value = ex.equipamento;
-            document.getElementById('select-conjugado-ex').value = ex.conjugado || 'Nenhum';
             document.getElementById('input-qtd-series-ex').value = ex.qtdSeries;
             document.getElementById('select-metodo-geral-ex').value = ex.metodoGeral || 'Nulo';
             document.getElementById('select-exige-rpe').value = ex.exigeRpe !== false ? 'sim' : 'nao';
@@ -886,7 +955,6 @@
             document.getElementById('input-qtd-series-ex').value = '4';
             document.getElementById('select-musculo-ex').value = 'Quadríceps';
             document.getElementById('select-equipamento-ex').value = 'Barra';
-            document.getElementById('select-conjugado-ex').value = 'Nenhum';
             document.getElementById('select-metodo-geral-ex').value = 'Nulo';
             document.getElementById('select-exige-rpe').value = 'sim';
             verificarRegrasMusculo();
@@ -902,7 +970,6 @@
             const nome = document.getElementById('input-busca-ex').value.trim();
             const musculo = document.getElementById('select-musculo-ex').value;
             const equipamento = document.getElementById('select-equipamento-ex').value;
-            const conjugado = document.getElementById('select-conjugado-ex').value;
             const qtdSeries = parseInt(document.getElementById('input-qtd-series-ex').value) || 4;
             const metodoGeral = (musculo === 'Abdômen' || musculo === 'Alongamentos' || musculo === 'Mobilidade') ? 'Nulo' : document.getElementById('select-metodo-geral-ex').value;
             const exigeRpe = (equipamento === 'Corporal' || equipamento === 'Elástico' || musculo === 'Abdômen' || musculo === 'Alongamentos' || musculo === 'Mobilidade') ? false : (document.getElementById('select-exige-rpe').value === 'sim');
@@ -937,8 +1004,9 @@
             const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
             if (treino) {
                 if (!treino.exercicios) treino.exercicios = [];
-                const dadosEx = { nome, musculo, equipamento, conjugado, qtdSeries, metodoGeral, repsPiramide, exigeRpe, seriesConfig };
+                const dadosEx = { nome, musculo, equipamento, conjugado: 'Nenhum', qtdSeries, metodoGeral, repsPiramide, exigeRpe, seriesConfig };
                 if (indiceExercicioEditando !== null) {
+                    dadosEx.conjugado = treino.exercicios[indiceExercicioEditando].conjugado || 'Nenhum';
                     treino.exercicios[indiceExercicioEditando] = dadosEx;
                 } else {
                     treino.exercicios.push(dadosEx);
@@ -1049,7 +1117,7 @@
                     container.innerHTML = `
                         <div class="flex items-center justify-between bg-black p-2.5 rounded-xl border border-slate-800">
                             <button onclick="grupoMuscularFiltroAtivo=null; atualizarRelatoriosAdmin();" class="text-xs text-af-orange font-bold">← Voltar para Grupos</button>
-                            <span class="text-xs text-white font-bold uppercase">${grupoMuscularFiltroAtivo}</span>
+                            <span class="text-xs text-white font-bold uppercase">${escapeHtml(grupoMuscularFiltroAtivo)}</span>
                         </div>
                         <div class="space-y-3 pt-1">
                             <div class="bg-black p-3 rounded-xl border border-slate-800 space-y-1 text-xs">
@@ -1061,7 +1129,7 @@
                                 const registros = gData.exercicios[exNome];
                                 return `
                                     <div class="bg-black border border-slate-800 p-3 rounded-xl space-y-2">
-                                        <span class="font-bold text-xs text-white block">${exNome}</span>
+                                        <span class="font-bold text-xs text-white block">${escapeHtml(exNome)}</span>
                                         <div class="space-y-1.5">
                                             ${registros.map(r => `
                                                 <div class="flex justify-between items-center text-[11px] border-t border-slate-900 pt-1.5">
@@ -1081,7 +1149,7 @@
                         <div class="space-y-2">
                             ${nomesGrupos.map(n => `
                                 <div onclick="grupoMuscularFiltroAtivo='${n}'; atualizarRelatoriosAdmin();" class="bg-black border border-slate-800 p-3 rounded-xl flex justify-between items-center cursor-pointer hover:border-af-orange">
-                                    <span class="font-bold text-sm text-af-orange">${n}</span>
+                                    <span class="font-bold text-sm text-af-orange">${escapeHtml(n)}</span>
                                     <span class="text-xs text-slate-200">${MUSCULOS_SEM_CARGA.includes(n) ? '' : grupos[n].volume.toLocaleString('pt-BR') + ' kg • '}${grupos[n].series} séries</span>
                                 </div>
                             `).join('')}
@@ -1094,19 +1162,15 @@
         function verificarRegrasMusculo() {
             const musculo = document.getElementById('select-musculo-ex').value;
             const blocoMetodoGeral = document.getElementById('bloco-select-metodo-geral');
-            const blocoRpe = document.getElementById('bloco-exigir-rpe');
             const selectEquip = document.getElementById('select-equipamento-ex');
 
             if (musculo === 'Abdômen' || musculo === 'Alongamentos' || musculo === 'Mobilidade') {
                 blocoMetodoGeral.classList.add('hidden');
-                blocoRpe.classList.add('hidden');
                 document.getElementById('select-metodo-geral-ex').value = 'Nulo';
-                document.getElementById('select-exige-rpe').value = 'nao';
                 alternarVisibilidadeMetodoMacro('Nulo');
                 if (musculo === 'Abdômen') selectEquip.value = 'Corporal';
             } else {
                 blocoMetodoGeral.classList.remove('hidden');
-                blocoRpe.classList.remove('hidden');
             }
             const qtd = parseInt(document.getElementById('input-qtd-series-ex').value) || 4;
             gerarCamposSeriesAdmin(qtd, lerSeriesAdminAtuais());
@@ -1117,10 +1181,7 @@
             const musculo = document.getElementById('select-musculo-ex').value;
             const blocoRpe = document.getElementById('bloco-exigir-rpe');
             if (eq === 'Corporal' || eq === 'Elástico' || musculo === 'Abdômen' || musculo === 'Alongamentos' || musculo === 'Mobilidade') {
-                blocoRpe.classList.add('hidden');
                 document.getElementById('select-exige-rpe').value = 'nao';
-            } else {
-                blocoRpe.classList.remove('hidden');
             }
         }
 
@@ -1230,7 +1291,6 @@
                                 <input type="number" inputmode="numeric" value="${descansoSel}" oninput="validarApenasNumeros(this)" class="input-descanso-serie ${inputBase} !text-af-orange">
                             </div>
                         </div>
-                        <div class="box-detalhe-metodo hidden text-[11px] text-slate-400"></div>
                     </div>
                 `;
             }
@@ -1238,28 +1298,9 @@
             container.querySelectorAll('.serie-config-item').forEach(item => {
                 aplicarTipoMetaNoItem(item, item.querySelector('.input-tipo-meta').value);
             });
-            if (!escondeMetodo) {
-                container.querySelectorAll('.select-metodo-serie').forEach(sel => atualizarMetodoSerieAdmin(sel));
-            }
         }
 
-        function atualizarMetodoSerieAdmin(select) {
-            const box = select.parentElement.parentElement.querySelector('.box-detalhe-metodo');
-            const val = select.value;
-            if (val === 'Drop Set') {
-                box.classList.remove('hidden');
-                box.innerHTML = `Qtd de Drops: <input type="number" min="1" max="5" value="2" oninput="validarApenasNumeros(this)" class="input-qtd-drops w-12 bg-black border border-slate-800 rounded p-0.5 text-center text-white ml-1">`;
-            } else if (val === 'Rest Pause' || val === 'Cluster Set') {
-                box.classList.remove('hidden');
-                box.innerHTML = `Qtd Mini-Blocos: <input type="number" min="2" max="4" value="2" oninput="validarApenasNumeros(this)" class="input-qtd-blocos w-12 bg-black border border-slate-800 rounded p-0.5 text-center text-white ml-1">`;
-            } else if (val === 'FST-7') {
-                box.classList.remove('hidden');
-                box.innerHTML = `Qtd Séries: <input type="number" min="3" max="7" value="7" oninput="validarApenasNumeros(this)" class="input-qtd-fst7 w-12 bg-black border border-slate-800 rounded p-0.5 text-center text-white ml-1">`;
-            } else {
-                box.classList.add('hidden');
-                box.innerHTML = '';
-            }
-        }
+        function atualizarMetodoSerieAdmin(select) {}
 
         async function removerExercicioDivisao(idx) {
             const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
@@ -1316,8 +1357,7 @@
             if (!alunoSelecionado) return;
             try {
                 const { data, error } = await supabaseClient.from('alunos').update({ treinos: treinosDoAluno }).eq('id', alunoSelecionado.id).select('id');
-                if (error) throw error;
-                if (!data || data.length === 0) throw new Error('o banco não gravou a alteração (verifique as políticas de UPDATE no Supabase).');
+                if (error || !data || data.length === 0) throw new Error('Erro ao salvar no banco.');
                 atualizarHoraSincronizacao();
             } catch (err) { alert('Erro ao salvar o treino: ' + err.message); }
         }
@@ -1346,7 +1386,7 @@
             if (!texto.trim()) { box.classList.add('hidden'); return; }
             const filtrados = baseExerciciosGlobais.filter(e => e.toLowerCase().includes(texto.toLowerCase()));
             if (filtrados.length === 0) { box.classList.add('hidden'); return; }
-            box.innerHTML = filtrados.map(f => `<div onclick="selecionarSugestaoExercicio('${f}')" class="p-2.5 hover:bg-slate-800 cursor-pointer text-xs text-slate-200 border-b border-slate-800/50">${f}</div>`).join('');
+            box.innerHTML = filtrados.map(f => `<div onclick="selecionarSugestaoExercicio('${escapeHtml(f)}')" class="p-2.5 hover:bg-slate-800 cursor-pointer text-xs text-slate-200 border-b border-slate-800/50">${escapeHtml(f)}</div>`).join('');
             box.classList.remove('hidden');
         }
 
@@ -1403,15 +1443,14 @@
             const alunoId = select.value;
             if (!alunoId) { alert('Selecione um aluno!'); return; }
             const aluno = alunosGlobais.find(a => String(a.id) === String(alunoId));
-            if (!aluno) { alert('Aluno não encontrado. Atualize a lista.'); return; }
+            if (!aluno) { alert('Aluno não encontrado.'); return; }
             const slot = slotAgendaSelecionado;
             agendaDados[slot] = { id: aluno.id, nome: aluno.nome };
             gravarAgendaLocal();
             fecharModalAgenda();
             renderizarGradeAgenda();
             if (agendaNoServidor) {
-                const { error } = await supabaseClient.from('agenda').upsert({ slot, aluno_id: aluno.id, aluno_nome: aluno.nome });
-                if (error) { alert('Salvo só neste aparelho. Erro ao gravar no banco: ' + error.message); agendaNoServidor = false; }
+                await supabaseClient.from('agenda').upsert({ slot, aluno_id: aluno.id, aluno_nome: aluno.nome });
             }
         }
 
@@ -1422,8 +1461,7 @@
             fecharModalAgenda();
             renderizarGradeAgenda();
             if (agendaNoServidor) {
-                const { error } = await supabaseClient.from('agenda').delete().eq('slot', slot);
-                if (error) alert('Erro ao liberar no banco: ' + error.message);
+                await supabaseClient.from('agenda').delete().eq('slot', slot);
             }
         }
 

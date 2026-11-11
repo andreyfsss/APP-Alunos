@@ -13,7 +13,6 @@
     <meta name="apple-mobile-web-app-title" content="AF Pro">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <script>
-    // Manifest dinâmico: o atalho instalado abre o link do PRÓPRIO aluno (com o token), nunca o painel admin.
     (function () {
         try {
             if (!/[?&]token=/.test(location.search)) return;
@@ -48,7 +47,7 @@
 </head>
 <body class="text-slate-100 min-h-screen flex flex-col antialiased">
 
-    <!-- MODAL DE ENERGIA (EXIBIDO APENAS AO CLICAR EM INICIAR O TREINO) -->
+    <!-- MODAL DE ENERGIA (OBRIGATÓRIO AO INICIAR O TREINO) -->
     <div id="modal-energia" class="fixed inset-0 bg-black/95 backdrop-blur-md hidden z-50 flex flex-col justify-center p-4">
         <div class="max-w-md w-full mx-auto bg-af-card border border-slate-800 rounded-3xl p-5 space-y-4 text-center shadow-2xl">
             <span class="text-3xl">⚡</span>
@@ -212,12 +211,19 @@
                     <h2 id="titulo-divisao-ativa" class="font-bold text-xs text-af-orange uppercase tracking-wider">Treino</h2>
                 </div>
 
-                <div class="bg-af-card border border-slate-800 rounded-2xl p-3.5 flex justify-between items-center text-xs">
-                    <div>
-                        <span class="text-[10px] uppercase font-bold text-slate-400 block">Volume Total da Sessão</span>
-                        <strong class="text-slate-200">Cargas x Repetições Reais</strong>
+                <!-- CAIXA DE RESUMO DA EVOLUÇÃO NO INÍCIO DO TREINO (MINIMIZÁVEL) -->
+                <div class="bg-af-card border border-slate-800 rounded-2xl p-3.5 space-y-2 shadow-md">
+                    <div class="flex justify-between items-center cursor-pointer" onclick="toggleMinimizarResumoAluno()">
+                        <span class="text-[10px] uppercase font-bold text-slate-400">Resumo da Evolução da Sessão</span>
+                        <button id="btn-minimizar-resumo-aluno" class="text-[10px] bg-black border border-slate-800 px-2 py-0.5 rounded text-slate-300 font-bold">Minimizar [-]</button>
                     </div>
-                    <span class="text-af-orange font-black text-base" id="volume-total-aluno">0 kg</span>
+                    <div id="conteudo-resumo-evolucao-aluno" class="space-y-2 pt-1 border-t border-slate-800">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-slate-300">Volume Total da Sessão</span>
+                            <span class="text-af-orange font-black text-base" id="volume-total-aluno">0 kg</span>
+                        </div>
+                        <div id="lista-evolucao-por-exercicio-aluno" class="space-y-1 text-xs"></div>
+                    </div>
                 </div>
 
                 <div id="lista-exercicios-aluno" class="space-y-4"></div>
@@ -263,6 +269,7 @@
         let treinoPendenteId = null;
         let energiaInicioTreino = 'Normal 👍';
         let salvandoTreino = false;
+        let resumoAlunoMinimizado = false;
 
         let timerInterval = null;
         let segundosRestantes = 0;
@@ -289,6 +296,10 @@
             if (m && s) return `${m}min ${s}s`;
             if (m) return `${m}min`;
             return `${s}s`;
+        }
+
+        function escapeHtml(t) {
+            return String(t ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         }
 
         function descreverSerieRealizada(sr, semCarga) {
@@ -326,12 +337,7 @@
             
             if (!token) {
                 document.getElementById('nome-aluno').innerText = 'Acesso Restrito';
-                document.getElementById('container-lista-divisoes').innerHTML = `
-                    <div class="bg-af-card border border-rose-900/50 p-5 rounded-2xl text-center space-y-2">
-                        <p class="text-xs text-rose-400 font-bold">Nenhum token de atleta identificado.</p>
-                        <p class="text-[10px] text-slate-400">Solicite o link correto do seu treino ao seu personal trainer.</p>
-                    </div>
-                `;
+                document.getElementById('container-lista-divisoes').innerHTML = `<p class="text-xs text-rose-400 text-center py-6">Nenhum token identificado.</p>`;
                 return;
             }
 
@@ -339,7 +345,6 @@
                 const { data: aluno, error } = await supabaseClient.from('alunos').select('*').eq('token', token).single();
                 if (error || !aluno) { 
                     document.getElementById('nome-aluno').innerText = 'Atleta não encontrado'; 
-                    document.getElementById('container-lista-divisoes').innerHTML = `<p class="text-xs text-rose-400 text-center py-6">Link inválido ou expirado.</p>`;
                     return; 
                 }
                 alunoAtualId = aluno.id;
@@ -347,21 +352,19 @@
                 treinosDoAlunoCarregados = aluno.treinos || [];
                 historicoTreinosAluno = Array.isArray(aluno.historico) ? aluno.historico : [];
                 renderizarDivisoesTreino(treinosDoAlunoCarregados);
-            } catch (err) {
-                document.getElementById('nome-aluno').innerText = 'Erro de conexão';
-            }
+            } catch (err) {}
         }
 
         function renderizarDivisoesTreino(treinos) {
             const container = document.getElementById('container-lista-divisoes');
             if (!treinos || treinos.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">Nenhum treino prescrito ainda pelo seu personal.</p>`;
+                container.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">Nenhum treino prescrito ainda.</p>`;
                 return;
             }
             container.innerHTML = treinos.map(t => `
                 <div onclick="solicitarEnergiaEIniciar('${t.id}')" class="bg-af-card border border-slate-800 hover:border-af-orange/50 rounded-2xl p-4 flex justify-between items-center cursor-pointer transition-all">
                     <div>
-                        <h3 class="font-bold text-sm text-af-orange uppercase tracking-wider">${t.nome}</h3>
+                        <h3 class="font-bold text-sm text-af-orange uppercase tracking-wider">${escapeHtml(t.nome)}</h3>
                         <p class="text-[10px] text-slate-500 mt-0.5">${t.exercicios ? t.exercicios.length : 0} exercício(s)</p>
                     </div>
                     <span class="text-xs text-black font-black bg-af-orange px-3 py-1.5 rounded-xl">Iniciar →</span>
@@ -404,6 +407,19 @@
             body.classList.toggle('hidden');
         }
 
+        function toggleMinimizarResumoAluno() {
+            resumoAlunoMinimizado = !resumoAlunoMinimizado;
+            const conteudo = document.getElementById('conteudo-resumo-evolucao-aluno');
+            const btn = document.getElementById('btn-minimizar-resumo-aluno');
+            if (resumoAlunoMinimizado) {
+                conteudo.classList.add('hidden');
+                btn.innerText = 'Expandir [+]';
+            } else {
+                conteudo.classList.remove('hidden');
+                btn.innerText = 'Minimizar [-]';
+            }
+        }
+
         function buscarDadosAnterioresSerie(nomeExercicio, numeroSerie) {
             const validos = historicoValidoDoAluno();
             for (let i = validos.length - 1; i >= 0; i--) {
@@ -433,7 +449,7 @@
         function fmtKg(v) { return String(Number(v.toFixed(1))).replace('.', ','); }
 
         function calcularNovaCarga(carga, pct) {
-            const passo = Math.max(1, Math.round((carga * pct / 100) * 2) / 2); // arredonda p/ 0,5kg, mínimo +1kg
+            const passo = Math.max(1, Math.round((carga * pct / 100) * 2) / 2);
             return carga + passo;
         }
 
@@ -444,11 +460,9 @@
                 keep: 'text-sky-300 bg-sky-950/40 border-sky-800/40',
                 down: 'text-rose-300 bg-rose-950/40 border-rose-800/40'
             };
-            return `<div class="text-[10px] font-bold px-2 py-1 rounded border mt-1 ${cores[cor]}">💡 AF Pro: ${txt}</div>`;
+            return `<div class="text-[10px] font-bold px-2 py-1 rounded border mt-1 ${cores[cor]}">💡 AF Pro: ${escapeHtml(txt)}</div>`;
         }
 
-        // Progressão dupla guiada por RPE: usa a ÚLTIMA sessão do exercício, as séries mais pesadas,
-        // o RPE médio e a faixa de reps prescrita. Sem RPE registrado, não sugere nada.
         function gerarSugestaoProgresso(ex, semCarga, exigeRpe) {
             if (semCarga || !exigeRpe) return '';
             const cfg = ex.seriesConfig || [];
@@ -460,7 +474,7 @@
                 const exR = (validos[i].exerciciosRealizados || []).find(e => e.nome.toLowerCase() === ex.nome.toLowerCase());
                 if (exR && exR.series && exR.series.length > 0) {
                     sets = exR.series.filter(x => x.tipoMeta !== 'tempo' && x.reps > 0 && rpeNumerico(x.rpe) !== null);
-                    break; // só a sessão mais recente conta
+                    break;
                 }
             }
             if (!sets || !sets.length) return '';
@@ -477,21 +491,16 @@
 
             if (rpeMed >= 9.5) {
                 if (abaixoMin && cargaTopo > 0) {
-                    return caixaSugestao('down', `Última (${ctx}, RPE ${rpeTxt}) ficou no limite e abaixo da faixa. Reduza ~5% (${fmtKg(Math.round(cargaTopo * 0.95 * 2) / 2)}kg) e feche as reps.`);
+                    return caixaSugestao('down', `Última (${ctx}, RPE ${rpeTxt}) ficou no limite. Reduza ~5% (${fmtKg(Math.round(cargaTopo * 0.95 * 2) / 2)}kg).`);
                 }
-                return caixaSugestao('keep', `Última (${ctx}, RPE ${rpeTxt}) foi no limite. Mantenha a carga e repita buscando RPE ≤ 9.`);
-            }
-            if (rpeMed >= 9) {
-                return caixaSugestao('keep', `Última (${ctx}, RPE ${rpeTxt}). Mantenha ${cargaTopo > 0 ? fmtKg(cargaTopo) + 'kg' : 'a execução'} e tente +1 rep mantendo RPE ≤ 9.`);
+                return caixaSugestao('keep', `Última (${ctx}, RPE ${rpeTxt}) no limite. Mantenha a carga.`);
             }
             if (cargaTopo > 0 && (bateuTopo || !faixa || rpeMed <= 6.5)) {
                 const pct = rpeMed <= 6.5 ? 10 : 5;
                 const nova = calcularNovaCarga(cargaTopo, pct);
-                const volta = faixa ? ` e recomece pela base da faixa (${faixa.min} reps)` : '';
-                return caixaSugestao('up', `Última (${ctx}, RPE ${rpeTxt}) com folga. Suba a carga para ${fmtKg(nova)}kg (+${pct}%)${volta}.`);
+                return caixaSugestao('up', `Última (${ctx}, RPE ${rpeTxt}) com folga. Suba para ${fmtKg(nova)}kg.`);
             }
-            const alvo = faixa ? Math.min(faixa.max, Math.round(repsMed) + 1) : Math.round(repsMed) + 1;
-            return caixaSugestao('reps', `Última (${ctx}, RPE ${rpeTxt}) com folga. Mantenha ${cargaTopo > 0 ? fmtKg(cargaTopo) + 'kg' : 'a carga'} e suba para ${alvo} reps por série.`);
+            return caixaSugestao('reps', `Última (${ctx}, RPE ${rpeTxt}). Mantenha a carga e suba reps.`);
         }
 
         function atualizarDeltaCarga(input) {
@@ -529,7 +538,7 @@
 
                 let badgeMetodoHtml = '';
                 if (metodoGeral !== 'Nulo') {
-                    badgeMetodoHtml = `<span onclick="event.stopPropagation(); mostrarExplicacaoMetodo('${metodoGeral}')" class="text-[9px] bg-amber-950/80 text-amber-400 border border-amber-600/40 px-2 py-0.5 rounded font-black cursor-pointer uppercase">${metodoGeral} ℹ️</span>`;
+                    badgeMetodoHtml = `<span onclick="event.stopPropagation(); mostrarExplicacaoMetodo('${metodoGeral}')" class="text-[9px] bg-amber-950/80 text-amber-400 border border-amber-600/40 px-2 py-0.5 rounded font-black cursor-pointer uppercase">${escapeHtml(metodoGeral)} ℹ️</span>`;
                 }
 
                 const htmlSeries = (ex.seriesConfig || []).map(s => {
@@ -538,12 +547,11 @@
                     const metodoSerie = s.metodo || 'Série Normal';
                     let badgeSerieHtml = '';
                     if (metodoGeral === 'Nulo' && !semCarga) {
-                        badgeSerieHtml = `<span onclick="mostrarExplicacaoMetodo('${metodoSerie}')" class="text-[9px] bg-slate-900 text-af-orange border border-slate-800 px-1.5 py-0.5 rounded font-bold cursor-pointer">${metodoSerie} ℹ️</span>`;
+                        badgeSerieHtml = `<span onclick="mostrarExplicacaoMetodo('${metodoSerie}')" class="text-[9px] bg-slate-900 text-af-orange border border-slate-800 px-1.5 py-0.5 rounded font-bold cursor-pointer">${escapeHtml(metodoSerie)} ℹ️</span>`;
                     }
 
                     const anterior = buscarDadosAnterioresSerie(ex.nome, s.num);
                     const textoAnterior = anterior ? `Último: ${descreverSerieRealizada(anterior, semCarga)}` : 'Sem registro anterior';
-
                     const isApenasConfirmacao = (ex.musculo === 'Alongamentos' || ex.musculo === 'Mobilidade');
 
                     if (isApenasConfirmacao) {
@@ -592,15 +600,15 @@
                 }).join('');
 
                 return `
-                    <div class="bg-af-card border ${conjugado ? 'border-amber-500/60' : 'border-slate-800'} rounded-2xl overflow-hidden shadow-md" data-nome-exercicio="${ex.nome}" data-musculo="${ex.musculo || ''}" data-sem-carga="${semCarga}">
+                    <div class="bg-af-card border ${conjugado ? 'border-amber-500/60' : 'border-slate-800'} rounded-2xl overflow-hidden shadow-md" data-nome-exercicio="${escapeHtml(ex.nome)}" data-musculo="${escapeHtml(ex.musculo || '')}" data-sem-carga="${semCarga}">
                         <div onclick="alternarColapsoExercicio(this)" class="p-3.5 bg-af-card flex justify-between items-center cursor-pointer select-none">
                             <div class="flex items-center gap-2">
                                 <div>
                                     <div class="flex items-center gap-1.5">
-                                        <span class="text-[10px] font-bold uppercase text-af-orange">${ex.musculo} • ${ex.equipamento}</span>
-                                        ${conjugado ? `<span class="text-[9px] bg-amber-950 text-amber-400 border border-amber-600/50 px-1.5 py-0.5 rounded font-black">🔗 ${conjugado}</span>` : ''}
+                                        <span class="text-[10px] font-bold uppercase text-af-orange">${escapeHtml(ex.musculo)} • ${escapeHtml(ex.equipamento)}</span>
+                                        ${conjugado ? `<span class="text-[9px] bg-amber-950 text-amber-400 border border-amber-600/50 px-1.5 py-0.5 rounded font-black">🔗 ${escapeHtml(conjugado)}</span>` : ''}
                                     </div>
-                                    <h3 class="font-bold text-xs text-slate-100">${index + 1}. ${ex.nome}</h3>
+                                    <h3 class="font-bold text-xs text-slate-100">${index + 1}. ${escapeHtml(ex.nome)}</h3>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
@@ -619,19 +627,8 @@
 
         function mostrarExplicacaoMetodo(metodo) {
             const modal = document.getElementById('modal-explicacao-metodo');
-            const titulo = document.getElementById('modal-titulo-metodo');
-            const texto = document.getElementById('modal-texto-metodo');
-            titulo.innerText = metodo;
-
-            let desc = '';
-            if (metodo === 'Pirâmide Crescente') desc = 'Na Pirâmide Crescente, você aumenta a carga a cada série e diminui um pouco as repetições.';
-            else if (metodo === 'Pirâmide Decrescente') desc = 'Na Pirâmide Decrescente, você começa com mais carga e vai reduzindo nas séries seguintes.';
-            else if (metodo === 'Drop Set') desc = 'No Drop Set, ao atingir a falha, você reduz a carga imediatamente e continua executando.';
-            else if (metodo === 'Rest Pause') desc = 'No Rest Pause, você executa até a falha, descansa 10 a 15 segundos e faz mais algumas repetições.';
-            else if (metodo === 'Cluster Set') desc = 'No Cluster Set, a série é dividida em mini-blocos com pequenos intervalos programados.';
-            else if (metodo === 'FST-7') desc = 'O FST-7 consiste em realizar 7 séries no final do exercício com intervalos curtos.';
-            else desc = 'Série Normal com execução padrão orientada pelo seu personal trainer.';
-            texto.innerText = desc;
+            document.getElementById('modal-titulo-metodo').innerText = metodo;
+            document.getElementById('modal-texto-metodo').innerText = 'Método de execução avançada programado pelo seu personal trainer.';
             modal.classList.remove('hidden');
         }
 
@@ -706,12 +703,7 @@
                 audioAlarme.setAttribute('playsinline', '');
                 const p = audioAlarme.play();
                 if (p && p.then) {
-                    p.then(() => {
-                        audioAlarmeAtivo = true;
-                        if ('mediaSession' in navigator && window.MediaMetadata) {
-                            navigator.mediaSession.metadata = new MediaMetadata({ title: 'Descanso entre séries', artist: 'AF Pro' });
-                        }
-                    }).catch(() => { audioAlarmeAtivo = false; });
+                    p.then(() => { audioAlarmeAtivo = true; }).catch(() => { audioAlarmeAtivo = false; });
                 }
             } catch (e) { audioAlarmeAtivo = false; }
         }
@@ -796,13 +788,6 @@
             document.title = `⏱️ ${textoTempo} - Descanso`;
         }
 
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible' && !alarmeTocado) {
-                tickTimer();
-                manterTelaAcesa();
-            }
-        });
-
         function lerTempoSerie(serieItem) {
             return (parseInt(serieItem.querySelector('.input-tempo-min')?.value) || 0) * 60 +
                    (parseInt(serieItem.querySelector('.input-tempo-seg')?.value) || 0);
@@ -832,14 +817,13 @@
 
                 serieItem.setAttribute('data-serie-concluida', 'true');
                 serieItem.classList.add('border-emerald-500/80', 'bg-emerald-950/25');
-                botao.className = isApenasConfirmacao ? 'bg-emerald-500 text-black px-3 py-1 rounded-lg text-xs font-bold btn-check-serie' : 'bg-emerald-500 text-black px-2.5 py-1 rounded-lg text-xs font-bold btn-check-serie';
+                botao.className = 'bg-emerald-500 text-black px-2.5 py-1 rounded-lg text-xs font-bold btn-check-serie';
                 botao.innerText = '✔ Feito';
             } else {
                 serieItem.setAttribute('data-serie-concluida', 'false');
                 serieItem.classList.remove('border-emerald-500/80', 'bg-emerald-950/25');
-                const isApenasConfirmacao = serieItem.querySelector('.input-carga') === null && serieItem.querySelector('.input-reps-reais') === null && serieItem.querySelector('.input-tempo-min') === null;
-                botao.className = isApenasConfirmacao ? 'bg-slate-900 border border-slate-800 text-slate-400 px-3 py-1 rounded-lg text-xs font-bold btn-check-serie' : 'bg-slate-900 border border-slate-800 text-slate-400 px-2.5 py-1 rounded-lg text-xs font-bold btn-check-serie';
-                botao.innerText = '✔ Feito';
+                botao.className = 'bg-slate-900 border border-slate-800 text-slate-400 px-2.5 py-1 rounded-lg text-xs font-bold btn-check-serie';
+                botao.innerText = '✔';
             }
             calcularVolumeTotal();
         }
@@ -911,8 +895,7 @@
                 const hist = Array.isArray(data?.historico) ? data.historico : [];
                 hist.push(novoRegistro);
                 const { data: salvo, error: erroSalvar } = await supabaseClient.from('alunos').update({ historico: hist }).eq('id', alunoAtualId).select('id');
-                if (erroSalvar) throw erroSalvar;
-                if (!salvo || salvo.length === 0) throw new Error('o banco não gravou o treino. Avise seu personal.');
+                if (erroSalvar || !salvo || salvo.length === 0) throw new Error('Erro ao salvar no banco.');
 
                 document.getElementById('modal-pos-satisfacao').classList.add('hidden');
 
@@ -926,13 +909,12 @@
                     const totalReps = e.series.reduce((a, b) => a + (b.reps || 0), 0);
                     const totalTempo = e.series.reduce((a, b) => a + (b.tempoSeg || 0), 0);
                     const partes = [`${e.series.length} séries`];
-                    if (totalReps > 0) partes.push(`${totalReps} reps totais`);
-                    if (totalTempo > 0) partes.push(`${formatarTempo(totalTempo)} no total`);
+                    if (totalReps > 0) partes.push(`${totalReps} reps`);
                     const direita = e.semCarga ? `Concluído` : `Máx: ${maxCarga} kg`;
                     return `
                         <div class="bg-black border border-slate-800 p-2.5 rounded-xl flex justify-between items-center">
                             <div>
-                                <strong class="text-white block">${e.nome}</strong>
+                                <strong class="text-white block">${escapeHtml(e.nome)}</strong>
                                 <span class="text-[10px] text-slate-400">${partes.join(' • ')}</span>
                             </div>
                             <span class="text-af-orange font-bold text-xs">${direita}</span>
@@ -1046,7 +1028,7 @@
                     container.innerHTML = `
                         <div class="flex items-center justify-between bg-black p-2.5 rounded-xl border border-slate-800">
                             <button onclick="grupoMuscularAtletaFiltroAtivo=null; atualizarRelatoriosAtletaDashboard();" class="text-xs text-af-orange font-bold">← Voltar para Grupos</button>
-                            <span class="text-xs text-white font-bold uppercase">${grupoMuscularAtletaFiltroAtivo}</span>
+                            <span class="text-xs text-white font-bold uppercase">${escapeHtml(grupoMuscularAtletaFiltroAtivo)}</span>
                         </div>
                         <div class="space-y-3 pt-1">
                             <div class="bg-black p-3 rounded-xl border border-slate-800 space-y-1 text-xs">
@@ -1058,7 +1040,7 @@
                                 const registros = gData.exercicios[exNome];
                                 return `
                                     <div class="bg-black border border-slate-800 p-3 rounded-xl space-y-2">
-                                        <span class="font-bold text-xs text-white block">${exNome}</span>
+                                        <span class="font-bold text-xs text-white block">${escapeHtml(exNome)}</span>
                                         <div class="space-y-1.5">
                                             ${registros.map(r => `
                                                 <div class="flex justify-between items-center text-[11px] border-t border-slate-900 pt-1.5">
@@ -1078,7 +1060,7 @@
                         <div class="space-y-2">
                             ${nomesGrupos.map(n => `
                                 <div onclick="grupoMuscularAtletaFiltroAtivo='${n}'; atualizarRelatoriosAtletaDashboard();" class="bg-black border border-slate-800 p-3 rounded-xl flex justify-between items-center cursor-pointer hover:border-af-orange">
-                                    <span class="font-bold text-sm text-af-orange">${n}</span>
+                                    <span class="font-bold text-sm text-af-orange">${escapeHtml(n)}</span>
                                     <span class="text-xs text-slate-200">${MUSCULOS_SEM_CARGA.includes(n) ? '' : grupos[n].volume.toLocaleString('pt-BR') + ' kg • '}${grupos[n].series} séries</span>
                                 </div>
                             `).join('')}
