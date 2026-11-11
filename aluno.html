@@ -22,20 +22,88 @@
 </head>
 <body class="text-slate-100 min-h-screen flex flex-col antialiased">
 
-    <!-- MODAL DE ENERGIA ANTES DO TREINO -->
-    <div id="modal-energia" class="fixed inset-0 bg-black/95 backdrop-blur-md z-50 flex flex-col justify-center p-4">
+    <!-- MODAL DE ENERGIA (EXIBIDO APENAS AO CLICAR EM INICIAR O TREINO) -->
+    <div id="modal-energia" class="fixed inset-0 bg-black/95 backdrop-blur-md hidden z-50 flex flex-col justify-center p-4">
         <div class="max-w-md w-full mx-auto bg-af-card border border-slate-800 rounded-3xl p-5 space-y-4 text-center shadow-2xl">
             <span class="text-3xl">⚡</span>
             <div>
-                <h2 class="text-base font-black text-white uppercase">Como está sua energia hoje?</h2>
-                <p class="text-[10px] text-slate-400 mt-0.5">Toque em uma opção para registrar o seu dia</p>
+                <h2 class="text-base font-black text-white uppercase">Como está sua energia para este treino?</h2>
+                <p class="text-[10px] text-slate-400 mt-0.5">Selecione para liberar a execução</p>
             </div>
             <div class="grid grid-cols-1 gap-2 text-xs">
-                <button onclick="selecionarEnergia('Muito Alta 🚀')" class="bg-black border border-slate-800 hover:border-af-orange p-3 rounded-xl flex justify-between items-center font-bold text-af-orange"><span>Muito Alta</span><span>🤩 5/5</span></button>
-                <button onclick="selecionarEnergia('Alta ⭐')" class="bg-black border border-slate-800 hover:border-af-orange p-3 rounded-xl flex justify-between items-center font-bold text-emerald-400"><span>Alta</span><span>😊 4/5</span></button>
-                <button onclick="selecionarEnergia('Normal 👍')" class="bg-black border border-slate-800 hover:border-af-orange p-3 rounded-xl flex justify-between items-center font-bold text-slate-200"><span>Normal</span><span>😐 3/5</span></button>
-                <button onclick="selecionarEnergia('Baixa ⚠️')" class="bg-black border border-slate-800 hover:border-af-orange p-3 rounded-xl flex justify-between items-center font-bold text-amber-400"><span>Baixa</span><span>🥱 2/5</span></button>
-                <button onclick="selecionarEnergia('Muito Baixa 🛑')" class="bg-black border border-slate-800 hover:border-af-orange p-3 rounded-xl flex justify-between items-center font-bold text-rose-400"><span>Muito Baixa</span><span>🛌 1/5</span></button>
+                <button onclick="confirmarEnergiaEIniciar('Muito Alta 🚀')" class="bg-black border border-slate-800 hover:border-af-orange p-3 rounded-xl flex justify-between items-center font-bold text-af-orange"><span>Muito Alta</span><span>🤩 5/5</span></button>
+                <button onclick="confirmarEnergiaEIniciar('Alta ⭐')" class="bg-black border border-slate-800 hover:border-af-orange p-3 rounded-xl flex justify-between items-center font-bold text-emerald-400"><span>Alta</span><span>😊 4/5</span></button>
+                <button onclick="confirmarEnergiaEIniciar('Normal 👍')" class="bg-black border border-slate-800 hover:border-af-orange p-3 rounded-xl flex justify-between items-center font-bold text-slate-200"><span>Normal</span><span>😐 3/5</span></button>
+                <button onclick="confirmarEnergiaEIniciar('Baixa ⚠️')" class="bg-black border border-slate-800 hover:border-af-orange p-3 rounded-xl flex justify-between items-center font-bold text-amber-400"><span>Baixa</span><span>🥱 2/5</span></button>
+                <button onclick="confirmarEnergiaEIniciar('Muito Baixa 🛑')" class="bg-black border border-slate-800 hover:border-af-orange p-3 rounded-xl flex justify-between items-center font-bold text-rose-400"><span>Muito Baixa</span><span>🛌 1/5</span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 1: PESQUISA DE SATISFAÇÃO & SENSAÇÃO PÓS-TREINO -->
+    <div id="modal-pos-satisfacao" class="fixed inset-0 bg-black/95 backdrop-blur-md hidden z-50 flex flex-col justify-center p-4">
+        <div class="max-w-md w-full mx-auto bg-af-card border border-slate-800 rounded-3xl p-5 space-y-4 shadow-2xl">
+            <div class="text-center">
+                <span class="text-3xl">🎯</span>
+                <h2 class="text-base font-black text-white uppercase mt-1">Como você terminou o treino?</h2>
+                <p class="text-[10px] text-slate-400">Avalie sua percepção de esforço e sensação final</p>
+            </div>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Percepção do Treino</label>
+                    <select id="select-pos-sensacao" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-xs text-white font-bold">
+                        <option value="Satisfeito / Excelente 🔥">Satisfeito / Excelente 🔥</option>
+                        <option value="Intenso no ponto certo 💪">Intenso no ponto certo 💪</option>
+                        <option value="Muito Pesado / Exaustivo 🥵">Muito Pesado / Exaustivo 🥵</option>
+                        <option value="Leve / Tranquilo 🌿">Leve / Tranquilo 🌿</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Comentários para o Personal (Opcional)</label>
+                    <textarea id="input-pos-comentario" placeholder="Ex: Senti um desconforto leve no ombro / Treino renderam ótimas cargas..." class="w-full bg-black border border-slate-800 rounded-xl p-3 text-xs text-white h-20 focus:border-af-orange focus:outline-none"></textarea>
+                </div>
+
+                <button onclick="avancarParaResumoPosTreino()" class="w-full bg-af-orange text-black font-black py-3 rounded-xl text-xs shadow-lg">
+                    Ver Resumo da Sessão →
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: RESUMO DO TREINO CONCLUÍDO -->
+    <div id="modal-relatorio-pos-treino" class="fixed inset-0 bg-black/95 backdrop-blur-md hidden z-50 flex flex-col p-4 overflow-y-auto">
+        <div class="max-w-md w-full mx-auto space-y-4 my-auto">
+            <div class="bg-af-card border border-slate-800 rounded-3xl p-5 space-y-4 shadow-2xl">
+                <div class="w-12 h-12 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-2xl flex items-center justify-center text-2xl mx-auto">
+                    🏆
+                </div>
+                <div class="text-center">
+                    <span class="text-[10px] font-bold text-af-orange uppercase tracking-widest block">Treino Concluído com Sucesso</span>
+                    <h2 id="relatorio-nome-treino" class="text-lg font-black text-white">Treino A</h2>
+                    <p id="relatorio-data-hora" class="text-[10px] text-slate-400 mt-0.5">Hoje</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 pt-2">
+                    <div class="bg-black border border-slate-800 p-3.5 rounded-2xl text-center">
+                        <span class="text-[9px] uppercase font-bold text-slate-500 block mb-1">Volume da Sessão</span>
+                        <strong id="relatorio-volume-total" class="text-lg font-black text-af-orange">0 kg</strong>
+                    </div>
+                    <div class="bg-black border border-slate-800 p-3.5 rounded-2xl text-center">
+                        <span class="text-[9px] uppercase font-bold text-slate-500 block mb-1">Séries Validadas</span>
+                        <strong id="relatorio-qtd-series" class="text-lg font-black text-white">0</strong>
+                    </div>
+                </div>
+
+                <div class="text-left space-y-2 pt-2 border-t border-slate-800">
+                    <h3 class="font-bold text-xs uppercase text-slate-300">Resumo por Exercício</h3>
+                    <div id="relatorio-lista-exercicios" class="space-y-1.5 text-xs max-h-52 overflow-y-auto pr-1"></div>
+                </div>
+
+                <button onclick="fecharResumoEVoltar()" class="w-full bg-af-orange text-black font-black py-3 rounded-xl text-xs shadow-lg">
+                    Concluir e Voltar ao Início
+                </button>
             </div>
         </div>
     </div>
@@ -64,42 +132,6 @@
                 ⏱️ Descanso: <span id="display-tempo-timer" class="text-sm text-af-orange font-black">01:30</span>
             </span>
             <button id="btn-folego-extra" onclick="adicionarTempoTimer(30)" class="bg-black text-af-orange text-[10px] px-3 py-1.5 rounded-lg font-bold border border-slate-800 transition-all">+30s (1x)</button>
-        </div>
-    </div>
-
-    <!-- MODAL RELATÓRIO PÓS-TREINO -->
-    <div id="modal-relatorio-pos-treino" class="fixed inset-0 bg-black/95 backdrop-blur-md hidden z-50 flex flex-col p-4 overflow-y-auto">
-        <div class="max-w-md w-full mx-auto space-y-4 my-auto">
-            <div class="bg-af-card border border-slate-800 rounded-3xl p-5 space-y-4 shadow-2xl">
-                <div class="w-12 h-12 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-2xl flex items-center justify-center text-2xl mx-auto">
-                    🏆
-                </div>
-                <div>
-                    <span class="text-[10px] font-bold text-af-orange uppercase tracking-widest block">Treino Concluído com Sucesso</span>
-                    <h2 id="relatorio-nome-treino" class="text-lg font-black text-white">Treino A</h2>
-                    <p id="relatorio-data-hora" class="text-[10px] text-slate-400 mt-0.5">Hoje</p>
-                </div>
-
-                <div class="grid grid-cols-2 gap-2 pt-2">
-                    <div class="bg-black border border-slate-800 p-3.5 rounded-2xl text-center">
-                        <span class="text-[9px] uppercase font-bold text-slate-500 block mb-1">Volume da Sessão</span>
-                        <strong id="relatorio-volume-total" class="text-lg font-black text-af-orange">0 kg</strong>
-                    </div>
-                    <div class="bg-black border border-slate-800 p-3.5 rounded-2xl text-center">
-                        <span class="text-[9px] uppercase font-bold text-slate-500 block mb-1">Séries Validadas</span>
-                        <strong id="relatorio-qtd-series" class="text-lg font-black text-white">0</strong>
-                    </div>
-                </div>
-
-                <div class="text-left space-y-2 pt-2 border-t border-slate-800">
-                    <h3 class="font-bold text-xs uppercase text-slate-300">Resumo por Exercício</h3>
-                    <div id="relatorio-lista-exercicios" class="space-y-1.5 text-xs max-h-52 overflow-y-auto pr-1"></div>
-                </div>
-
-                <button onclick="fecharRelatorioEAtualizar()" class="w-full bg-af-orange text-black font-black py-3 rounded-xl text-xs shadow-lg">
-                    Concluir e Voltar ao Início
-                </button>
-            </div>
         </div>
     </div>
 
@@ -164,7 +196,7 @@
 
                 <div id="lista-exercicios-aluno" class="space-y-4"></div>
 
-                <button onclick="finalizarTreinoAluno()" class="w-full bg-af-orange hover:bg-orange-600 font-black py-3.5 rounded-2xl transition-all shadow-lg text-black text-xs">
+                <button onclick="abrirPesquisaSatisfacaoPosTreino()" class="w-full bg-af-orange hover:bg-orange-600 font-black py-3.5 rounded-2xl transition-all shadow-lg text-black text-xs">
                     Finalizar e Registrar Treino 🚀
                 </button>
             </div>
@@ -202,6 +234,8 @@
         let treinosDoAlunoCarregados = [];
         let historicoTreinosAluno = [];
         let treinoExecucaoAtual = null;
+        let treinoPendenteId = null;
+        let energiaInicioTreino = 'Normal 👍';
         let salvandoTreino = false;
 
         let timerInterval = null;
@@ -299,7 +333,7 @@
                 return;
             }
             container.innerHTML = treinos.map(t => `
-                <div onclick="abrirExecucaoTreino('${t.id}')" class="bg-af-card border border-slate-800 hover:border-af-orange/50 rounded-2xl p-4 flex justify-between items-center cursor-pointer transition-all">
+                <div onclick="solicitarEnergiaEIniciar('${t.id}')" class="bg-af-card border border-slate-800 hover:border-af-orange/50 rounded-2xl p-4 flex justify-between items-center cursor-pointer transition-all">
                     <div>
                         <h3 class="font-bold text-sm text-af-orange uppercase tracking-wider">${t.nome}</h3>
                         <p class="text-[10px] text-slate-500 mt-0.5">${t.exercicios ? t.exercicios.length : 0} exercício(s)</p>
@@ -309,8 +343,18 @@
             `).join('');
         }
 
-        function selecionarEnergia(nivel) {
+        function solicitarEnergiaEIniciar(treinoId) {
+            treinoPendenteId = treinoId;
+            document.getElementById('modal-energia').classList.remove('hidden');
+        }
+
+        function confirmarEnergiaEIniciar(nivelEnergia) {
+            energiaInicioTreino = nivelEnergia;
             document.getElementById('modal-energia').classList.add('hidden');
+            if (treinoPendenteId) {
+                abrirExecucaoTreino(treinoPendenteId);
+                treinoPendenteId = null;
+            }
         }
 
         function abrirExecucaoTreino(treinoId) {
@@ -705,11 +749,19 @@
         function fecharRPEFullScreen() { document.getElementById('modal-rpe-fullscreen').classList.add('hidden'); }
         function selecionarRPE(v) { if (inputRPEAtivo) inputRPEAtivo.value = v; fecharRPEFullScreen(); }
 
-        async function finalizarTreinoAluno() {
-            if (salvandoTreino) return;
+        function abrirPesquisaSatisfacaoPosTreino() {
             let todasValidadas = true;
             document.querySelectorAll('.serie-item').forEach(s => { if (s.getAttribute('data-serie-concluida') !== 'true') todasValidadas = false; });
             if (!todasValidadas) { alert('Valide todas as séries preenchendo os dados ou marcando como feitas antes de finalizar!'); return; }
+            document.getElementById('modal-pos-satisfacao').classList.remove('hidden');
+        }
+
+        async function avancarParaResumoPosTreino() {
+            if (salvandoTreino) return;
+            salvandoTreino = true;
+
+            const sensacao = document.getElementById('select-pos-sensacao').value;
+            const comentario = document.getElementById('input-pos-comentario').value.trim();
 
             let volumeSessao = 0;
             let exerciciosRealizados = [];
@@ -735,18 +787,22 @@
                 data: new Date().toISOString(),
                 treinoId: treinoExecucaoAtual?.id,
                 treinoNome: treinoExecucaoAtual?.nome || '',
+                energiaInicio: energiaInicioTreino,
+                sensacaoFim: sensacao,
+                comentarioAtleta: comentario,
                 volume: volumeSessao,
                 qtdSeriesValidadas: document.querySelectorAll('.serie-item').length,
                 comparativo: 'mesmo',
                 exerciciosRealizados
             };
 
-            salvandoTreino = true;
             try {
                 const { data } = await supabaseClient.from('alunos').select('historico').eq('id', alunoAtualId).single();
                 const hist = Array.isArray(data?.historico) ? data.historico : [];
                 hist.push(novoRegistro);
                 await supabaseClient.from('alunos').update({ historico: hist }).eq('id', alunoAtualId);
+
+                document.getElementById('modal-pos-satisfacao').classList.add('hidden');
 
                 document.getElementById('relatorio-nome-treino').innerText = treinoExecucaoAtual?.nome || 'Treino';
                 document.getElementById('relatorio-data-hora').innerText = new Date().toLocaleString('pt-BR');
@@ -777,11 +833,17 @@
 
             } catch (e) {
                 salvandoTreino = false;
-                alert('Erro ao salvar: ' + e.message);
+                alert('Erro ao salvar treino: ' + e.message);
             }
         }
 
-        function fecharRelatorioEAtualizar() { window.location.reload(); }
+        function fecharResumoEVoltar() {
+            salvandoTreino = false;
+            document.getElementById('modal-relatorio-pos-treino').classList.add('hidden');
+            voltarParaDivisoes();
+            carregarDadosAluno();
+        }
+
         function mudarPeriodoAtletaRelatorio(periodo) {
             periodoAtletaRelatorioAtual = periodo;
             grupoMuscularAtletaFiltroAtivo = null;

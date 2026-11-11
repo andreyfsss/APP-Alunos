@@ -332,7 +332,7 @@
                 <div class="flex justify-between items-center">
                     <div>
                         <h2 class="font-bold text-xs text-af-orange uppercase">Painel Financeiro</h2>
-                        <p class="text-[10px] text-slate-400">Controle financeiro em desenvolvimento</p>
+                        <p class="text-[10px] text-slate-400">Controle financeiro limpo</p>
                     </div>
                     <button onclick="carregarFinanceiro()" class="bg-black border border-slate-800 text-slate-300 text-xs px-3 py-1.5 rounded-xl font-bold">🔄 Atualizar</button>
                 </div>
@@ -362,7 +362,7 @@
             </div>
         </div>
 
-        <!-- SEÇÃO AGENDA (Segunda a Sexta, 05:00 às 21:00) -->
+        <!-- SEÇÃO AGENDA -->
         <div id="sec-adm-agenda" class="hidden space-y-4 no-print">
             <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3">
                 <div class="flex justify-between items-center">
@@ -463,7 +463,6 @@
                 if (agendaDados[key]) ocupadosHoje++;
             }
             const livresHoje = Math.max(0, 17 - ocupadosHoje);
-            
             let totalSemana = Object.keys(agendaDados).length;
 
             document.getElementById('resumo-ocupados-hoje').innerText = ocupadosHoje;
@@ -543,13 +542,13 @@
 
             const { error } = await supabaseClient.from('alunos').insert([{ nome, token, treinos: [], historico: [], arquivado: false }]);
             if (error) alert('Erro: ' + error.message);
-            else { input.value = ''; carregarAlunos(); }
+            else { input.value = ''; await carregarAlunos(); }
         }
 
         async function arquivarAluno(id, arquivar) {
             const { error } = await supabaseClient.from('alunos').update({ arquivado: arquivar }).eq('id', id);
             if (error) alert('Erro: ' + error.message);
-            else carregarAlunos();
+            else await carregarAlunos();
         }
 
         async function apagarAlunoDefinitivo(id, nome) {
@@ -1280,9 +1279,7 @@
             document.getElementById('sugestoes-autocomplete').classList.add('hidden');
         }
 
-        function carregarFinanceiro() {
-            document.getElementById('fin-receita-total').innerText = 'R$ 0,00';
-        }
+        function carregarFinanceiro() {}
 
         function mudarDiaAgenda(dia) {
             diaAgendaAtual = dia;
