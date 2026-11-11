@@ -4,10 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AF Pro - Meu Treino</title>
-    <link rel="manifest" href="manifest.webmanifest.json">
-    <link rel="apple-touch-icon" sizes="180x180" href="icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="icon.png">
+    <link rel="manifest" id="link-manifest" href="manifest-aluno.webmanifest.json">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
     <meta name="theme-color" content="#050505">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="AF Pro">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <script>
+    // Manifest dinâmico: o atalho instalado abre o link do PRÓPRIO aluno (com o token), nunca o painel admin.
+    (function () {
+        try {
+            if (!/[?&]token=/.test(location.search)) return;
+            var base = location.href.split('?')[0].split('#')[0].replace(/[^\/]*$/, '');
+            var m = {
+                name: 'AF Pro - Meu Treino', short_name: 'AF Pro',
+                start_url: location.href.split('#')[0], scope: base,
+                display: 'standalone', orientation: 'portrait',
+                background_color: '#1d1d1e', theme_color: '#050505',
+                icons: [
+                    { src: base + 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+                    { src: base + 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+                    { src: base + 'icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+                ]
+            };
+            var url = URL.createObjectURL(new Blob([JSON.stringify(m)], { type: 'application/manifest+json' }));
+            document.getElementById('link-manifest').setAttribute('href', url);
+        } catch (e) {}
+    })();
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -390,23 +416,105 @@
             return null;
         }
 
-        function gerarSugestaoProgresso(nomeExercicio, semCarga) {
-            if (semCarga) return '';
+        function parseFaixaReps(txt) {
+            const nums = String(txt || '').match(/\d+/g);
+            if (!nums) return null;
+            const n = nums.map(Number);
+            return { min: Math.min(...n), max: Math.max(...n) };
+        }
+
+        function rpeNumerico(r) {
+            if (r === undefined || r === null || r === '' || r === 'N/A') return null;
+            if (r === '1-4') return 4;
+            const v = parseFloat(r);
+            return isNaN(v) ? null : v;
+        }
+
+        function fmtKg(v) { return String(Number(v.toFixed(1))).replace('.', ','); }
+
+        function calcularNovaCarga(carga, pct) {
+            const passo = Math.max(1, Math.round((carga * pct / 100) * 2) / 2); // arredonda p/ 0,5kg, mínimo +1kg
+            return carga + passo;
+        }
+
+        function caixaSugestao(cor, txt) {
+            const cores = {
+                up:   'text-emerald-300 bg-emerald-950/40 border-emerald-800/50',
+                reps: 'text-amber-400 bg-amber-950/40 border-amber-800/40',
+                keep: 'text-sky-300 bg-sky-950/40 border-sky-800/40',
+                down: 'text-rose-300 bg-rose-950/40 border-rose-800/40'
+            };
+            return `<div class="text-[10px] font-bold px-2 py-1 rounded border mt-1 ${cores[cor]}">💡 AF Pro: ${txt}</div>`;
+        }
+
+        // Progressão dupla guiada por RPE: usa a ÚLTIMA sessão do exercício, as séries mais pesadas,
+        // o RPE médio e a faixa de reps prescrita. Sem RPE registrado, não sugere nada.
+        function gerarSugestaoProgresso(ex, semCarga, exigeRpe) {
+            if (semCarga || !exigeRpe) return '';
+            const cfg = ex.seriesConfig || [];
+            if (cfg.length && cfg.every(s => s.tipoMeta === 'tempo')) return '';
+
             const validos = historicoValidoDoAluno();
+            let sets = null;
             for (let i = validos.length - 1; i >= 0; i--) {
-                const sessao = validos[i];
-                const exRealizado = (sessao.exerciciosRealizados || []).find(e => e.nome.toLowerCase() === nomeExercicio.toLowerCase());
-                if (exRealizado && exRealizado.series && exRealizado.series.length > 0) {
-                    const ultimaSerie = exRealizado.series[0];
-                    const carga = ultimaSerie.carga || 0;
-                    const rpe = parseFloat(ultimaSerie.rpe) || 8;
-                    if (carga > 0 && rpe <= 8.5) {
-                        const sugCarga = (carga + 2).toFixed(1).replace('.0','');
-                        return `<div class="text-[10px] text-amber-400 font-bold bg-amber-950/40 px-2 py-1 rounded border border-amber-800/40 mt-1">💡 Sugestão AF Pro: Tente subir para ${sugCarga}kg nesta sessão!</div>`;
-                    }
+                const exR = (validos[i].exerciciosRealizados || []).find(e => e.nome.toLowerCase() === ex.nome.toLowerCase());
+                if (exR && exR.series && exR.series.length > 0) {
+                    sets = exR.series.filter(x => x.tipoMeta !== 'tempo' && x.reps > 0 && rpeNumerico(x.rpe) !== null);
+                    break; // só a sessão mais recente conta
                 }
             }
-            return '';
+            if (!sets || !sets.length) return '';
+
+            const cargaTopo = Math.max(...sets.map(x => x.carga || 0));
+            const topo = sets.filter(x => (x.carga || 0) === cargaTopo);
+            const rpeMed = topo.reduce((a, x) => a + rpeNumerico(x.rpe), 0) / topo.length;
+            const repsMed = topo.reduce((a, x) => a + x.reps, 0) / topo.length;
+            const faixa = parseFaixaReps((cfg.find(s => s.tipoMeta !== 'tempo') || {}).repsSugeridas);
+            const bateuTopo = faixa ? topo.every(x => x.reps >= faixa.max) : false;
+            const abaixoMin = faixa ? topo.some(x => x.reps < faixa.min) : false;
+            const rpeTxt = String(Number(rpeMed.toFixed(1))).replace('.', ',');
+            const ctx = cargaTopo > 0 ? `${fmtKg(cargaTopo)}kg × ${Math.round(repsMed)}` : `${Math.round(repsMed)} reps`;
+
+            if (rpeMed >= 9.5) {
+                if (abaixoMin && cargaTopo > 0) {
+                    return caixaSugestao('down', `Última (${ctx}, RPE ${rpeTxt}) ficou no limite e abaixo da faixa. Reduza ~5% (${fmtKg(Math.round(cargaTopo * 0.95 * 2) / 2)}kg) e feche as reps.`);
+                }
+                return caixaSugestao('keep', `Última (${ctx}, RPE ${rpeTxt}) foi no limite. Mantenha a carga e repita buscando RPE ≤ 9.`);
+            }
+            if (rpeMed >= 9) {
+                return caixaSugestao('keep', `Última (${ctx}, RPE ${rpeTxt}). Mantenha ${cargaTopo > 0 ? fmtKg(cargaTopo) + 'kg' : 'a execução'} e tente +1 rep mantendo RPE ≤ 9.`);
+            }
+            if (cargaTopo > 0 && (bateuTopo || !faixa || rpeMed <= 6.5)) {
+                const pct = rpeMed <= 6.5 ? 10 : 5;
+                const nova = calcularNovaCarga(cargaTopo, pct);
+                const volta = faixa ? ` e recomece pela base da faixa (${faixa.min} reps)` : '';
+                return caixaSugestao('up', `Última (${ctx}, RPE ${rpeTxt}) com folga. Suba a carga para ${fmtKg(nova)}kg (+${pct}%)${volta}.`);
+            }
+            const alvo = faixa ? Math.min(faixa.max, Math.round(repsMed) + 1) : Math.round(repsMed) + 1;
+            return caixaSugestao('reps', `Última (${ctx}, RPE ${rpeTxt}) com folga. Mantenha ${cargaTopo > 0 ? fmtKg(cargaTopo) + 'kg' : 'a carga'} e suba para ${alvo} reps por série.`);
+        }
+
+        function atualizarDeltaCarga(input) {
+            const item = input.closest('.serie-item');
+            const box = item && item.querySelector('.delta-carga');
+            if (!box) return;
+            const ant = parseFloat(item.getAttribute('data-carga-anterior'));
+            const atual = parseFloat(input.value);
+            if (!ant || isNaN(atual) || input.value === '') { box.classList.add('hidden'); return; }
+            const pct = ((atual - ant) / ant) * 100;
+            const base = 'delta-carga text-[10px] font-black px-2 py-0.5 rounded border whitespace-nowrap ';
+            const fmtPct = Math.abs(pct).toFixed(1).replace('.', ',');
+            const dif = atual - ant;
+            if (Math.abs(pct) < 0.05) {
+                box.className = base + 'text-slate-300 bg-slate-900 border-slate-700';
+                box.innerText = '= mesma carga';
+            } else if (pct > 0) {
+                box.className = base + 'text-emerald-300 bg-emerald-950/50 border-emerald-700/60';
+                box.innerText = `▲ +${fmtPct}% (+${fmtKg(dif)}kg)`;
+            } else {
+                box.className = base + 'text-rose-300 bg-rose-950/50 border-rose-700/60';
+                box.innerText = `▼ -${fmtPct}% (-${fmtKg(Math.abs(dif))}kg)`;
+            }
         }
 
         function renderizarExerciciosAluno(exercicios) {
@@ -417,7 +525,7 @@
                 const exigeRpe = ex.exigeRpe !== false && !semCarga;
                 const metodoGeral = ex.metodoGeral || 'Nulo';
                 const conjugado = ex.conjugado && ex.conjugado !== 'Nenhum' ? ex.conjugado : null;
-                const sugestaoHtml = gerarSugestaoProgresso(ex.nome, semCarga);
+                const sugestaoHtml = gerarSugestaoProgresso(ex, semCarga, exigeRpe);
 
                 let badgeMetodoHtml = '';
                 if (metodoGeral !== 'Nulo') {
@@ -451,7 +559,7 @@
 
                     const campos = [];
                     if (!semCarga) {
-                        campos.push(`<input type="number" step="0.5" oninput="calcularVolumeTotal()" class="${inputBase} input-carga" placeholder="${ex.equipamento === 'Corporal' ? 'Corporal (0)' : 'Carga (kg)'}">`);
+                        campos.push(`<input type="number" step="0.5" inputmode="decimal" oninput="calcularVolumeTotal(); atualizarDeltaCarga(this)" class="${inputBase} input-carga" placeholder="${ex.equipamento === 'Corporal' ? 'Corporal (0)' : 'Carga (kg)'}">`);
                     }
                     if (tipo === 'tempo') {
                         campos.push(`<input type="number" inputmode="numeric" min="0" oninput="this.value=this.value.replace(/[^0-9]/g,'')" class="${inputBase} input-tempo-min" placeholder="min">`);
@@ -464,7 +572,7 @@
                     }
 
                     return `
-                        <div class="bg-black border border-slate-800 p-2.5 rounded-xl space-y-2 serie-item" data-serie-concluida="false" data-exige-rpe="${exigeRpe}" data-tipo="${tipo}" data-sem-carga="${semCarga}">
+                        <div class="bg-black border border-slate-800 p-2.5 rounded-xl space-y-2 serie-item" data-serie-concluida="false" data-exige-rpe="${exigeRpe}" data-tipo="${tipo}" data-sem-carga="${semCarga}" data-carga-anterior="${anterior && anterior.carga > 0 ? anterior.carga : ''}">
                             <div class="flex items-center gap-1.5 flex-wrap">
                                 <span class="w-4 text-center font-bold text-xs text-slate-400">${s.num}ª</span>
                                 ${badgeSerieHtml}
@@ -472,8 +580,9 @@
                                 <button onclick="iniciarTimer(${s.descanso || 90})" class="ml-auto bg-slate-900 border border-slate-800 text-af-orange text-[10px] px-2 py-0.5 rounded-lg font-bold">⏱️ ${s.descanso || 90}s</button>
                                 <button onclick="toggleValidarSerie(this)" class="bg-slate-900 border border-slate-800 text-slate-400 px-2.5 py-1 rounded-lg text-xs font-bold btn-check-serie">✔</button>
                             </div>
-                            <div class="text-[10px] text-emerald-400 font-medium bg-emerald-950/30 px-2 py-1 rounded border border-emerald-900/40">
-                                📊 ${textoAnterior}
+                            <div class="text-[10px] text-emerald-400 font-medium bg-emerald-950/30 px-2 py-1 rounded border border-emerald-900/40 flex items-center justify-between gap-2">
+                                <span>📊 ${textoAnterior}</span>
+                                <span class="delta-carga hidden"></span>
                             </div>
                             <div class="grid grid-cols-${campos.length} gap-2 items-center">
                                 ${campos.join('')}
@@ -797,10 +906,13 @@
             };
 
             try {
-                const { data } = await supabaseClient.from('alunos').select('historico').eq('id', alunoAtualId).single();
+                const { data, error: erroLeitura } = await supabaseClient.from('alunos').select('historico').eq('id', alunoAtualId).single();
+                if (erroLeitura) throw erroLeitura;
                 const hist = Array.isArray(data?.historico) ? data.historico : [];
                 hist.push(novoRegistro);
-                await supabaseClient.from('alunos').update({ historico: hist }).eq('id', alunoAtualId);
+                const { data: salvo, error: erroSalvar } = await supabaseClient.from('alunos').update({ historico: hist }).eq('id', alunoAtualId).select('id');
+                if (erroSalvar) throw erroSalvar;
+                if (!salvo || salvo.length === 0) throw new Error('o banco não gravou o treino. Avise seu personal.');
 
                 document.getElementById('modal-pos-satisfacao').classList.add('hidden');
 

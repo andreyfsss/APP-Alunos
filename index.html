@@ -5,9 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AF Pro - Painel do Personal</title>
     <link rel="manifest" href="manifest.webmanifest.json">
-    <link rel="apple-touch-icon" sizes="180x180" href="icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="icon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
     <meta name="theme-color" content="#050505">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="AF Admin">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -440,13 +444,14 @@
             document.getElementById(`sec-adm-${aba}`).classList.remove('hidden');
             document.getElementById(`tab-adm-${aba}`).className = 'flex-1 py-2.5 rounded-xl bg-af-orange text-black font-bold transition-all';
 
-            if (aba === 'alunos') carregarAlunos();
+            if (aba === 'alunos') { carregarAlunos().then(atualizarResumoAgendaTelaAlunos); }
             if (aba === 'financeiro') carregarFinanceiro();
-            if (aba === 'agenda') renderizarGradeAgenda();
+            if (aba === 'agenda') { carregarAgenda().then(renderizarGradeAgenda); }
         }
 
         async function carregarDadosGerais() {
             await carregarAlunos();
+            await carregarAgenda();
             carregarFinanceiro();
             renderizarGradeAgenda();
             atualizarResumoAgendaTelaAlunos();
@@ -470,10 +475,59 @@
             document.getElementById('resumo-total-semana').innerText = totalSemana;
         }
 
+        function escapeHtml(t) {
+            return String(t ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        function abrirPainelPorId(id) {
+            const aluno = alunosGlobais.find(a => String(a.id) === String(id));
+            if (!aluno) return;
+            const baseURL = window.location.href.split('?')[0].split('#')[0].replace(/[^\/]*$/, '');
+            abrirPainelAluno(aluno.id, aluno.nome, aluno.token, `${baseURL}aluno.html?token=${aluno.token}`);
+        }
+
+        // ---------- AGENDA PERSISTENTE ----------
+        // Tabela esperada no Supabase: agenda (slot text primary key, aluno_id <mesmo tipo de alunos.id>, aluno_nome text)
+        // Enquanto a tabela não existir, a agenda fica salva no aparelho (localStorage) como contingência.
+        const AGENDA_LS_KEY = 'afpro_agenda_v1';
+        let agendaNoServidor = true;
+
+        function lerAgendaLocal() {
+            try { return JSON.parse(localStorage.getItem(AGENDA_LS_KEY) || '{}'); } catch (e) { return {}; }
+        }
+        function gravarAgendaLocal() {
+            try { localStorage.setItem(AGENDA_LS_KEY, JSON.stringify(agendaDados)); } catch (e) {}
+        }
+
+        async function carregarAgenda() {
+            const { data, error } = await supabaseClient.from('agenda').select('slot, aluno_id, aluno_nome');
+            if (error) {
+                agendaNoServidor = false;
+                console.warn('Tabela agenda indisponível, usando armazenamento local:', error.message);
+                agendaDados = lerAgendaLocal();
+            } else {
+                agendaNoServidor = true;
+                agendaDados = {};
+                (data || []).forEach(r => { agendaDados[r.slot] = { id: r.aluno_id, nome: r.aluno_nome }; });
+                gravarAgendaLocal();
+            }
+            limparAgendaOrfa();
+        }
+
+        // Remove da agenda quem foi apagado ou arquivado
+        function limparAgendaOrfa() {
+            if (!alunosGlobais.length) return; // lista não carregou: não apaga nada da agenda
+            const ativosIds = new Set(alunosGlobais.filter(a => !a.arquivado).map(a => String(a.id)));
+            Object.keys(agendaDados).forEach(k => {
+                const v = agendaDados[k];
+                if (!v || typeof v === 'string' || !ativosIds.has(String(v.id))) delete agendaDados[k];
+            });
+        }
+
         async function carregarAlunos() {
             try {
-                const { data, error } = await supabaseClient.from('alunos').select('*').order('created_at', { ascending: false });
-                if (error) return;
+                const { data, error } = await supabaseClient.from('alunos').select('id, nome, token, arquivado, created_at').order('created_at', { ascending: false });
+                if (error) { console.error('carregarAlunos:', error); document.getElementById('status-sincronizacao').innerText = 'Erro ao sincronizar: ' + error.message; return; }
                 alunosGlobais = data || [];
                 atualizarHoraSincronizacao();
 
@@ -483,6 +537,8 @@
                 const ativos = alunosGlobais.filter(a => !a.arquivado);
                 const arquivados = alunosGlobais.filter(a => a.arquivado);
 
+                limparAgendaOrfa();
+                atualizarResumoAgendaTelaAlunos();
                 document.getElementById('contador-ativos').innerText = ativos.length;
                 document.getElementById('contador-arquivados').innerText = arquivados.length;
 
@@ -494,19 +550,19 @@
                     containerAtivos.innerHTML = ativos.map(aluno => {
                         const linkAluno = `${baseURL}aluno.html?token=${aluno.token}`;
                         return `
-                            <div onclick="abrirPainelAluno('${aluno.id}', '${aluno.nome.replace(/'/g, "\\'")}', '${aluno.token}', '${linkAluno}')" class="bg-af-card border border-slate-800 p-3.5 rounded-2xl flex items-center justify-between cursor-pointer transition-all">
+                            <div onclick="abrirPainelPorId('${aluno.id}')" class="bg-af-card border border-slate-800 p-3.5 rounded-2xl flex items-center justify-between cursor-pointer transition-all">
                                 <div class="flex items-center gap-3">
                                     <div class="w-10 h-10 rounded-xl bg-black text-af-orange font-black flex items-center justify-center text-xs border border-slate-800">
-                                        ${aluno.nome.substring(0, 2).toUpperCase()}
+                                        ${escapeHtml(aluno.nome.substring(0, 2).toUpperCase())}
                                     </div>
                                     <div>
-                                        <h3 class="font-bold text-sm text-slate-200">${aluno.nome}</h3>
+                                        <h3 class="font-bold text-sm text-slate-200">${escapeHtml(aluno.nome)}</h3>
                                         <p class="text-[10px] text-slate-500">Ativo • Gerenciar</p>
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-1.5" onclick="event.stopPropagation()">
                                     <button onclick="arquivarAluno('${aluno.id}', true)" class="text-xs bg-black text-amber-400 border border-slate-800 px-2 py-1.5 rounded-xl font-bold" title="Arquivar">📁</button>
-                                    <button onclick="apagarAlunoDefinitivo('${aluno.id}', '${aluno.nome.replace(/'/g, "\\'")}')" class="text-xs bg-black text-rose-400 border border-slate-800 px-2 py-1.5 rounded-xl font-bold" title="Excluir Permanentemente">🗑️</button>
+                                    <button onclick="apagarAlunoDefinitivo('${aluno.id}')" class="text-xs bg-black text-rose-400 border border-slate-800 px-2 py-1.5 rounded-xl font-bold" title="Excluir Permanentemente">🗑️</button>
                                     <button onclick="copiarLinkDirect('${linkAluno}')" class="text-xs bg-af-orange text-black px-3 py-1.5 rounded-xl font-black">Copiar</button>
                                 </div>
                             </div>
@@ -519,10 +575,10 @@
                 } else {
                     containerArquivados.innerHTML = arquivados.map(aluno => `
                         <div class="bg-black border border-slate-900 p-3 rounded-xl flex justify-between items-center text-xs">
-                            <span class="text-slate-400 font-bold">${aluno.nome} (Arquivado)</span>
+                            <span class="text-slate-400 font-bold">${escapeHtml(aluno.nome)} (Arquivado)</span>
                             <div class="flex gap-1">
                                 <button onclick="arquivarAluno('${aluno.id}', false)" class="bg-slate-900 border border-slate-800 text-af-orange px-2.5 py-1 rounded-lg font-bold">Desarquivar</button>
-                                <button onclick="apagarAlunoDefinitivo('${aluno.id}', '${aluno.nome.replace(/'/g, "\\'")}')" class="bg-slate-900 border border-slate-800 text-rose-400 px-2.5 py-1 rounded-lg font-bold">Excluir</button>
+                                <button onclick="apagarAlunoDefinitivo('${aluno.id}')" class="bg-slate-900 border border-slate-800 text-rose-400 px-2.5 py-1 rounded-lg font-bold">Excluir</button>
                             </div>
                         </div>
                     `).join('');
@@ -551,15 +607,33 @@
             else await carregarAlunos();
         }
 
-        async function apagarAlunoDefinitivo(id, nome) {
+        async function apagarAlunoDefinitivo(id) {
+            const aluno = alunosGlobais.find(a => String(a.id) === String(id));
+            const nome = aluno ? aluno.nome : 'este aluno';
             if (!confirm(`Deseja PERMANENTEMENTE apagar o aluno "${nome}" e todo o seu banco de dados e histórico? Esta ação é irreversível!`)) return;
-            const { error } = await supabaseClient.from('alunos').delete().eq('id', id);
+
+            // .select() devolve as linhas realmente apagadas. Sem isso, o Supabase responde "ok"
+            // mesmo quando a política (RLS) bloqueia o DELETE e nada é removido.
+            const { data, error } = await supabaseClient.from('alunos').delete().eq('id', aluno ? aluno.id : id).select('id');
             if (error) {
                 alert('Erro ao apagar: ' + error.message);
-            } else {
-                alert('Aluno apagado com sucesso do banco de dados.');
-                await carregarAlunos();
+                return;
             }
+            if (!data || data.length === 0) {
+                alert('O banco NÃO apagou este aluno (0 linhas removidas). Isso acontece quando o Supabase não tem uma política de DELETE liberada para a tabela "alunos". Nada foi alterado.');
+                await carregarAlunos();
+                return;
+            }
+
+            // limpa agenda do aluno apagado
+            alunosGlobais = alunosGlobais.filter(a => String(a.id) !== String(id));
+            Object.keys(agendaDados).forEach(k => { if (agendaDados[k] && String(agendaDados[k].id) === String(id)) delete agendaDados[k]; });
+            gravarAgendaLocal();
+            if (agendaNoServidor) await supabaseClient.from('agenda').delete().eq('aluno_id', id);
+
+            alert('Aluno apagado com sucesso do banco de dados.');
+            await carregarAlunos();
+            renderizarGradeAgenda();
         }
 
         async function zerarHistoricoAlunoComConfirmacao() {
@@ -1241,9 +1315,11 @@
         async function salvarTreinosNoSupabase() {
             if (!alunoSelecionado) return;
             try {
-                await supabaseClient.from('alunos').update({ treinos: treinosDoAluno }).eq('id', alunoSelecionado.id);
+                const { data, error } = await supabaseClient.from('alunos').update({ treinos: treinosDoAluno }).eq('id', alunoSelecionado.id).select('id');
+                if (error) throw error;
+                if (!data || data.length === 0) throw new Error('o banco não gravou a alteração (verifique as políticas de UPDATE no Supabase).');
                 atualizarHoraSincronizacao();
-            } catch (err) {}
+            } catch (err) { alert('Erro ao salvar o treino: ' + err.message); }
         }
 
         function abrirMontagemTreino(treinoId) {
@@ -1298,11 +1374,11 @@
 
             container.innerHTML = horas.map(hora => {
                 const key = `${diaAgendaAtual}_${hora}`;
-                const alunoVinculado = agendaDados[key];
+                const alunoVinculado = agendaDados[key] ? agendaDados[key].nome : '';
                 return `
                     <div onclick="abrirModalAgenda('${hora}')" class="bg-black border border-slate-800 p-3 rounded-xl flex justify-between items-center cursor-pointer hover:border-af-orange transition-all">
                         <span class="font-bold text-xs text-slate-300">⏰ ${hora}</span>
-                        <span class="text-xs font-bold ${alunoVinculado ? 'text-af-orange' : 'text-slate-500'}">${alunoVinculado || 'Livre'}</span>
+                        <span class="text-xs font-bold ${alunoVinculado ? 'text-af-orange' : 'text-slate-500'}">${alunoVinculado ? escapeHtml(alunoVinculado) : 'Livre'}</span>
                     </div>
                 `;
             }).join('');
@@ -1314,24 +1390,41 @@
             document.getElementById('modal-agenda-titulo').innerText = `Horário: ${diaAgendaAtual} às ${hora}`;
             const select = document.getElementById('select-aluno-agenda');
             const ativos = alunosGlobais.filter(a => !a.arquivado);
-            select.innerHTML = `<option value="">-- Selecione o Aluno --</option>` + ativos.map(a => `<option value="${a.nome}">${a.nome}</option>`).join('');
+            select.innerHTML = `<option value="">-- Selecione o Aluno --</option>` + ativos.map(a => `<option value="${escapeHtml(a.id)}">${escapeHtml(a.nome)}</option>`).join('');
+            const atual = agendaDados[slotAgendaSelecionado];
+            if (atual) select.value = String(atual.id);
             document.getElementById('modal-agenda').classList.remove('hidden');
         }
 
         function fecharModalAgenda() { document.getElementById('modal-agenda').classList.add('hidden'); }
 
-        function salvarHorarioAgenda() {
-            const nomeAluno = document.getElementById('select-aluno-agenda').value;
-            if (!nomeAluno) { alert('Selecione um aluno!'); return; }
-            agendaDados[slotAgendaSelecionado] = nomeAluno;
+        async function salvarHorarioAgenda() {
+            const select = document.getElementById('select-aluno-agenda');
+            const alunoId = select.value;
+            if (!alunoId) { alert('Selecione um aluno!'); return; }
+            const aluno = alunosGlobais.find(a => String(a.id) === String(alunoId));
+            if (!aluno) { alert('Aluno não encontrado. Atualize a lista.'); return; }
+            const slot = slotAgendaSelecionado;
+            agendaDados[slot] = { id: aluno.id, nome: aluno.nome };
+            gravarAgendaLocal();
             fecharModalAgenda();
             renderizarGradeAgenda();
+            if (agendaNoServidor) {
+                const { error } = await supabaseClient.from('agenda').upsert({ slot, aluno_id: aluno.id, aluno_nome: aluno.nome });
+                if (error) { alert('Salvo só neste aparelho. Erro ao gravar no banco: ' + error.message); agendaNoServidor = false; }
+            }
         }
 
-        function liberarHorarioAgenda() {
-            delete agendaDados[slotAgendaSelecionado];
+        async function liberarHorarioAgenda() {
+            const slot = slotAgendaSelecionado;
+            delete agendaDados[slot];
+            gravarAgendaLocal();
             fecharModalAgenda();
             renderizarGradeAgenda();
+            if (agendaNoServidor) {
+                const { error } = await supabaseClient.from('agenda').delete().eq('slot', slot);
+                if (error) alert('Erro ao liberar no banco: ' + error.message);
+            }
         }
 
         window.onload = carregarDadosGerais;
