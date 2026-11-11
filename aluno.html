@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AF Pro - Meu Treino</title>
     <link rel="manifest" href="manifest.webmanifest.json">
+    <link rel="apple-touch-icon" sizes="180x180" href="icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="icon.png">
     <meta name="theme-color" content="#050505">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -202,7 +204,7 @@
         let subAbaAtletaRelatorioAtual = 'peso';
         let grupoMuscularAtletaFiltroAtivo = null;
 
-        const MUSCULOS_SEM_CARGA = ['Abdômen', 'Alongamentos'];
+        const MUSCULOS_SEM_CARGA = ['Abdômen', 'Alongamentos', 'Mobilidade'];
 
         function formatarTempo(seg) {
             seg = Math.max(0, Math.round(seg || 0));
@@ -348,6 +350,19 @@
 
                     const anterior = buscarDadosAnterioresSerie(ex.nome, s.num);
                     const textoAnterior = anterior ? `Último: ${descreverSerieRealizada(anterior, semCarga)}` : 'Sem registro anterior';
+
+                    const isApenasConfirmacao = (ex.musculo === 'Alongamentos' || ex.musculo === 'Mobilidade');
+
+                    if (isApenasConfirmacao) {
+                        return `
+                            <div class="bg-black border border-slate-800 p-2.5 rounded-xl space-y-1.5 serie-item" data-serie-concluida="false" data-exige-rpe="false" data-tipo="${tipo}" data-sem-carga="true">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-bold text-xs text-slate-300">${s.num}ª Série • Meta: <strong class="text-af-orange">${metaTxt}</strong></span>
+                                    <button onclick="toggleValidarSerie(this)" class="bg-slate-900 border border-slate-800 text-slate-400 px-3 py-1 rounded-lg text-xs font-bold btn-check-serie">✔ Feito</button>
+                                </div>
+                            </div>
+                        `;
+                    }
 
                     const campos = [];
                     if (!semCarga) {
@@ -604,24 +619,30 @@
                 const exigeRpe = serieItem.getAttribute('data-exige-rpe') === 'true';
                 const tipo = serieItem.getAttribute('data-tipo');
                 const semCarga = serieItem.getAttribute('data-sem-carga') === 'true';
-                const faltando = [];
-                if (!semCarga && serieItem.querySelector('.input-carga').value === '') faltando.push('a carga');
-                if (tipo === 'tempo') { if (lerTempoSerie(serieItem) <= 0) faltando.push('o tempo'); }
-                else if (!serieItem.querySelector('.input-reps-reais').value) faltando.push('as repetições');
-                if (exigeRpe && !serieItem.querySelector('.input-rpe').value) faltando.push('o RPE');
-                if (faltando.length) {
-                    alert(`Preencha ${faltando.join(', ')} antes de validar a série!`);
-                    return;
+                const isApenasConfirmacao = serieItem.querySelector('.input-carga') === null && serieItem.querySelector('.input-reps-reais') === null && serieItem.querySelector('.input-tempo-min') === null;
+
+                if (!isApenasConfirmacao) {
+                    const faltando = [];
+                    if (!semCarga && serieItem.querySelector('.input-carga').value === '') faltando.push('a carga');
+                    if (tipo === 'tempo') { if (lerTempoSerie(serieItem) <= 0) faltando.push('o tempo'); }
+                    else if (!serieItem.querySelector('.input-reps-reais').value) faltando.push('as repetições');
+                    if (exigeRpe && !serieItem.querySelector('.input-rpe').value) faltando.push('o RPE');
+                    if (faltando.length) {
+                        alert(`Preencha ${faltando.join(', ')} antes de validar a série!`);
+                        return;
+                    }
                 }
+
                 serieItem.setAttribute('data-serie-concluida', 'true');
                 serieItem.classList.add('border-emerald-500/80', 'bg-emerald-950/25');
-                botao.className = 'bg-emerald-500 text-black px-2.5 py-1 rounded-lg text-xs font-bold btn-check-serie';
+                botao.className = isApenasConfirmacao ? 'bg-emerald-500 text-black px-3 py-1 rounded-lg text-xs font-bold btn-check-serie' : 'bg-emerald-500 text-black px-2.5 py-1 rounded-lg text-xs font-bold btn-check-serie';
                 botao.innerText = '✔ Feito';
             } else {
                 serieItem.setAttribute('data-serie-concluida', 'false');
                 serieItem.classList.remove('border-emerald-500/80', 'bg-emerald-950/25');
-                botao.className = 'bg-slate-900 border border-slate-800 text-slate-400 px-2.5 py-1 rounded-lg text-xs font-bold btn-check-serie';
-                botao.innerText = '✔';
+                const isApenasConfirmacao = serieItem.querySelector('.input-carga') === null && serieItem.querySelector('.input-reps-reais') === null && serieItem.querySelector('.input-tempo-min') === null;
+                botao.className = isApenasConfirmacao ? 'bg-slate-900 border border-slate-800 text-slate-400 px-3 py-1 rounded-lg text-xs font-bold btn-check-serie' : 'bg-slate-900 border border-slate-800 text-slate-400 px-2.5 py-1 rounded-lg text-xs font-bold btn-check-serie';
+                botao.innerText = '✔ Feito';
             }
             calcularVolumeTotal();
         }
@@ -644,7 +665,7 @@
             if (salvandoTreino) return;
             let todasValidadas = true;
             document.querySelectorAll('.serie-item').forEach(s => { if (s.getAttribute('data-serie-concluida') !== 'true') todasValidadas = false; });
-            if (!todasValidadas) { alert('Valide todas as séries preenchendo carga e repetições reais antes de finalizar!'); return; }
+            if (!todasValidadas) { alert('Valide todas as séries preenchendo os dados ou marcando como feitas antes de finalizar!'); return; }
 
             let volumeSessao = 0;
             let exerciciosRealizados = [];
@@ -698,7 +719,7 @@
                     if (totalReps > 0) partes.push(`${totalReps} reps totais`);
                     if (totalTempo > 0) partes.push(`${formatarTempo(totalTempo)} no total`);
                     const direita = e.semCarga
-                        ? `Melhor: ${(maxTempo > 0 && maxReps === 0) ? formatarTempo(maxTempo) : maxReps + ' reps'}`
+                        ? `Concluído`
                         : `Máx: ${maxCarga} kg`;
                     return `
                         <div class="bg-black border border-slate-800 p-2.5 rounded-xl flex justify-between items-center">
@@ -828,7 +849,7 @@
                                             ${registros.map(r => `
                                                 <div class="flex justify-between items-center text-[11px] border-t border-slate-900 pt-1.5">
                                                     <span class="text-slate-400">${r.data} (${r.series} séries)</span>
-                                                    <span class="text-af-orange font-bold">${r.semCarga ? ((r.melhorTempo > 0 && r.melhorReps === 0) ? formatarTempo(r.melhorTempo) : r.melhorReps + ' reps') : r.cargaMax + 'kg máx'}</span>
+                                                    <span class="text-af-orange font-bold">${r.semCarga ? 'Realizado' : r.cargaMax + 'kg máx'}</span>
                                                 </div>
                                             `).join('')}
                                         </div>

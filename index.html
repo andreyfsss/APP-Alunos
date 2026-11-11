@@ -196,6 +196,7 @@
                                 <option value="Panturrilhas">Panturrilhas</option>
                                 <option value="Abdômen">Abdômen</option>
                                 <option value="Alongamentos">Alongamentos</option>
+                                <option value="Mobilidade">Mobilidade</option>
                             </select>
                         </div>
                         <div>
@@ -205,6 +206,7 @@
                                 <option value="Halter">Halter</option>
                                 <option value="Máquina">Máquina</option>
                                 <option value="Crossover">Crossover</option>
+                                <option value="Elástico">Elástico</option>
                                 <option value="Corporal">Peso Corporal / Sem Peso</option>
                             </select>
                         </div>
@@ -296,7 +298,7 @@
         let subAbaRelatorioAtual = 'peso';
         let grupoMuscularFiltroAtivo = null;
 
-        const MUSCULOS_SEM_CARGA = ['Abdômen', 'Alongamentos'];
+        const MUSCULOS_SEM_CARGA = ['Abdômen', 'Alongamentos', 'Mobilidade'];
 
         function atualizarHoraSincronizacao() {
             const agora = new Date();
@@ -638,8 +640,8 @@
             const equipamento = document.getElementById('select-equipamento-ex').value;
             const conjugado = document.getElementById('select-conjugado-ex').value;
             const qtdSeries = parseInt(document.getElementById('input-qtd-series-ex').value) || 4;
-            const metodoGeral = (musculo === 'Abdômen' || musculo === 'Alongamentos') ? 'Nulo' : document.getElementById('select-metodo-geral-ex').value;
-            const exigeRpe = (equipamento === 'Corporal' || musculo === 'Abdômen' || musculo === 'Alongamentos') ? false : (document.getElementById('select-exige-rpe').value === 'sim');
+            const metodoGeral = (musculo === 'Abdômen' || musculo === 'Alongamentos' || musculo === 'Mobilidade') ? 'Nulo' : document.getElementById('select-metodo-geral-ex').value;
+            const exigeRpe = (equipamento === 'Corporal' || equipamento === 'Elástico' || musculo === 'Abdômen' || musculo === 'Alongamentos' || musculo === 'Mobilidade') ? false : (document.getElementById('select-exige-rpe').value === 'sim');
 
             if (!nome) { alert('Digite o nome do exercício!'); return; }
             if (!baseExerciciosGlobais.includes(nome)) baseExerciciosGlobais.push(nome);
@@ -831,13 +833,13 @@
             const blocoRpe = document.getElementById('bloco-exigir-rpe');
             const selectEquip = document.getElementById('select-equipamento-ex');
 
-            if (musculo === 'Abdômen' || musculo === 'Alongamentos') {
+            if (musculo === 'Abdômen' || musculo === 'Alongamentos' || musculo === 'Mobilidade') {
                 blocoMetodoGeral.classList.add('hidden');
                 blocoRpe.classList.add('hidden');
                 document.getElementById('select-metodo-geral-ex').value = 'Nulo';
                 document.getElementById('select-exige-rpe').value = 'nao';
                 alternarVisibilidadeMetodoMacro('Nulo');
-                selectEquip.value = 'Corporal';
+                if (musculo === 'Abdômen') selectEquip.value = 'Corporal';
             } else {
                 blocoMetodoGeral.classList.remove('hidden');
                 blocoRpe.classList.remove('hidden');
@@ -850,7 +852,7 @@
             const eq = document.getElementById('select-equipamento-ex').value;
             const musculo = document.getElementById('select-musculo-ex').value;
             const blocoRpe = document.getElementById('bloco-exigir-rpe');
-            if (eq === 'Corporal' || musculo === 'Abdômen' || musculo === 'Alongamentos') {
+            if (eq === 'Corporal' || eq === 'Elástico' || musculo === 'Abdômen' || musculo === 'Alongamentos' || musculo === 'Mobilidade') {
                 blocoRpe.classList.add('hidden');
                 document.getElementById('select-exige-rpe').value = 'nao';
             } else {
