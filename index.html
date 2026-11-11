@@ -526,7 +526,7 @@
 
         async function carregarAlunos() {
             try {
-                const { data, error } = await supabaseClient.from('alunos').select('id, nome, token, arquivado, created_at').order('created_at', { ascending: false });
+                const { data, error } = await supabaseClient.from('alunos').select('*').order('created_at', { ascending: false });
                 if (error) { console.error('carregarAlunos:', error); document.getElementById('status-sincronizacao').innerText = 'Erro ao sincronizar: ' + error.message; return; }
                 alunosGlobais = data || [];
                 atualizarHoraSincronizacao();
