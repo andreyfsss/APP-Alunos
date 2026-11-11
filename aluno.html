@@ -26,7 +26,7 @@
             <div>
                 <div class="flex items-center gap-1.5">
                     <span class="font-black text-lg text-white tracking-tighter">ANDREY FRANCO</span>
-                    <span class="font-black text-[10px] text-af-orange tracking-widest bg-orange-950/60 px-1.5 py-0.5 rounded border border-orange-600/40">PERSONAL</span>
+                    <span class="font-black text-[10px] text-af-orange tracking-widest bg-orange-950/60 px-1.5 py-0.5 rounded border border-orange-600/40">ATLETA</span>
                 </div>
                 <h1 id="nome-aluno" class="font-bold text-xs text-slate-300">Carregando atleta...</h1>
             </div>
@@ -244,22 +244,39 @@
         async function carregarDadosAluno() {
             const urlParams = new URLSearchParams(window.location.search);
             const token = urlParams.get('token');
-            if (!token) return;
+            
+            if (!token) {
+                document.getElementById('nome-aluno').innerText = 'Acesso Restrito';
+                document.getElementById('container-lista-divisoes').innerHTML = `
+                    <div class="bg-af-card border border-rose-900/50 p-5 rounded-2xl text-center space-y-2">
+                        <p class="text-xs text-rose-400 font-bold">Nenhum token de atleta identificado.</p>
+                        <p class="text-[10px] text-slate-400">Solicite o link correto do seu treino ao seu personal trainer.</p>
+                    </div>
+                `;
+                return;
+            }
+
             try {
                 const { data: aluno, error } = await supabaseClient.from('alunos').select('*').eq('token', token).single();
-                if (error || !aluno) { document.getElementById('nome-aluno').innerText = 'Erro ao carregar'; return; }
+                if (error || !aluno) { 
+                    document.getElementById('nome-aluno').innerText = 'Atleta não encontrado'; 
+                    document.getElementById('container-lista-divisoes').innerHTML = `<p class="text-xs text-rose-400 text-center py-6">Link inválido ou expirado.</p>`;
+                    return; 
+                }
                 alunoAtualId = aluno.id;
                 document.getElementById('nome-aluno').innerText = aluno.nome;
                 treinosDoAlunoCarregados = aluno.treinos || [];
                 historicoTreinosAluno = Array.isArray(aluno.historico) ? aluno.historico : [];
                 renderizarDivisoesTreino(treinosDoAlunoCarregados);
-            } catch (err) {}
+            } catch (err) {
+                document.getElementById('nome-aluno').innerText = 'Erro de conexão';
+            }
         }
 
         function renderizarDivisoesTreino(treinos) {
             const container = document.getElementById('container-lista-divisoes');
             if (!treinos || treinos.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">Nenhum treino prescrito ainda.</p>`;
+                container.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">Nenhum treino prescrito ainda pelo seu personal.</p>`;
                 return;
             }
             container.innerHTML = treinos.map(t => `
