@@ -47,24 +47,6 @@
 </head>
 <body class="text-slate-100 min-h-screen flex flex-col antialiased">
 
-    <!-- MODAL DE ENERGIA (OBRIGATÓRIO AO INICIAR O TREINO) -->
-    <div id="modal-energia" class="fixed inset-0 bg-black/95 backdrop-blur-md hidden z-50 flex flex-col justify-center p-4">
-        <div class="max-w-md w-full mx-auto bg-af-card border border-slate-800 rounded-3xl p-5 space-y-4 text-center shadow-2xl">
-            <span class="text-3xl">⚡</span>
-            <div>
-                <h2 class="text-base font-black text-white uppercase">Como está sua energia para este treino?</h2>
-                <p class="text-[10px] text-slate-400 mt-0.5">Selecione para liberar a execução</p>
-            </div>
-            <div class="grid grid-cols-1 gap-2 text-xs">
-                <button onclick="confirmarEnergiaEIniciar('Muito Alta 🚀')" class="bg-black border border-slate-800 hover:border-af-orange p-3 rounded-xl flex justify-between items-center font-bold text-af-orange"><span>Muito Alta</span><span>🤩 5/5</span></button>
-                <button onclick="confirmarEnergiaEIniciar('Alta ⭐')" class="bg-black border border-slate-800 hover:border-af-orange p-3 rounded-xl flex justify-between items-center font-bold text-emerald-400"><span>Alta</span><span>😊 4/5</span></button>
-                <button onclick="confirmarEnergiaEIniciar('Normal 👍')" class="bg-black border border-slate-800 hover:border-af-orange p-3 rounded-xl flex justify-between items-center font-bold text-slate-200"><span>Normal</span><span>😐 3/5</span></button>
-                <button onclick="confirmarEnergiaEIniciar('Baixa ⚠️')" class="bg-black border border-slate-800 hover:border-af-orange p-3 rounded-xl flex justify-between items-center font-bold text-amber-400"><span>Baixa</span><span>🥱 2/5</span></button>
-                <button onclick="confirmarEnergiaEIniciar('Muito Baixa 🛑')" class="bg-black border border-slate-800 hover:border-af-orange p-3 rounded-xl flex justify-between items-center font-bold text-rose-400"><span>Muito Baixa</span><span>🛌 1/5</span></button>
-            </div>
-        </div>
-    </div>
-
     <!-- MODAL 1: PESQUISA DE SATISFAÇÃO & SENSAÇÃO PÓS-TREINO -->
     <div id="modal-pos-satisfacao" class="fixed inset-0 bg-black/95 backdrop-blur-md hidden z-50 flex flex-col justify-center p-4">
         <div class="max-w-md w-full mx-auto bg-af-card border border-slate-800 rounded-3xl p-5 space-y-4 shadow-2xl">
@@ -211,6 +193,21 @@
                     <h2 id="titulo-divisao-ativa" class="font-bold text-xs text-af-orange uppercase tracking-wider">Treino</h2>
                 </div>
 
+                <!-- BLOCO INTEGRADO DE ENERGIA (SELEÇÃO DENTRO DO TREINO) -->
+                <div class="bg-af-card border border-slate-800 rounded-2xl p-3.5 space-y-2 shadow-md">
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] uppercase font-bold text-af-orange tracking-wider">⚡ Nível de Energia de Hoje</span>
+                        <span id="badge-energia-selecionada" class="text-[10px] font-bold text-slate-400">Selecione abaixo</span>
+                    </div>
+                    <div class="grid grid-cols-5 gap-1 pt-1 text-center text-xs">
+                        <button onclick="selecionarEnergiaInline('Muito Alta 🚀', this)" class="btn-opcao-energia bg-black border border-slate-800 hover:border-af-orange p-2 rounded-xl flex flex-col items-center gap-0.5"><span class="text-base">🚀</span><span class="text-[9px] font-bold text-slate-300">5/5</span></button>
+                        <button onclick="selecionarEnergiaInline('Alta ⭐', this)" class="btn-opcao-energia bg-black border border-slate-800 hover:border-af-orange p-2 rounded-xl flex flex-col items-center gap-0.5"><span class="text-base">⭐</span><span class="text-[9px] font-bold text-slate-300">4/5</span></button>
+                        <button onclick="selecionarEnergiaInline('Normal 👍', this)" class="btn-opcao-energia bg-black border border-slate-800 hover:border-af-orange p-2 rounded-xl flex flex-col items-center gap-0.5"><span class="text-base">👍</span><span class="text-[9px] font-bold text-slate-300">3/5</span></button>
+                        <button onclick="selecionarEnergiaInline('Baixa ⚠️', this)" class="btn-opcao-energia bg-black border border-slate-800 hover:border-af-orange p-2 rounded-xl flex flex-col items-center gap-0.5"><span class="text-base">⚠️</span><span class="text-[9px] font-bold text-slate-300">2/5</span></button>
+                        <button onclick="selecionarEnergiaInline('Muito Baixa 🛑', this)" class="btn-opcao-energia bg-black border border-slate-800 hover:border-af-orange p-2 rounded-xl flex flex-col items-center gap-0.5"><span class="text-base">🛑</span><span class="text-[9px] font-bold text-slate-300">1/5</span></button>
+                    </div>
+                </div>
+
                 <!-- CAIXA DE RESUMO DA EVOLUÇÃO NO INÍCIO DO TREINO (MINIMIZÁVEL) -->
                 <div class="bg-af-card border border-slate-800 rounded-2xl p-3.5 space-y-2 shadow-md">
                     <div class="flex justify-between items-center cursor-pointer select-none" onclick="toggleMinimizarResumoAluno()">
@@ -266,7 +263,6 @@
         let treinosDoAlunoCarregados = [];
         let historicoTreinosAluno = [];
         let treinoExecucaoAtual = null;
-        let treinoPendenteId = null;
         let energiaInicioTreino = 'Normal 👍';
         let salvandoTreino = false;
         let resumoAlunoMinimizado = false;
@@ -362,7 +358,7 @@
                 return;
             }
             container.innerHTML = treinos.map(t => `
-                <div onclick="solicitarEnergiaEIniciar('${t.id}')" class="bg-af-card border border-slate-800 hover:border-af-orange/50 rounded-2xl p-4 flex justify-between items-center cursor-pointer transition-all">
+                <div onclick="abrirExecucaoTreino('${t.id}')" class="bg-af-card border border-slate-800 hover:border-af-orange/50 rounded-2xl p-4 flex justify-between items-center cursor-pointer transition-all">
                     <div>
                         <h3 class="font-bold text-sm text-af-orange uppercase tracking-wider">${escapeHtml(t.nome)}</h3>
                         <p class="text-[10px] text-slate-500 mt-0.5">${t.exercicios ? t.exercicios.length : 0} exercício(s)</p>
@@ -372,18 +368,15 @@
             `).join('');
         }
 
-        function solicitarEnergiaEIniciar(treinoId) {
-            treinoPendenteId = treinoId;
-            document.getElementById('modal-energia').classList.remove('hidden');
-        }
-
-        function confirmarEnergiaEIniciar(nivelEnergia) {
-            energiaInicioTreino = nivelEnergia;
-            document.getElementById('modal-energia').classList.add('hidden');
-            if (treinoPendenteId) {
-                abrirExecucaoTreino(treinoPendenteId);
-                treinoPendenteId = null;
+        function selecionarEnergiaInline(nivel, elemento) {
+            energiaInicioTreino = nivel;
+            document.querySelectorAll('.btn-opcao-energia').forEach(btn => {
+                btn.className = 'btn-opcao-energia bg-black border border-slate-800 hover:border-af-orange p-2 rounded-xl flex flex-col items-center gap-0.5';
+            });
+            if (elemento) {
+                elemento.className = 'btn-opcao-energia bg-af-orange/20 border-af-orange p-2 rounded-xl flex flex-col items-center gap-0.5';
             }
+            document.getElementById('badge-energia-selecionada').innerText = nivel;
         }
 
         function abrirExecucaoTreino(treinoId) {
