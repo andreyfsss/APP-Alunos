@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AF Pro - Painel do Personal</title>
+    <link rel="manifest" href="manifest.webmanifest.json">
+    <link rel="apple-touch-icon" sizes="180x180" href="icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="icon.png">
+    <meta name="theme-color" content="#050505">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -12,10 +16,8 @@
         .text-af-orange { color: #FF6A00; }
         .bg-af-orange { background-color: #FF6A00; }
         .border-af-orange { border-color: #FF6A00; }
-        
         input, select, textarea { font-size: 16px !important; }
         html { touch-action: manipulation; }
-
         @media print {
             body { background-color: #ffffff !important; color: #000000 !important; }
             .no-print { display: none !important; }
@@ -25,7 +27,7 @@
 </head>
 <body class="text-slate-100 min-h-screen p-3 md:p-6 flex flex-col items-center antialiased">
 
-    <div class="max-w-md w-full space-y-5">
+    <div class="max-w-md w-full space-y-5 pb-20">
         <!-- Topo -->
         <div class="flex justify-between items-center bg-af-card border border-slate-800 rounded-2xl p-4 shadow-xl no-print">
             <div>
@@ -38,246 +40,342 @@
                     <p id="status-sincronizacao" class="text-[10px] text-slate-400 font-medium">Sincronizado agora</p>
                 </div>
             </div>
-            <button onclick="carregarAlunos()" class="bg-black hover:bg-slate-900 text-slate-300 p-2.5 rounded-xl border border-slate-800 text-xs transition-all">🔄</button>
+            <button onclick="carregarDadosGerais()" class="bg-black hover:bg-slate-900 text-slate-300 p-2.5 rounded-xl border border-slate-800 text-xs transition-all">🔄</button>
         </div>
 
-        <!-- TELA 1: LISTA DE ALUNOS -->
-        <div id="view-lista-alunos" class="space-y-4 no-print">
-            <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3 shadow-lg">
-                <h2 class="font-bold text-xs uppercase tracking-wider text-af-orange">Cadastrar Novo Aluno</h2>
-                <div class="flex gap-2">
-                    <input type="text" id="nome-novo-aluno" placeholder="Nome completo do aluno..." class="flex-1 bg-black border border-slate-800 rounded-xl px-3.5 py-2.5 text-white focus:border-af-orange focus:outline-none">
-                    <button onclick="cadastrarAluno()" class="bg-af-orange hover:bg-orange-600 font-black px-4 py-2.5 rounded-xl text-black text-xs transition-all shadow-md">Cadastrar</button>
-                </div>
-            </div>
-
-            <div class="space-y-2">
-                <h2 class="font-bold text-xs uppercase tracking-wider text-slate-400 px-1">Seus Alunos</h2>
-                <div id="container-alunos" class="space-y-2">
-                    <p class="text-xs text-slate-500 text-center py-8">Carregando alunos...</p>
-                </div>
-            </div>
+        <!-- ABA NAVEGAÇÃO SUPERIOR ADMIN -->
+        <div class="flex gap-1 bg-af-card p-1 rounded-2xl border border-slate-800 text-xs font-bold text-center no-print">
+            <button onclick="mudarAbaPrincipalAdmin('alunos')" id="tab-adm-alunos" class="flex-1 py-2.5 rounded-xl bg-af-orange text-black transition-all">👥 Alunos</button>
+            <button onclick="mudarAbaPrincipalAdmin('financeiro')" id="tab-adm-financeiro" class="flex-1 py-2.5 rounded-xl text-slate-400 hover:text-white transition-all">💰 Financeiro</button>
+            <button onclick="mudarAbaPrincipalAdmin('agenda')" id="tab-adm-agenda" class="flex-1 py-2.5 rounded-xl text-slate-400 hover:text-white transition-all">📅 Agenda</button>
         </div>
 
-        <!-- TELA 2: VISÃO DO ALUNO (ADMIN) -->
-        <div id="view-detalhe-aluno" class="hidden space-y-4 w-full">
-            <div class="flex items-center justify-between bg-af-card border border-slate-800 rounded-2xl p-4 no-print">
-                <div class="flex items-center gap-3">
-                    <button onclick="voltarParaLista()" class="bg-black text-slate-400 px-3 py-2 rounded-xl text-xs font-bold border border-slate-800">← Voltar</button>
-                    <div>
-                        <h2 id="detalhe-nome-aluno" class="font-bold text-base text-white">Aluno</h2>
-                        <p class="text-[10px] text-af-orange font-bold uppercase">Painel Bi / Análise Avançada</p>
-                    </div>
-                </div>
-                <div class="flex gap-1.5">
-                    <button id="btn-testar-link-aluno" class="text-xs bg-black text-af-orange border border-slate-800 px-3 py-2 rounded-xl font-bold">👁️ Testar</button>
-                    <button id="btn-copiar-link-aluno" class="text-xs bg-af-orange text-black font-black px-3 py-2 rounded-xl">Copiar</button>
-                </div>
-            </div>
-
-            <div class="flex gap-1 bg-af-card p-1.5 rounded-2xl border border-slate-800 text-[11px] font-bold text-center no-print">
-                <button onclick="mudarAbaAdminAluno('treinos')" id="tab-admin-treinos" class="flex-1 py-2 rounded-xl bg-af-orange text-black transition-all">🏋️ Treinos</button>
-                <button onclick="mudarAbaAdminAluno('relatorios')" id="tab-admin-relatorios" class="flex-1 py-2 rounded-xl text-slate-400 hover:text-white transition-all">📊 BI / Dashboard</button>
-            </div>
-
-            <!-- ABA 1: TREINOS -->
-            <div id="sec-admin-treinos" class="space-y-4 no-print">
-                <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3">
-                    <div class="flex justify-between items-center">
-                        <h3 class="font-black text-xs uppercase tracking-wider text-af-orange">EVOLUÇÃO RECENTE</h3>
-                        <button onclick="zerarHistoricoAlunoComConfirmacao()" class="text-[9px] bg-rose-950/60 text-rose-400 border border-rose-800 px-2 py-1 rounded font-bold hover:bg-rose-900/60">🗑️ Limpar Histórico</button>
-                    </div>
-                    <div class="grid grid-cols-3 gap-2">
-                        <div class="bg-black border border-slate-800 p-3 rounded-xl text-center">
-                            <div class="text-lg font-black text-emerald-400" id="val-mais-peso">0</div>
-                            <div class="text-[9px] font-bold text-slate-400 uppercase">MAIS PESO</div>
-                        </div>
-                        <div class="bg-black border border-slate-800 p-3 rounded-xl text-center">
-                            <div class="text-lg font-black text-af-orange" id="val-mesmo-peso">0</div>
-                            <div class="text-[9px] font-bold text-slate-400 uppercase">MESMO PESO</div>
-                        </div>
-                        <div class="bg-black border border-slate-800 p-3 rounded-xl text-center">
-                            <div class="text-lg font-black text-rose-400" id="val-menos-peso">0</div>
-                            <div class="text-[9px] font-bold text-slate-400 uppercase">MENOS PESO</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3">
-                    <h3 class="font-bold text-xs uppercase text-slate-300">Nova Divisão de Treino</h3>
+        <!-- SEÇÃO ALUNOS -->
+        <div id="sec-adm-alunos" class="space-y-4 no-print">
+            <div id="view-lista-alunos" class="space-y-4">
+                <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3 shadow-lg">
+                    <h2 class="font-bold text-xs uppercase tracking-wider text-af-orange">Cadastrar Novo Aluno</h2>
                     <div class="flex gap-2">
-                        <input type="text" id="input-nome-treino" placeholder="Ex: Treino A - Quadríceps" class="flex-1 bg-black border border-slate-800 rounded-xl px-3.5 py-2.5 text-white focus:border-af-orange focus:outline-none">
-                        <button onclick="criarTreinoDivisao()" class="bg-af-orange font-bold px-4 py-2.5 rounded-xl text-black text-xs">Criar</button>
+                        <input type="text" id="nome-novo-aluno" placeholder="Nome completo do aluno..." class="flex-1 bg-black border border-slate-800 rounded-xl px-3.5 py-2.5 text-white focus:border-af-orange focus:outline-none">
+                        <button onclick="cadastrarAluno()" class="bg-af-orange hover:bg-orange-600 font-black px-4 py-2.5 rounded-xl text-black text-xs transition-all shadow-md">Cadastrar</button>
                     </div>
                 </div>
 
                 <div class="space-y-2">
-                    <h2 class="font-bold text-xs uppercase tracking-wider text-slate-400 px-1">Treinos Prescritos</h2>
-                    <div id="container-treinos-aluno" class="space-y-3"></div>
+                    <div class="flex justify-between items-center px-1">
+                        <h2 class="font-bold text-xs uppercase tracking-wider text-slate-400">Alunos Ativos</h2>
+                        <span id="contador-ativos" class="text-[10px] bg-slate-900 text-slate-400 px-2 py-0.5 rounded-full font-bold">0</span>
+                    </div>
+                    <div id="container-alunos" class="space-y-2">
+                        <p class="text-xs text-slate-500 text-center py-8">Carregando alunos...</p>
+                    </div>
+                </div>
+
+                <div class="space-y-2 pt-2">
+                    <div class="flex justify-between items-center px-1">
+                        <h2 class="font-bold text-xs uppercase tracking-wider text-slate-500">Alunos Arquivados</h2>
+                        <span id="contador-arquivados" class="text-[10px] bg-slate-900 text-slate-600 px-2 py-0.5 rounded-full font-bold">0</span>
+                    </div>
+                    <div id="container-alunos-arquivados" class="space-y-2"></div>
                 </div>
             </div>
 
-            <!-- ABA 2: DASHBOARD BI & ANÁLISE PROFUNDA -->
-            <div id="sec-admin-relatorios" class="hidden space-y-4">
-                <div class="flex justify-between items-center bg-af-card border border-slate-800 rounded-2xl p-4 no-print">
-                    <div>
-                        <h3 class="font-bold text-xs text-af-orange uppercase">BI & Análise Executiva</h3>
-                        <p class="text-[10px] text-slate-400">Métricas analíticas e evolução completa</p>
-                    </div>
-                    <button onclick="gerarRelatorioPDF()" class="bg-af-orange text-black font-black px-3.5 py-2 rounded-xl text-xs shadow-md">📄 Imprimir PDF</button>
-                </div>
-
-                <div class="bg-af-card border border-af-orange/40 rounded-2xl p-4 space-y-3 shadow-xl">
-                    <div class="flex items-center gap-2">
-                        <span class="text-base">📈</span>
+            <!-- TELA 2: VISÃO DO ALUNO (ADMIN) -->
+            <div id="view-detalhe-aluno" class="hidden space-y-4 w-full">
+                <div class="flex items-center justify-between bg-af-card border border-slate-800 rounded-2xl p-4">
+                    <div class="flex items-center gap-3">
+                        <button onclick="voltarParaLista()" class="bg-black text-slate-400 px-3 py-2 rounded-xl text-xs font-bold border border-slate-800">← Voltar</button>
                         <div>
-                            <h4 class="font-bold text-xs text-af-orange uppercase">Raio-X de Exercício (Histórico Completo)</h4>
-                            <p class="text-[10px] text-slate-400">Acompanhe a evolução em um exercício específico desde o primeiro treino</p>
+                            <h2 id="detalhe-nome-aluno" class="font-bold text-base text-white">Aluno</h2>
+                            <p class="text-[10px] text-af-orange font-bold uppercase">Painel BI / Análise Avançada</p>
                         </div>
                     </div>
-                    <select id="select-analise-exercicio-admin" onchange="renderizarRaioXExercicioAdmin()" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-slate-200 text-xs focus:border-af-orange focus:outline-none">
-                        <option value="">Selecione um exercício para auditar...</option>
-                    </select>
-                    <div id="container-raio-x-admin" class="space-y-2 pt-1">
-                        <p class="text-[11px] text-slate-500 text-center py-2">Selecione um exercício acima para carregar a curva de progressão.</p>
+                    <div class="flex gap-1.5">
+                        <button id="btn-testar-link-aluno" class="text-xs bg-black text-af-orange border border-slate-800 px-3 py-2 rounded-xl font-bold">👁️ Testar</button>
+                        <button id="btn-copiar-link-aluno" class="text-xs bg-af-orange text-black font-black px-3 py-2 rounded-xl">Copiar</button>
                     </div>
                 </div>
 
-                <div class="flex gap-1.5 bg-black p-1.5 rounded-xl border border-slate-800 text-xs font-bold text-center no-print">
-                    <button onclick="mudarPeriodoRelatorio('semanal')" id="btn-periodo-semanal" class="flex-1 py-1.5 rounded-lg bg-af-orange text-black transition-all">📅 Semanal</button>
-                    <button onclick="mudarPeriodoRelatorio('mensal')" id="btn-periodo-mensal" class="flex-1 py-1.5 rounded-lg text-slate-400 transition-all">📆 Mensal</button>
+                <div class="flex gap-1 bg-af-card p-1.5 rounded-2xl border border-slate-800 text-[11px] font-bold text-center">
+                    <button onclick="mudarAbaAdminAluno('treinos')" id="tab-admin-treinos" class="flex-1 py-2 rounded-xl bg-af-orange text-black transition-all">🏋️ Treinos</button>
+                    <button onclick="mudarAbaAdminAluno('relatorios')" id="tab-admin-relatorios" class="flex-1 py-2 rounded-xl text-slate-400 hover:text-white transition-all">📊 BI / Dashboard</button>
                 </div>
 
-                <div class="flex gap-1 bg-af-card p-1 rounded-xl border border-slate-800 text-[10px] font-bold text-center no-print">
-                    <button onclick="mudarSubAbaRelatorio('peso')" id="subtab-peso" class="flex-1 py-1.5 rounded-lg bg-af-orange text-black">🏋️ Volume</button>
-                    <button onclick="mudarSubAbaRelatorio('series')" id="subtab-series" class="flex-1 py-1.5 rounded-lg text-slate-400">🔢 Séries</button>
-                    <button onclick="mudarSubAbaRelatorio('grupos')" id="subtab-grupos" class="flex-1 py-1.5 rounded-lg text-slate-400">🎯 Grupamentos</button>
-                </div>
-
-                <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-4 print-container">
-                    <div class="text-center border-b border-slate-800 pb-3">
-                        <span id="label-periodo-ativo" class="text-[10px] font-bold text-af-orange uppercase tracking-wider block">Relatório Semanal</span>
-                        <h4 id="nome-aluno-relatorio-titulo" class="font-bold text-base text-white">Atleta</h4>
+                <!-- ABA 1: TREINOS -->
+                <div id="sec-admin-treinos" class="space-y-4">
+                    <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-black text-xs uppercase tracking-wider text-af-orange">EVOLUÇÃO RECENTE</h3>
+                            <button onclick="zerarHistoricoAlunoComConfirmacao()" class="text-[9px] bg-rose-950/60 text-rose-400 border border-rose-800 px-2 py-1 rounded font-bold hover:bg-rose-900/60">🗑️ Limpar Histórico</button>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2">
+                            <div class="bg-black border border-slate-800 p-3 rounded-xl text-center">
+                                <div class="text-lg font-black text-emerald-400" id="val-mais-peso">0</div>
+                                <div class="text-[9px] font-bold text-slate-400 uppercase">MAIS PESO</div>
+                            </div>
+                            <div class="bg-black border border-slate-800 p-3 rounded-xl text-center">
+                                <div class="text-lg font-black text-af-orange" id="val-mesmo-peso">0</div>
+                                <div class="text-[9px] font-bold text-slate-400 uppercase">MESMO PESO</div>
+                            </div>
+                            <div class="bg-black border border-slate-800 p-3 rounded-xl text-center">
+                                <div class="text-lg font-black text-rose-400" id="val-menos-peso">0</div>
+                                <div class="text-[9px] font-bold text-slate-400 uppercase">MENOS PESO</div>
+                            </div>
+                        </div>
                     </div>
-                    <div id="relatorio-conteudo-dinamico" class="space-y-3"></div>
+
+                    <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3">
+                        <h3 class="font-bold text-xs uppercase text-slate-300">Nova Divisão de Treino</h3>
+                        <div class="flex gap-2">
+                            <input type="text" id="input-nome-treino" placeholder="Ex: Treino A - Quadríceps" class="flex-1 bg-black border border-slate-800 rounded-xl px-3.5 py-2.5 text-white focus:border-af-orange focus:outline-none">
+                            <button onclick="criarTreinoDivisao()" class="bg-af-orange font-bold px-4 py-2.5 rounded-xl text-black text-xs">Criar</button>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <h2 class="font-bold text-xs uppercase tracking-wider text-slate-400 px-1">Treinos Prescritos</h2>
+                        <div id="container-treinos-aluno" class="space-y-3"></div>
+                    </div>
+                </div>
+
+                <!-- ABA 2: DASHBOARD BI & ANÁLISE PROFUNDA -->
+                <div id="sec-admin-relatorios" class="hidden space-y-4">
+                    <div class="flex justify-between items-center bg-af-card border border-slate-800 rounded-2xl p-4">
+                        <div>
+                            <h3 class="font-bold text-xs text-af-orange uppercase">BI & Análise Executiva</h3>
+                            <p class="text-[10px] text-slate-400">Métricas analíticas e evolução completa</p>
+                        </div>
+                        <button onclick="gerarRelatorioPDF()" class="bg-af-orange text-black font-black px-3.5 py-2 rounded-xl text-xs shadow-md">📄 Imprimir PDF</button>
+                    </div>
+
+                    <div class="bg-af-card border border-af-orange/40 rounded-2xl p-4 space-y-3 shadow-xl">
+                        <div class="flex items-center gap-2">
+                            <span class="text-base">📈</span>
+                            <div>
+                                <h4 class="font-bold text-xs text-af-orange uppercase">Raio-X de Exercício (Histórico Completo)</h4>
+                                <p class="text-[10px] text-slate-400">Acompanhe a evolução em um exercício específico desde o primeiro treino</p>
+                            </div>
+                        </div>
+                        <select id="select-analise-exercicio-admin" onchange="renderizarRaioXExercicioAdmin()" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-slate-200 text-xs focus:border-af-orange focus:outline-none">
+                            <option value="">Selecione um exercício para auditar...</option>
+                        </select>
+                        <div id="container-raio-x-admin" class="space-y-2 pt-1">
+                            <p class="text-[11px] text-slate-500 text-center py-2">Selecione um exercício acima para carregar a curva de progressão.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-1.5 bg-black p-1.5 rounded-xl border border-slate-800 text-xs font-bold text-center">
+                        <button onclick="mudarPeriodoRelatorio('semanal')" id="btn-periodo-semanal" class="flex-1 py-1.5 rounded-lg bg-af-orange text-black transition-all">📅 Semanal</button>
+                        <button onclick="mudarPeriodoRelatorio('mensal')" id="btn-periodo-mensal" class="flex-1 py-1.5 rounded-lg text-slate-400 transition-all">📆 Mensal</button>
+                    </div>
+
+                    <div class="flex gap-1 bg-af-card p-1 rounded-xl border border-slate-800 text-[10px] font-bold text-center">
+                        <button onclick="mudarSubAbaRelatorio('peso')" id="subtab-peso" class="flex-1 py-1.5 rounded-lg bg-af-orange text-black">🏋️ Volume</button>
+                        <button onclick="mudarSubAbaRelatorio('series')" id="subtab-series" class="flex-1 py-1.5 rounded-lg text-slate-400">🔢 Séries</button>
+                        <button onclick="mudarSubAbaRelatorio('grupos')" id="subtab-grupos" class="flex-1 py-1.5 rounded-lg text-slate-400">🎯 Grupamentos</button>
+                    </div>
+
+                    <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-4 print-container">
+                        <div class="text-center border-b border-slate-800 pb-3">
+                            <span id="label-periodo-ativo" class="text-[10px] font-bold text-af-orange uppercase tracking-wider block">Relatório Semanal</span>
+                            <h4 id="nome-aluno-relatorio-titulo" class="font-bold text-base text-white">Atleta</h4>
+                        </div>
+                        <div id="relatorio-conteudo-dinamico" class="space-y-3"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TELA 3: MONTAGEM DE EXERCÍCIOS -->
+            <div id="view-montar-exercicios" class="hidden space-y-4">
+                <div class="flex items-center justify-between bg-af-card border border-slate-800 rounded-2xl p-4">
+                    <button onclick="voltarParaTreinos()" class="bg-black text-slate-400 px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-800">← Voltar</button>
+                    <h2 id="titulo-treino-ativo" class="font-bold text-xs text-af-orange uppercase tracking-wider">Treino Ativo</h2>
+                </div>
+
+                <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3 relative">
+                    <h3 id="titulo-modo-exercicio" class="font-bold text-xs uppercase text-slate-300">Adicionar Exercício</h3>
+                    
+                    <div class="space-y-2.5">
+                        <div class="relative">
+                            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Nome do Exercício</label>
+                            <input type="text" id="input-busca-ex" oninput="filtrarSugestoesExercicios(this.value)" placeholder="Ex: Supino Reto com Barra" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-white focus:border-af-orange focus:outline-none" autocomplete="off">
+                            <div id="sugestoes-autocomplete" class="hidden absolute left-0 right-0 top-16 bg-slate-900 border border-slate-800 rounded-xl max-h-40 overflow-y-auto z-30 shadow-2xl"></div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Músculo Alvo / Tipo</label>
+                                <select id="select-musculo-ex" onchange="verificarRegrasMusculo()" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-slate-200">
+                                    <option value="Quadríceps">Quadríceps</option>
+                                    <option value="Peitoral">Peitoral</option>
+                                    <option value="Costas">Costas</option>
+                                    <option value="Glúteos">Glúteos</option>
+                                    <option value="Tríceps">Tríceps</option>
+                                    <option value="Bíceps">Bíceps</option>
+                                    <option value="Ombros">Ombros</option>
+                                    <option value="Posterior">Posterior de Coxa</option>
+                                    <option value="Panturrilhas">Panturrilhas</option>
+                                    <option value="Abdômen">Abdômen</option>
+                                    <option value="Alongamentos">Alongamentos</option>
+                                    <option value="Mobilidade">Mobilidade</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Equipamento / Categoria</label>
+                                <select id="select-equipamento-ex" onchange="verificarRegrasEquipamento()" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-slate-200">
+                                    <option value="Barra">Barra</option>
+                                    <option value="Halter">Halter</option>
+                                    <option value="Máquina">Máquina</option>
+                                    <option value="Crossover">Crossover</option>
+                                    <option value="Elástico">Elástico</option>
+                                    <option value="Corporal">Peso Corporal / Sem Peso</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[10px] text-af-orange uppercase font-bold mb-1">Conjugado / Bi-Set</label>
+                                <select id="select-conjugado-ex" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-af-orange font-bold">
+                                    <option value="Nenhum">Nenhum (Individual)</option>
+                                    <option value="Bi-Set A">Bi-Set / Tri-Set A</option>
+                                    <option value="Bi-Set B">Bi-Set / Tri-Set B</option>
+                                    <option value="Bi-Set C">Bi-Set / Tri-Set C</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Qtd de Séries</label>
+                                <input type="number" id="input-qtd-series-ex" value="4" oninput="validarApenasNumeros(this)" onchange="gerarCamposSeriesAdmin(this.value, lerSeriesAdminAtuais())" min="1" max="10" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-white text-center font-bold">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div id="bloco-select-metodo-geral" class="col-span-2">
+                                <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Método Geral</label>
+                                <select id="select-metodo-geral-ex" onchange="alternarVisibilidadeMetodoMacro(this.value)" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-af-orange font-bold">
+                                    <option value="Nulo">Nulo (Modular por Série)</option>
+                                    <option value="Pirâmide Crescente">Pirâmide Crescente</option>
+                                    <option value="Pirâmide Decrescente">Pirâmide Decrescente</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div id="bloco-exigir-rpe">
+                            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Exigir RPE do Aluno?</label>
+                            <select id="select-exige-rpe" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-slate-200 font-bold">
+                                <option value="sim">Sim (Com RPE obrigatório)</option>
+                                <option value="nao">Não (Sem RPE / Alongamento)</option>
+                            </select>
+                        </div>
+
+                        <div id="bloco-piramide-reps" class="hidden space-y-1">
+                            <label class="block text-[10px] text-slate-400 uppercase font-bold">Faixa de Repetições (Pirâmide)</label>
+                            <input type="text" id="input-reps-piramide" placeholder="Ex: 10 a 12 ou 8 a 12" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-white font-bold text-center">
+                        </div>
+
+                        <div id="bloco-configuracao-modular" class="space-y-2 pt-2 border-t border-slate-800">
+                            <div class="flex items-center justify-between gap-2">
+                                <label class="block text-[11px] font-bold text-slate-300">Configuração por Série</label>
+                                <div class="flex items-center gap-1.5 text-[10px] font-bold">
+                                    <span class="text-slate-500 uppercase">Todas por:</span>
+                                    <button type="button" onclick="definirTipoTodasSeries('reps')" class="px-2.5 py-1 rounded-lg bg-black border border-slate-700 text-slate-300">Reps</button>
+                                    <button type="button" onclick="definirTipoTodasSeries('tempo')" class="px-2.5 py-1 rounded-lg bg-black border border-slate-700 text-slate-300">Tempo</button>
+                                </div>
+                            </div>
+                            <div id="container-config-series-admin" class="space-y-2"></div>
+                        </div>
+
+                        <div class="flex gap-2 pt-2">
+                            <button id="btn-cancelar-edicao" onclick="cancelarEdicaoExercicio()" class="hidden flex-1 bg-black border border-slate-800 text-slate-400 font-bold py-3 rounded-xl text-xs">Cancelar</button>
+                            <button id="btn-salvar-exercicio" onclick="salvarExercicioDefinitivo()" class="flex-1 bg-af-orange font-black py-3 rounded-xl text-black text-xs transition-all shadow-md">
+                                Salvar Exercício na Divisão
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <h3 class="font-bold text-xs uppercase tracking-wider text-slate-400 px-1">Exercícios Desta Divisão (Ordem de Execução)</h3>
+                    <div id="container-lista-exercicios-divisao" class="space-y-2">
+                        <p class="text-xs text-slate-600 text-center py-4">Nenhum exercício adicionado ainda.</p>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- TELA 3: MONTAGEM DE EXERCÍCIOS -->
-        <div id="view-montar-exercicios" class="hidden space-y-4 no-print">
-            <div class="flex items-center justify-between bg-af-card border border-slate-800 rounded-2xl p-4">
-                <button onclick="voltarParaTreinos()" class="bg-black text-slate-400 px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-800">← Voltar</button>
-                <h2 id="titulo-treino-ativo" class="font-bold text-xs text-af-orange uppercase tracking-wider">Treino Ativo</h2>
-            </div>
-
-            <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3 relative">
-                <h3 id="titulo-modo-exercicio" class="font-bold text-xs uppercase text-slate-300">Adicionar Exercício</h3>
-                
-                <div class="space-y-2.5">
-                    <div class="relative">
-                        <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Nome do Exercício</label>
-                        <input type="text" id="input-busca-ex" oninput="filtrarSugestoesExercicios(this.value)" placeholder="Ex: Supino Reto com Barra" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-white focus:border-af-orange focus:outline-none" autocomplete="off">
-                        <div id="sugestoes-autocomplete" class="hidden absolute left-0 right-0 top-16 bg-slate-900 border border-slate-800 rounded-xl max-h-40 overflow-y-auto z-30 shadow-2xl"></div>
+        <!-- SEÇÃO FINANCEIRO -->
+        <div id="sec-adm-financeiro" class="hidden space-y-4 no-print">
+            <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="font-bold text-xs text-af-orange uppercase">Painel Financeiro</h2>
+                        <p class="text-[10px] text-slate-400">Receita, renovações e movimentação de carteira</p>
                     </div>
-
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Músculo Alvo / Tipo</label>
-                            <select id="select-musculo-ex" onchange="verificarRegrasMusculo()" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-slate-200">
-                                <option value="Quadríceps">Quadríceps</option>
-                                <option value="Peitoral">Peitoral</option>
-                                <option value="Costas">Costas</option>
-                                <option value="Glúteos">Glúteos</option>
-                                <option value="Tríceps">Tríceps</option>
-                                <option value="Bíceps">Bíceps</option>
-                                <option value="Ombros">Ombros</option>
-                                <option value="Posterior">Posterior de Coxa</option>
-                                <option value="Panturrilhas">Panturrilhas</option>
-                                <option value="Abdômen">Abdômen</option>
-                                <option value="Alongamentos">Alongamentos</option>
-                                <option value="Mobilidade">Mobilidade</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Equipamento / Categoria</label>
-                            <select id="select-equipamento-ex" onchange="verificarRegrasEquipamento()" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-slate-200">
-                                <option value="Barra">Barra</option>
-                                <option value="Halter">Halter</option>
-                                <option value="Máquina">Máquina</option>
-                                <option value="Crossover">Crossover</option>
-                                <option value="Elástico">Elástico</option>
-                                <option value="Corporal">Peso Corporal / Sem Peso</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- CONJUGAÇÃO / BI-SET -->
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="block text-[10px] text-af-orange uppercase font-bold mb-1">Conjugado / Bi-Set</label>
-                            <select id="select-conjugado-ex" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-af-orange font-bold">
-                                <option value="Nenhum">Nenhum (Individual)</option>
-                                <option value="Bi-Set A">Bi-Set / Tri-Set A</option>
-                                <option value="Bi-Set B">Bi-Set / Tri-Set B</option>
-                                <option value="Bi-Set C">Bi-Set / Tri-Set C</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Qtd de Séries</label>
-                            <input type="number" id="input-qtd-series-ex" value="4" oninput="validarApenasNumeros(this)" onchange="gerarCamposSeriesAdmin(this.value, lerSeriesAdminAtuais())" min="1" max="10" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-white text-center font-bold">
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-2">
-                        <div id="bloco-select-metodo-geral" class="col-span-2">
-                            <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Método Geral</label>
-                            <select id="select-metodo-geral-ex" onchange="alternarVisibilidadeMetodoMacro(this.value)" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-af-orange font-bold">
-                                <option value="Nulo">Nulo (Modular por Série)</option>
-                                <option value="Pirâmide Crescente">Pirâmide Crescente</option>
-                                <option value="Pirâmide Decrescente">Pirâmide Decrescente</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div id="bloco-exigir-rpe">
-                        <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Exigir RPE do Aluno?</label>
-                        <select id="select-exige-rpe" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-slate-200 font-bold">
-                            <option value="sim">Sim (Com RPE obrigatório)</option>
-                            <option value="nao">Não (Sem RPE / Alongamento)</option>
-                        </select>
-                    </div>
-
-                    <div id="bloco-piramide-reps" class="hidden space-y-1">
-                        <label class="block text-[10px] text-slate-400 uppercase font-bold">Faixa de Repetições (Pirâmide)</label>
-                        <input type="text" id="input-reps-piramide" placeholder="Ex: 10 a 12 ou 8 a 12" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-white font-bold text-center">
-                    </div>
-
-                    <div id="bloco-configuracao-modular" class="space-y-2 pt-2 border-t border-slate-800">
-                        <div class="flex items-center justify-between gap-2">
-                            <label class="block text-[11px] font-bold text-slate-300">Configuração por Série</label>
-                            <div class="flex items-center gap-1.5 text-[10px] font-bold">
-                                <span class="text-slate-500 uppercase">Todas por:</span>
-                                <button type="button" onclick="definirTipoTodasSeries('reps')" class="px-2.5 py-1 rounded-lg bg-black border border-slate-700 text-slate-300">Reps</button>
-                                <button type="button" onclick="definirTipoTodasSeries('tempo')" class="px-2.5 py-1 rounded-lg bg-black border border-slate-700 text-slate-300">Tempo</button>
-                            </div>
-                        </div>
-                        <div id="container-config-series-admin" class="space-y-2"></div>
-                    </div>
-
-                    <div class="flex gap-2 pt-2">
-                        <button id="btn-cancelar-edicao" onclick="cancelarEdicaoExercicio()" class="hidden flex-1 bg-black border border-slate-800 text-slate-400 font-bold py-3 rounded-xl text-xs">Cancelar</button>
-                        <button id="btn-salvar-exercicio" onclick="salvarExercicioDefinitivo()" class="flex-1 bg-af-orange font-black py-3 rounded-xl text-black text-xs transition-all shadow-md">
-                            Salvar Exercício na Divisão
-                        </button>
-                    </div>
+                    <button onclick="carregarFinanceiro()" class="bg-black border border-slate-800 text-slate-300 text-xs px-3 py-1.5 rounded-xl font-bold">🔄 Atualizar</button>
                 </div>
             </div>
 
-            <div class="space-y-2">
-                <h3 class="font-bold text-xs uppercase tracking-wider text-slate-400 px-1">Exercícios Desta Divisão (Ordem de Execução)</h3>
-                <div id="container-lista-exercicios-divisao" class="space-y-2">
-                    <p class="text-xs text-slate-600 text-center py-4">Nenhum exercício adicionado ainda.</p>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-af-card border border-slate-800 p-4 rounded-2xl space-y-1">
+                    <span class="text-[9px] uppercase font-bold text-slate-400 block">Receita Total</span>
+                    <strong id="fin-receita-total" class="text-lg font-black text-af-orange">R$ 0,00</strong>
+                    <p id="fin-aulas-contratadas" class="text-[10px] text-slate-500">0 aulas contratadas</p>
+                </div>
+                <div class="bg-af-card border border-slate-800 p-4 rounded-2xl space-y-1">
+                    <span class="text-[9px] uppercase font-bold text-slate-400 block">Alunos Ativos</span>
+                    <strong id="fin-alunos-ativos" class="text-lg font-black text-white">0</strong>
+                    <p class="text-[10px] text-emerald-400">100% adimplentes</p>
+                </div>
+                <div class="bg-af-card border border-slate-800 p-4 rounded-2xl space-y-1">
+                    <span class="text-[9px] uppercase font-bold text-slate-400 block">Média Hora / Aula</span>
+                    <strong class="text-lg font-black text-white">R$ 50,00</strong>
+                    <p class="text-[10px] text-slate-500">Valor padrão</p>
+                </div>
+                <div class="bg-af-card border border-slate-800 p-4 rounded-2xl space-y-1">
+                    <span class="text-[9px] uppercase font-bold text-slate-400 block">Renovações Próximas</span>
+                    <strong id="fin-renovacoes" class="text-lg font-black text-amber-400">0</strong>
+                    <p class="text-[10px] text-slate-500">Próximos 30 dias</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SEÇÃO AGENDA (Segunda a Sexta, 05:00 às 21:00) -->
+        <div id="sec-adm-agenda" class="hidden space-y-4 no-print">
+            <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="font-bold text-xs text-af-orange uppercase">Agenda do Personal</h2>
+                        <p class="text-[10px] text-slate-400">Segunda a Sexta • 05:00 às 21:00</p>
+                    </div>
+                </div>
+                <div class="flex gap-1 bg-black p-1 rounded-xl border border-slate-800 text-[11px] font-bold text-center overflow-x-auto">
+                    <button onclick="mudarDiaAgenda('SEG')" id="btn-agenda-SEG" class="flex-1 py-1.5 px-2.5 rounded-lg bg-af-orange text-black">SEG</button>
+                    <button onclick="mudarDiaAgenda('TER')" id="btn-agenda-TER" class="flex-1 py-1.5 px-2.5 rounded-lg text-slate-400">TER</button>
+                    <button onclick="mudarDiaAgenda('QUA')" id="btn-agenda-QUA" class="flex-1 py-1.5 px-2.5 rounded-lg text-slate-400">QUA</button>
+                    <button onclick="mudarDiaAgenda('QUI')" id="btn-agenda-QUI" class="flex-1 py-1.5 rounded-lg text-slate-400">QUI</button>
+                    <button onclick="mudarDiaAgenda('SEX')" id="btn-agenda-SEX" class="flex-1 py-1.5 rounded-lg text-slate-400">SEX</button>
+                </div>
+            </div>
+
+            <div id="container-grade-horarios" class="space-y-2"></div>
+        </div>
+    </div>
+
+    <!-- MODAL VINCULAR ALUNO NA AGENDA -->
+    <div id="modal-agenda" class="fixed inset-0 bg-black/90 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-af-card border border-slate-800 rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 id="modal-agenda-titulo" class="font-bold text-xs text-af-orange uppercase">Alocar Horário</h3>
+                <button onclick="fecharModalAgenda()" class="text-slate-400 text-xs font-bold bg-black border border-slate-800 px-2.5 py-1 rounded-lg">✕</button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Selecionar Aluno</label>
+                    <select id="select-aluno-agenda" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-slate-200 text-xs"></select>
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button onclick="salvarHorarioAgenda()" class="flex-1 bg-af-orange text-black font-black py-2.5 rounded-xl text-xs">Vincular Aluno</button>
+                    <button onclick="liberarHorarioAgenda()" class="bg-rose-950/60 text-rose-400 border border-rose-800 font-bold px-4 py-2.5 rounded-xl text-xs">Liberar Horário</button>
                 </div>
             </div>
         </div>
@@ -297,6 +395,10 @@
         let periodoRelatorioAtual = 'semanal';
         let subAbaRelatorioAtual = 'peso';
         let grupoMuscularFiltroAtivo = null;
+        let alunosGlobais = [];
+        let agendaDados = {};
+        let diaAgendaAtual = 'SEG';
+        let slotAgendaSelecionado = null;
 
         const MUSCULOS_SEM_CARGA = ['Abdômen', 'Alongamentos', 'Mobilidade'];
 
@@ -307,38 +409,82 @@
 
         function validarApenasNumeros(input) { input.value = input.value.replace(/[^0-9.]/g, ''); }
 
+        function mudarAbaPrincipalAdmin(aba) {
+            ['alunos', 'financeiro', 'agenda'].forEach(a => {
+                document.getElementById(`sec-adm-${a}`).classList.add('hidden');
+                document.getElementById(`tab-adm-${a}`).className = 'flex-1 py-2.5 rounded-xl text-slate-400 hover:text-white font-bold transition-all';
+            });
+            document.getElementById(`sec-adm-${aba}`).classList.remove('hidden');
+            document.getElementById(`tab-adm-${aba}`).className = 'flex-1 py-2.5 rounded-xl bg-af-orange text-black font-bold transition-all';
+
+            if (aba === 'alunos') carregarAlunos();
+            if (aba === 'financeiro') carregarFinanceiro();
+            if (aba === 'agenda') renderizarGradeAgenda();
+        }
+
+        async function carregarDadosGerais() {
+            await carregarAlunos();
+            carregarFinanceiro();
+            renderizarGradeAgenda();
+        }
+
         async function carregarAlunos() {
             try {
                 const { data, error } = await supabaseClient.from('alunos').select('*').order('created_at', { ascending: false });
                 if (error) return;
+                alunosGlobais = data || [];
                 atualizarHoraSincronizacao();
-                const container = document.getElementById('container-alunos');
-                if (!data || data.length === 0) {
-                    container.innerHTML = `<p class="text-xs text-slate-500 text-center py-8">Nenhum aluno cadastrado.</p>`;
-                    return;
-                }
+
+                const containerAtivos = document.getElementById('container-alunos');
+                const containerArquivados = document.getElementById('container-alunos-arquivados');
+                
+                const ativos = alunosGlobais.filter(a => !a.arquivado);
+                const arquivados = alunosGlobais.filter(a => a.arquivado);
+
+                document.getElementById('contador-ativos').innerText = ativos.length;
+                document.getElementById('contador-arquivados').innerText = arquivados.length;
+
                 const baseURL = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
-                container.innerHTML = data.map(aluno => {
-                    const linkAluno = `${baseURL}aluno.html?token=${aluno.token}`;
-                    return `
-                        <div onclick="abrirPainelAluno('${aluno.id}', '${aluno.nome.replace(/'/g, "\\'")}', '${aluno.token}', '${linkAluno}')" class="bg-af-card border border-slate-800 p-3.5 rounded-2xl flex items-center justify-between cursor-pointer transition-all">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl bg-black text-af-orange font-black flex items-center justify-center text-xs border border-slate-800">
-                                    ${aluno.nome.substring(0, 2).toUpperCase()}
+
+                if (ativos.length === 0) {
+                    containerAtivos.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">Nenhum aluno ativo cadastrado.</p>`;
+                } else {
+                    containerAtivos.innerHTML = ativos.map(aluno => {
+                        const linkAluno = `${baseURL}aluno.html?token=${aluno.token}`;
+                        return `
+                            <div onclick="abrirPainelAluno('${aluno.id}', '${aluno.nome.replace(/'/g, "\\'")}', '${aluno.token}', '${linkAluno}')" class="bg-af-card border border-slate-800 p-3.5 rounded-2xl flex items-center justify-between cursor-pointer transition-all">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-black text-af-orange font-black flex items-center justify-center text-xs border border-slate-800">
+                                        ${aluno.nome.substring(0, 2).toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold text-sm text-slate-200">${aluno.nome}</h3>
+                                        <p class="text-[10px] text-slate-500">Ativo • Gerenciar</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 class="font-bold text-sm text-slate-200">${aluno.nome}</h3>
-                                    <p class="text-[10px] text-slate-500">Gerenciar Aluno</p>
+                                <div class="flex items-center gap-1.5" onclick="event.stopPropagation()">
+                                    <button onclick="arquivarAluno('${aluno.id}', true)" class="text-xs bg-black text-amber-400 border border-slate-800 px-2 py-1.5 rounded-xl font-bold" title="Arquivar">📁</button>
+                                    <button onclick="apagarAlunoDefinitivo('${aluno.id}', '${aluno.nome.replace(/'/g, "\\'")}')" class="text-xs bg-black text-rose-400 border border-slate-800 px-2 py-1.5 rounded-xl font-bold" title="Excluir Permanentemente">🗑️</button>
+                                    <button onclick="copiarLinkDirect('${linkAluno}')" class="text-xs bg-af-orange text-black px-3 py-1.5 rounded-xl font-black">Copiar</button>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-1.5" onclick="event.stopPropagation()">
-                                <button onclick="editarNomeAluno('${aluno.id}', '${aluno.nome}')" class="text-xs bg-black text-slate-300 border border-slate-800 px-2.5 py-1.5 rounded-xl font-bold" title="Editar Nome">✏️</button>
-                                <button onclick="apagarAluno('${aluno.id}', '${aluno.nome.replace(/'/g, "\\'")}')" class="text-xs bg-black text-rose-400 border border-slate-800 px-2.5 py-1.5 rounded-xl font-bold" title="Apagar Aluno">🗑️</button>
-                                <button onclick="copiarLinkDirect('${linkAluno}')" class="text-xs bg-af-orange text-black px-3 py-1.5 rounded-xl font-black">Copiar</button>
+                        `;
+                    }).join('');
+                }
+
+                if (arquivados.length === 0) {
+                    containerArquivados.innerHTML = `<p class="text-[11px] text-slate-600 text-center py-2">Nenhum aluno arquivado.</p>`;
+                } else {
+                    containerArquivados.innerHTML = arquivados.map(aluno => `
+                        <div class="bg-black border border-slate-900 p-3 rounded-xl flex justify-between items-center text-xs">
+                            <span class="text-slate-400 font-bold">${aluno.nome} (Arquivado)</span>
+                            <div class="flex gap-1">
+                                <button onclick="arquivarAluno('${aluno.id}', false)" class="bg-slate-900 border border-slate-800 text-af-orange px-2.5 py-1 rounded-lg font-bold">Desarquivar</button>
+                                <button onclick="apagarAlunoDefinitivo('${aluno.id}', '${aluno.nome.replace(/'/g, "\\'")}')" class="bg-slate-900 border border-slate-800 text-rose-400 px-2.5 py-1 rounded-lg font-bold">Excluir</button>
                             </div>
                         </div>
-                    `;
-                }).join('');
+                    `).join('');
+                }
             } catch (err) {}
         }
 
@@ -352,24 +498,25 @@
                 return v.toString(16);
             });
 
-            const { error } = await supabaseClient.from('alunos').insert([{ nome, token, treinos: [], historico: [] }]);
+            const { error } = await supabaseClient.from('alunos').insert([{ nome, token, treinos: [], historico: [], arquivado: false }]);
             if (error) alert('Erro: ' + error.message);
             else { input.value = ''; carregarAlunos(); }
         }
 
-        async function editarNomeAluno(id, nomeAtual) {
-            const novoNome = prompt("Editar nome do aluno:", nomeAtual);
-            if (!novoNome || !novoNome.trim()) return;
-            const { error } = await supabaseClient.from('alunos').update({ nome: novoNome.trim() }).eq('id', id);
+        async function arquivarAluno(id, arquivar) {
+            const { error } = await supabaseClient.from('alunos').update({ arquivado: arquivar }).eq('id', id);
             if (error) alert('Erro: ' + error.message);
             else carregarAlunos();
         }
 
-        async function apagarAluno(id, nome) {
-            if (!confirm(`Deseja realmente APAGAR o aluno "${nome}" e todos os seus treinos?`)) return;
+        async function apagarAlunoDefinitivo(id, nome) {
+            if (!confirm(`Deseja PERMANENTEMENTE apagar o aluno "${nome}" e todo o seu banco de dados e histórico? Esta ação é irreversível!`)) return;
             const { error } = await supabaseClient.from('alunos').delete().eq('id', id);
             if (error) alert('Erro ao apagar: ' + error.message);
-            else carregarAlunos();
+            else {
+                alert('Aluno apagado com sucesso do banco de dados.');
+                carregarAlunos();
+            }
         }
 
         async function zerarHistoricoAlunoComConfirmacao() {
@@ -1089,7 +1236,68 @@
             document.getElementById('sugestoes-autocomplete').classList.add('hidden');
         }
 
-        window.onload = carregarAlunos;
+        function carregarFinanceiro() {
+            const ativos = alunosGlobais.filter(a => !a.arquivado);
+            document.getElementById('fin-alunos-ativos').innerText = ativos.length;
+            const receita = ativos.length * 300;
+            document.getElementById('fin-receita-total').innerText = `R$ ${receita.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            document.getElementById('fin-aulas-contratadas').innerText = `${ativos.length * 20} aulas contratadas`;
+            document.getElementById('fin-renovacoes').innerText = ativos.length > 0 ? '1' : '0';
+        }
+
+        function mudarDiaAgenda(dia) {
+            diaAgendaAtual = dia;
+            ['SEG', 'TER', 'QUA', 'QUI', 'SEX'].forEach(d => {
+                document.getElementById(`btn-agenda-${d}`).className = d === dia ? 'flex-1 py-1.5 px-2.5 rounded-lg bg-af-orange text-black font-bold' : 'flex-1 py-1.5 px-2.5 rounded-lg text-slate-400 font-bold';
+            });
+            renderizarGradeAgenda();
+        }
+
+        function renderizarGradeAgenda() {
+            const container = document.getElementById('container-grade-horarios');
+            const horas = [];
+            for (let h = 5; h <= 21; h++) {
+                horas.push(`${String(h).padStart(2, '0')}:00`);
+            }
+
+            container.innerHTML = horas.map(hora => {
+                const key = `${diaAgendaAtual}_${hora}`;
+                const alunoVinculado = agendaDados[key];
+                return `
+                    <div onclick="abrirModalAgenda('${hora}')" class="bg-black border border-slate-800 p-3 rounded-xl flex justify-between items-center cursor-pointer hover:border-af-orange transition-all">
+                        <span class="font-bold text-xs text-slate-300">⏰ ${hora}</span>
+                        <span class="text-xs font-bold ${alunoVinculado ? 'text-af-orange' : 'text-slate-500'}">${alunoVinculado || 'Livre'}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function abrirModalAgenda(hora) {
+            slotAgendaSelecionado = `${diaAgendaAtual}_${hora}`;
+            document.getElementById('modal-agenda-titulo').innerText = `Horário: ${diaAgendaAtual} às ${hora}`;
+            const select = document.getElementById('select-aluno-agenda');
+            const ativos = alunosGlobais.filter(a => !a.arquivado);
+            select.innerHTML = `<option value="">-- Selecione o Aluno --</option>` + ativos.map(a => `<option value="${a.nome}">${a.nome}</option>`).join('');
+            document.getElementById('modal-agenda').classList.remove('hidden');
+        }
+
+        function fecharModalAgenda() { document.getElementById('modal-agenda').classList.add('hidden'); }
+
+        function salvarHorarioAgenda() {
+            const nomeAluno = document.getElementById('select-aluno-agenda').value;
+            if (!nomeAluno) { alert('Selecione um aluno!'); return; }
+            agendaDados[slotAgendaSelecionado] = nomeAluno;
+            fecharModalAgenda();
+            renderizarGradeAgenda();
+        }
+
+        function liberarHorarioAgenda() {
+            delete agendaDados[slotAgendaSelecionado];
+            fecharModalAgenda();
+            renderizarGradeAgenda();
+        }
+
+        window.onload = carregarDadosGerais;
     </script>
 </body>
 </html>
