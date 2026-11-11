@@ -130,12 +130,12 @@
 
                 <!-- CAIXA DE RESUMO DA EVOLUÇÃO MINIMIZÁVEL -->
                 <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3 shadow-xl">
-                    <div class="flex justify-between items-center cursor-pointer" onclick="toggleMinimizarResumoAdmin()">
+                    <div class="flex justify-between items-center cursor-pointer select-none" onclick="toggleMinimizarResumoAdmin()">
                         <div class="flex items-center gap-2">
-                            <span class="text-base">📈</span>
+                            <span class="text-sm">📈</span>
                             <h3 class="font-bold text-xs text-af-orange uppercase">Resumo da Evolução (Carga Total & Exercícios)</h3>
                         </div>
-                        <button id="btn-minimizar-resumo-admin" class="text-xs bg-black border border-slate-800 px-2.5 py-1 rounded-lg text-slate-300 font-bold">Minimizar [-]</button>
+                        <span id="icone-seta-resumo-admin" class="text-xs font-bold text-slate-400">▼</span>
                     </div>
                     <div id="conteudo-resumo-evolucao-admin" class="space-y-3 pt-2 border-t border-slate-800">
                         <div class="grid grid-cols-3 gap-2 text-center">
@@ -651,6 +651,9 @@
             document.getElementById('view-lista-alunos').classList.add('hidden');
             document.getElementById('view-detalhe-aluno').classList.remove('hidden');
 
+            // Garante que a agenda de hoje some ao entrar no painel do aluno
+            document.getElementById('bloco-agenda-hoje-admin').style.display = 'none';
+
             try {
                 const { data } = await supabaseClient.from('alunos').select('treinos, historico').eq('id', id).single();
                 treinosDoAluno = (data && data.treinos) ? data.treinos : [];
@@ -668,13 +671,13 @@
         function toggleMinimizarResumoAdmin() {
             resumoAdminMinimizado = !resumoAdminMinimizado;
             const conteudo = document.getElementById('conteudo-resumo-evolucao-admin');
-            const btn = document.getElementById('btn-minimizar-resumo-admin');
+            const seta = document.getElementById('icone-seta-resumo-admin');
             if (resumoAdminMinimizado) {
                 conteudo.classList.add('hidden');
-                btn.innerText = 'Expandir [+]';
+                seta.innerText = '▶';
             } else {
                 conteudo.classList.remove('hidden');
-                btn.innerText = 'Minimizar [-]';
+                seta.innerText = '▼';
             }
         }
 
@@ -835,7 +838,6 @@
             renderizarListaExerciciosDivisao();
         }
 
-        // Função para conjugar exercício com o de cima
         function conjugarExercicioComCima(idx) {
             const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
             if (!treino || idx <= 0) return;
@@ -857,7 +859,6 @@
             renderizarListaExerciciosDivisao();
         }
 
-        // Função para desconjugar exercício
         function desconjugarExercicio(idx) {
             const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
             if (!treino || !treino.exercicios[idx]) return;
@@ -1179,7 +1180,6 @@
         function verificarRegrasEquipamento() {
             const eq = document.getElementById('select-equipamento-ex').value;
             const musculo = document.getElementById('select-musculo-ex').value;
-            const blocoRpe = document.getElementById('bloco-exigir-rpe');
             if (eq === 'Corporal' || eq === 'Elástico' || musculo === 'Abdômen' || musculo === 'Alongamentos' || musculo === 'Mobilidade') {
                 document.getElementById('select-exige-rpe').value = 'nao';
             }

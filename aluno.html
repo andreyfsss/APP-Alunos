@@ -213,9 +213,9 @@
 
                 <!-- CAIXA DE RESUMO DA EVOLUÇÃO NO INÍCIO DO TREINO (MINIMIZÁVEL) -->
                 <div class="bg-af-card border border-slate-800 rounded-2xl p-3.5 space-y-2 shadow-md">
-                    <div class="flex justify-between items-center cursor-pointer" onclick="toggleMinimizarResumoAluno()">
+                    <div class="flex justify-between items-center cursor-pointer select-none" onclick="toggleMinimizarResumoAluno()">
                         <span class="text-[10px] uppercase font-bold text-slate-400">Resumo da Evolução da Sessão</span>
-                        <button id="btn-minimizar-resumo-aluno" class="text-[10px] bg-black border border-slate-800 px-2 py-0.5 rounded text-slate-300 font-bold">Minimizar [-]</button>
+                        <span id="icone-seta-resumo-aluno" class="text-xs font-bold text-slate-400">▼</span>
                     </div>
                     <div id="conteudo-resumo-evolucao-aluno" class="space-y-2 pt-1 border-t border-slate-800">
                         <div class="flex justify-between items-center text-xs">
@@ -410,13 +410,13 @@
         function toggleMinimizarResumoAluno() {
             resumoAlunoMinimizado = !resumoAlunoMinimizado;
             const conteudo = document.getElementById('conteudo-resumo-evolucao-aluno');
-            const btn = document.getElementById('btn-minimizar-resumo-aluno');
+            const seta = document.getElementById('icone-seta-resumo-aluno');
             if (resumoAlunoMinimizado) {
                 conteudo.classList.add('hidden');
-                btn.innerText = 'Expandir [+]';
+                seta.innerText = '▶';
             } else {
                 conteudo.classList.remove('hidden');
-                btn.innerText = 'Minimizar [-]';
+                seta.innerText = '▼';
             }
         }
 
@@ -499,6 +499,9 @@
                 const pct = rpeMed <= 6.5 ? 10 : 5;
                 const nova = calcularNovaCarga(cargaTopo, pct);
                 return caixaSugestao('up', `Última (${ctx}, RPE ${rpeTxt}) com folga. Suba para ${fmtKg(nova)}kg.`);
+            }
+            if (faixa && !bateuTopo && rpeMed < 9) {
+                return caixaSugestao('reps', `Última (${ctx}, RPE ${rpeTxt}). Mantenha a carga e busque atingir ${faixa.max} reps.`);
             }
             return caixaSugestao('reps', `Última (${ctx}, RPE ${rpeTxt}). Mantenha a carga e suba reps.`);
         }
