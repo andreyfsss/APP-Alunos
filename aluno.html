@@ -346,6 +346,25 @@
             return null;
         }
 
+        function gerarSugestaoProgresso(nomeExercicio, semCarga) {
+            if (semCarga) return '';
+            const validos = historicoValidoDoAluno();
+            for (let i = validos.length - 1; i >= 0; i--) {
+                const sessao = validos[i];
+                const exRealizado = (sessao.exerciciosRealizados || []).find(e => e.nome.toLowerCase() === nomeExercicio.toLowerCase());
+                if (exRealizado && exRealizado.series && exRealizado.series.length > 0) {
+                    const ultimaSerie = exRealizado.series[0];
+                    const carga = ultimaSerie.carga || 0;
+                    const rpe = parseFloat(ultimaSerie.rpe) || 8;
+                    if (carga > 0 && rpe <= 8.5) {
+                        const sugCarga = (carga + 2).toFixed(1).replace('.0','');
+                        return `<div class="text-[10px] text-amber-400 font-bold bg-amber-950/40 px-2 py-1 rounded border border-amber-800/40 mt-1">💡 Sugestão AF Pro: Tente subir para ${sugCarga}kg nesta sessão!</div>`;
+                    }
+                }
+            }
+            return '';
+        }
+
         function renderizarExerciciosAluno(exercicios) {
             const container = document.getElementById('lista-exercicios-aluno');
             const inputBase = 'w-full h-9 bg-slate-900 border border-slate-800 rounded-lg p-1 text-center text-xs font-bold text-white';
@@ -354,6 +373,7 @@
                 const exigeRpe = ex.exigeRpe !== false && !semCarga;
                 const metodoGeral = ex.metodoGeral || 'Nulo';
                 const conjugado = ex.conjugado && ex.conjugado !== 'Nenhum' ? ex.conjugado : null;
+                const sugestaoHtml = gerarSugestaoProgresso(ex.nome, semCarga);
 
                 let badgeMetodoHtml = '';
                 if (metodoGeral !== 'Nulo') {
@@ -435,7 +455,10 @@
                                 <span class="text-xs text-slate-400">▼</span>
                             </div>
                         </div>
-                        <div class="p-2.5 border-t border-slate-800 space-y-2 bg-af-card">${htmlSeries}</div>
+                        <div class="p-2.5 border-t border-slate-800 space-y-2 bg-af-card">
+                            ${sugestaoHtml}
+                            ${htmlSeries}
+                        </div>
                     </div>
                 `;
             }).join('');

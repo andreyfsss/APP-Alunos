@@ -52,6 +52,29 @@
 
         <!-- SEÇÃO ALUNOS -->
         <div id="sec-adm-alunos" class="space-y-4 no-print">
+            
+            <!-- RESUMO DA AGENDA DO DIA NA TELA DE ALUNOS -->
+            <div onclick="mudarAbaPrincipalAdmin('agenda')" class="bg-af-card border border-af-orange/40 hover:border-af-orange rounded-2xl p-4 cursor-pointer transition-all space-y-3 shadow-lg">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                    <span class="font-bold text-xs text-af-orange uppercase tracking-wider" id="resumo-agenda-titulo">Agenda de Hoje</span>
+                    <span class="text-[10px] text-slate-400">Ver Agenda Completa →</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2 text-center">
+                    <div class="bg-black border border-slate-800 p-2.5 rounded-xl">
+                        <span id="resumo-ocupados-hoje" class="text-base font-black text-af-orange">0</span>
+                        <span class="text-[9px] uppercase font-bold text-slate-400 block mt-0.5">Ocupados Hoje</span>
+                    </div>
+                    <div class="bg-black border border-slate-800 p-2.5 rounded-xl">
+                        <span id="resumo-livres-hoje" class="text-base font-black text-emerald-400">17</span>
+                        <span class="text-[9px] uppercase font-bold text-slate-400 block mt-0.5">Livres Hoje</span>
+                    </div>
+                    <div class="bg-black border border-slate-800 p-2.5 rounded-xl">
+                        <span id="resumo-total-semana" class="text-base font-black text-white">0</span>
+                        <span class="text-[9px] uppercase font-bold text-slate-400 block mt-0.5">Da Semana</span>
+                    </div>
+                </div>
+            </div>
+
             <div id="view-lista-alunos" class="space-y-4">
                 <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3 shadow-lg">
                     <h2 class="font-bold text-xs uppercase tracking-wider text-af-orange">Cadastrar Novo Aluno</h2>
@@ -303,13 +326,13 @@
             </div>
         </div>
 
-        <!-- SEÇÃO FINANCEIRO -->
+        <!-- SEÇÃO FINANCEIRO ZERADO -->
         <div id="sec-adm-financeiro" class="hidden space-y-4 no-print">
             <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3">
                 <div class="flex justify-between items-center">
                     <div>
                         <h2 class="font-bold text-xs text-af-orange uppercase">Painel Financeiro</h2>
-                        <p class="text-[10px] text-slate-400">Receita, renovações e movimentação de carteira</p>
+                        <p class="text-[10px] text-slate-400">Controle financeiro em desenvolvimento</p>
                     </div>
                     <button onclick="carregarFinanceiro()" class="bg-black border border-slate-800 text-slate-300 text-xs px-3 py-1.5 rounded-xl font-bold">🔄 Atualizar</button>
                 </div>
@@ -318,23 +341,23 @@
             <div class="grid grid-cols-2 gap-3">
                 <div class="bg-af-card border border-slate-800 p-4 rounded-2xl space-y-1">
                     <span class="text-[9px] uppercase font-bold text-slate-400 block">Receita Total</span>
-                    <strong id="fin-receita-total" class="text-lg font-black text-af-orange">R$ 0,00</strong>
-                    <p id="fin-aulas-contratadas" class="text-[10px] text-slate-500">0 aulas contratadas</p>
+                    <strong class="text-lg font-black text-af-orange">R$ 0,00</strong>
+                    <p class="text-[10px] text-slate-500">Nenhum lançamento</p>
                 </div>
                 <div class="bg-af-card border border-slate-800 p-4 rounded-2xl space-y-1">
                     <span class="text-[9px] uppercase font-bold text-slate-400 block">Alunos Ativos</span>
-                    <strong id="fin-alunos-ativos" class="text-lg font-black text-white">0</strong>
-                    <p class="text-[10px] text-emerald-400">100% adimplentes</p>
+                    <strong class="text-lg font-black text-white">0</strong>
+                    <p class="text-[10px] text-slate-500">Sem cobranças ativas</p>
                 </div>
                 <div class="bg-af-card border border-slate-800 p-4 rounded-2xl space-y-1">
                     <span class="text-[9px] uppercase font-bold text-slate-400 block">Média Hora / Aula</span>
-                    <strong class="text-lg font-black text-white">R$ 50,00</strong>
-                    <p class="text-[10px] text-slate-500">Valor padrão</p>
+                    <strong class="text-lg font-black text-white">R$ 0,00</strong>
+                    <p class="text-[10px] text-slate-500">Não definido</p>
                 </div>
                 <div class="bg-af-card border border-slate-800 p-4 rounded-2xl space-y-1">
                     <span class="text-[9px] uppercase font-bold text-slate-400 block">Renovações Próximas</span>
-                    <strong id="fin-renovacoes" class="text-lg font-black text-amber-400">0</strong>
-                    <p class="text-[10px] text-slate-500">Próximos 30 dias</p>
+                    <strong class="text-lg font-black text-amber-400">0</strong>
+                    <p class="text-[10px] text-slate-500">Nenhum vencimento</p>
                 </div>
             </div>
         </div>
@@ -352,8 +375,8 @@
                     <button onclick="mudarDiaAgenda('SEG')" id="btn-agenda-SEG" class="flex-1 py-1.5 px-2.5 rounded-lg bg-af-orange text-black">SEG</button>
                     <button onclick="mudarDiaAgenda('TER')" id="btn-agenda-TER" class="flex-1 py-1.5 px-2.5 rounded-lg text-slate-400">TER</button>
                     <button onclick="mudarDiaAgenda('QUA')" id="btn-agenda-QUA" class="flex-1 py-1.5 px-2.5 rounded-lg text-slate-400">QUA</button>
-                    <button onclick="mudarDiaAgenda('QUI')" id="btn-agenda-QUI" class="flex-1 py-1.5 rounded-lg text-slate-400">QUI</button>
-                    <button onclick="mudarDiaAgenda('SEX')" id="btn-agenda-SEX" class="flex-1 py-1.5 rounded-lg text-slate-400">SEX</button>
+                    <button onclick="mudarDiaAgenda('QUI')" id="btn-agenda-QUI" class="flex-1 py-1.5 px-2.5 rounded-lg text-slate-400">QUI</button>
+                    <button onclick="mudarDiaAgenda('SEX')" id="btn-agenda-SEX" class="flex-1 py-1.5 px-2.5 rounded-lg text-slate-400">SEX</button>
                 </div>
             </div>
 
@@ -426,6 +449,26 @@
             await carregarAlunos();
             carregarFinanceiro();
             renderizarGradeAgenda();
+            atualizarResumoAgendaTelaAlunos();
+        }
+
+        function atualizarResumoAgendaTelaAlunos() {
+            const diasSemanaMap = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
+            const diaHojeStr = diasSemanaMap[new Date().getDay()] || 'SEG';
+            document.getElementById('resumo-agenda-titulo').innerText = `Agenda de Hoje (${diaHojeStr})`;
+
+            let ocupadosHoje = 0;
+            for (let h = 5; h <= 21; h++) {
+                const key = `${diaHojeStr}_${String(h).padStart(2,'0')}:00`;
+                if (agendaDados[key]) ocupadosHoje++;
+            }
+            const livresHoje = Math.max(0, 17 - ocupadosHoje);
+            
+            let totalSemana = Object.keys(agendaDados).length;
+
+            document.getElementById('resumo-ocupados-hoje').innerText = ocupadosHoje;
+            document.getElementById('resumo-livres-hoje').innerText = livresHoje;
+            document.getElementById('resumo-total-semana').innerText = totalSemana;
         }
 
         async function carregarAlunos() {
@@ -512,10 +555,11 @@
         async function apagarAlunoDefinitivo(id, nome) {
             if (!confirm(`Deseja PERMANENTEMENTE apagar o aluno "${nome}" e todo o seu banco de dados e histórico? Esta ação é irreversível!`)) return;
             const { error } = await supabaseClient.from('alunos').delete().eq('id', id);
-            if (error) alert('Erro ao apagar: ' + error.message);
-            else {
+            if (error) {
+                alert('Erro ao apagar: ' + error.message);
+            } else {
                 alert('Aluno apagado com sucesso do banco de dados.');
-                carregarAlunos();
+                await carregarAlunos();
             }
         }
 
@@ -1237,12 +1281,7 @@
         }
 
         function carregarFinanceiro() {
-            const ativos = alunosGlobais.filter(a => !a.arquivado);
-            document.getElementById('fin-alunos-ativos').innerText = ativos.length;
-            const receita = ativos.length * 300;
-            document.getElementById('fin-receita-total').innerText = `R$ ${receita.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-            document.getElementById('fin-aulas-contratadas').innerText = `${ativos.length * 20} aulas contratadas`;
-            document.getElementById('fin-renovacoes').innerText = ativos.length > 0 ? '1' : '0';
+            document.getElementById('fin-receita-total').innerText = 'R$ 0,00';
         }
 
         function mudarDiaAgenda(dia) {
@@ -1270,6 +1309,7 @@
                     </div>
                 `;
             }).join('');
+            atualizarResumoAgendaTelaAlunos();
         }
 
         function abrirModalAgenda(hora) {
