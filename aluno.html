@@ -327,20 +327,48 @@
             }
         }
 
+        function salvarTokenManual() {
+            const input = document.getElementById('input-token-manual');
+            if (!input) return;
+            let valor = input.value.trim();
+            if (!valor) return;
+            if (valor.includes('token=')) {
+                const match = valor.match(/[?&]token=([^&]+)/);
+                if (match && match[1]) valor = match[1];
+            }
+            localStorage.setItem('afpro_aluno_token', valor);
+            carregarDadosAluno();
+        }
+
         async function carregarDadosAluno() {
             const urlParams = new URLSearchParams(window.location.search);
-            const token = urlParams.get('token');
+            let token = urlParams.get('token');
+
+            if (token) {
+                localStorage.setItem('afpro_aluno_token', token);
+            } else {
+                token = localStorage.getItem('afpro_aluno_token');
+            }
             
             if (!token) {
                 document.getElementById('nome-aluno').innerText = 'Acesso Restrito';
-                document.getElementById('container-lista-divisoes').innerHTML = `<p class="text-xs text-rose-400 text-center py-6">Nenhum token identificado.</p>`;
+                document.getElementById('container-lista-divisoes').innerHTML = `
+                    <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3 text-center">
+                        <p class="text-xs text-rose-400 font-bold">Nenhum token identificado.</p>
+                        <p class="text-[11px] text-slate-400">Cole abaixo o link ou código enviado pelo seu personal para vincular este aparelho:</p>
+                        <input type="text" id="input-token-manual" placeholder="Cole o link ou token aqui..." class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-xs text-white text-center focus:border-af-orange focus:outline-none">
+                        <button onclick="salvarTokenManual()" class="w-full bg-af-orange text-black font-black py-2.5 rounded-xl text-xs shadow-lg">Acessar Meu Treino</button>
+                    </div>
+                `;
                 return;
             }
 
             try {
                 const { data: aluno, error } = await supabaseClient.from('alunos').select('*').eq('token', token).single();
                 if (error || !aluno) { 
+                    localStorage.removeItem('afpro_aluno_token');
                     document.getElementById('nome-aluno').innerText = 'Atleta não encontrado'; 
+                    document.getElementById('container-lista-divisoes').innerHTML = `<p class="text-xs text-rose-400 text-center py-6">Token inválido ou expirado. Abra novamente pelo link enviado pelo personal.</p>`;
                     return; 
                 }
                 alunoAtualId = aluno.id;
