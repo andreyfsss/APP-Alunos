@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AF Pro - Treino do Aluno</title>
+    <title>AFPRO - Treino do Aluno</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --bg-color: #0d0f12;
@@ -17,274 +18,45 @@
             --success: #10B981;
             --danger: #EF4444;
         }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Inter', sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            padding: 16px;
-            padding-bottom: 90px;
-            max-width: 480px;
-            margin: 0 auto;
-        }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            background: var(--card-bg);
-            padding: 14px 18px;
-            border-radius: 14px;
-            border: 1px solid var(--card-border);
-        }
-
-        .workout-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-        }
-
-        .workout-timer {
-            font-size: 0.85rem;
-            color: var(--accent);
-            font-weight: 600;
-            background: rgba(255, 106, 0, 0.1);
-            padding: 4px 8px;
-            border-radius: 6px;
-        }
-
-        .btn-finish-top {
-            background: var(--success);
-            color: #fff;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.85rem;
-            cursor: pointer;
-        }
-
-        .exercise-card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-        }
-
-        .exercise-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 12px;
-        }
-
-        .exercise-name {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: #fff;
-            margin-bottom: 4px;
-        }
-
-        .exercise-meta {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-        }
-
-        .progression-badge {
-            background: rgba(16, 185, 129, 0.15);
-            color: var(--success);
-            padding: 6px 10px;
-            border-radius: 8px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-bottom: 16px;
-            display: inline-block;
-        }
-
-        .set-row {
-            display: grid;
-            grid-template-columns: 40px 1fr 1fr 1fr 40px;
-            gap: 8px;
-            align-items: center;
-            margin-bottom: 10px;
-            background: rgba(0,0,0,0.2);
-            padding: 8px;
-            border-radius: 10px;
-            border: 1px solid rgba(255,255,255,0.03);
-        }
-
-        .set-row.completed {
-            border-color: var(--success);
-            background: rgba(16, 185, 129, 0.05);
-        }
-
-        .set-number {
-            font-weight: 700;
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
-
-        .set-input-group {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .set-input-group label {
-            font-size: 0.65rem;
-            color: var(--text-muted);
-            margin-bottom: 2px;
-            text-transform: uppercase;
-        }
-
-        .set-input-group input {
-            background: #0d0f12;
-            border: 1px solid var(--card-border);
-            border-radius: 6px;
-            color: #fff;
-            padding: 8px;
-            text-align: center;
-            font-size: 0.95rem;
-            font-weight: 600;
-            width: 100%;
-        }
-
-        .set-input-group input:focus {
-            border-color: var(--accent);
-            outline: none;
-        }
-
-        .btn-check-set {
-            background: transparent;
-            border: 2px solid var(--card-border);
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text-muted);
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .set-row.completed .btn-check-set {
-            background: var(--success);
-            border-color: var(--success);
-            color: #fff;
-        }
-
-        .wizard-nav {
-            display: flex;
-            gap: 12px;
-            margin-top: 20px;
-        }
-
-        .btn-wizard {
-            flex: 1;
-            padding: 14px;
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 0.95rem;
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .btn-prev {
-            background: var(--card-border);
-            color: var(--text-main);
-        }
-
-        .btn-next {
-            background: var(--accent);
-            color: #fff;
-            box-shadow: 0 4px 15px var(--accent-glow);
-        }
-
-        .btn-wizard:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            padding: 20px;
-            display: none;
-        }
-
-        .modal-card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 20px;
-            padding: 24px;
-            width: 100%;
-            max-width: 360px;
-            text-align: center;
-        }
-
-        .modal-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-
-        .modal-desc {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            margin-bottom: 24px;
-        }
-
-        .modal-actions {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .btn-modal-save {
-            background: var(--success);
-            color: #fff;
-            padding: 14px;
-            border-radius: 12px;
-            border: none;
-            font-weight: 700;
-            cursor: pointer;
-        }
-
-        .btn-modal-discard {
-            background: rgba(239, 68, 68, 0.15);
-            color: var(--danger);
-            padding: 14px;
-            border-radius: 12px;
-            border: none;
-            font-weight: 700;
-            cursor: pointer;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-color); color: var(--text-main); padding: 16px; padding-bottom: 90px; max-width: 480px; margin: 0 auto; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: var(--card-bg); padding: 14px 18px; border-radius: 14px; border: 1px solid var(--card-border); }
+        .workout-title { font-size: 1.1rem; font-weight: 700; }
+        .workout-timer { font-size: 0.85rem; color: var(--accent); font-weight: 600; background: rgba(255, 106, 0, 0.1); padding: 4px 8px; border-radius: 6px; }
+        .btn-finish-top { background: var(--success); color: #fff; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; }
+        .exercise-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+        .exercise-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+        .exercise-name { font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 4px; }
+        .exercise-meta { font-size: 0.85rem; color: var(--text-muted); }
+        .progression-badge { background: rgba(16, 185, 129, 0.15); color: var(--success); padding: 6px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; margin-bottom: 16px; display: inline-block; }
+        .set-row { display: grid; grid-template-columns: 40px 1fr 1fr 1fr 40px; gap: 8px; align-items: center; margin-bottom: 10px; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.03); }
+        .set-row.completed { border-color: var(--success); background: rgba(16, 185, 129, 0.05); }
+        .set-number { font-weight: 700; text-align: center; color: var(--text-muted); font-size: 0.9rem; }
+        .set-input-group { display: flex; flex-direction: column; }
+        .set-input-group label { font-size: 0.65rem; color: var(--text-muted); margin-bottom: 2px; text-transform: uppercase; }
+        .set-input-group input { background: #0d0f12; border: 1px solid var(--card-border); border-radius: 6px; color: #fff; padding: 8px; text-align: center; font-size: 0.95rem; font-weight: 600; width: 100%; }
+        .set-input-group input:focus { border-color: var(--accent); outline: none; }
+        .btn-check-set { background: transparent; border: 2px solid var(--card-border); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); cursor: pointer; transition: all 0.2s; }
+        .set-row.completed .btn-check-set { background: var(--success); border-color: var(--success); color: #fff; }
+        .wizard-nav { display: flex; gap: 12px; margin-top: 20px; }
+        .btn-wizard { flex: 1; padding: 14px; border-radius: 12px; font-weight: 700; font-size: 0.95rem; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-prev { background: var(--card-border); color: var(--text-main); }
+        .btn-next { background: var(--accent); color: #fff; box-shadow: 0 4px 15px var(--accent-glow); }
+        .btn-wizard:disabled { opacity: 0.4; cursor: not-allowed; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; display: none; }
+        .modal-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 24px; width: 100%; max-width: 360px; text-align: center; }
+        .modal-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 8px; }
+        .modal-desc { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 24px; text-align: left; }
+        .modal-actions { display: flex; flex-direction: column; gap: 10px; }
+        .btn-modal-save { background: var(--success); color: #fff; padding: 14px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; }
+        .btn-modal-discard { background: rgba(239, 68, 68, 0.15); color: var(--danger); padding: 14px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <header>
         <div>
-            <div class="workout-title" id="workoutName">Leg Day</div>
+            <div class="workout-title" id="workoutName">Carregando Treino...</div>
             <div class="workout-timer" id="timerDisplay">00:00</div>
         </div>
         <button class="btn-finish-top" onclick="openFinishModal()">Terminar</button>
@@ -292,10 +64,30 @@
 
     <div id="exerciseWizardContainer"></div>
 
+    <!-- Modal de Explicação RPE 1 a 10 -->
+    <div class="modal-overlay" id="rpeModal" onclick="closeRpeModal(event)">
+        <div class="modal-card" style="max-width: 380px; text-align: left;" onclick="event.stopPropagation()">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: #fff;">Escala RPE (1 a 10)</h3>
+                <button onclick="closeRpeModal()" style="background:none; border:none; color:#9CA3AF; font-size:1.2rem; cursor:pointer;">✕</button>
+            </div>
+            <div class="modal-desc" style="max-height: 60vh; overflow-y: auto; space-y: 6px;">
+                <p style="margin-bottom: 6px;"><strong>10:</strong> Esforço máximo absoluto (impossível fazer mais reps).</p>
+                <p style="margin-bottom: 6px;"><strong>9:</strong> Extremamente difícil (máximo 1 repetição a mais).</p>
+                <p style="margin-bottom: 6px;"><strong>8:</strong> Muito difícil (poderia fazer 2 a 3 reps a mais).</p>
+                <p style="margin-bottom: 6px;"><strong>7:</strong> Difícil (poderia fazer 3 a 4 reps a mais).</p>
+                <p style="margin-bottom: 6px;"><strong>5 - 6:</strong> Esforço moderado / sustentável.</p>
+                <p style="margin-bottom: 4px;"><strong>1 - 4:</strong> Muito leve a leve / aquecimento.</p>
+            </div>
+            <button onclick="closeRpeModal()" style="width:100%; background:var(--card-border); color:#fff; padding:12px; border-radius:10px; border:none; font-weight:700; cursor:pointer;">Entendido</button>
+        </div>
+    </div>
+
+    <!-- Modal de Finalizar / Descartar Treino -->
     <div class="modal-overlay" id="finishModal">
         <div class="modal-card">
             <div class="modal-title">Finalizar Treino?</div>
-            <div class="modal-desc" id="finishModalDesc">Deseja salvar sua sessão de treino ou descartar os dados?</div>
+            <div class="modal-desc" style="text-align: center;">Deseja salvar sua sessão de treino ou descartar os dados?</div>
             <div class="modal-actions">
                 <button class="btn-modal-save" onclick="saveAndFinishWorkout()">Salvar e Sair</button>
                 <button class="btn-modal-discard" onclick="discardWorkout()">Descartar Treino</button>
@@ -304,59 +96,79 @@
     </div>
 
     <script>
+        const SUPABASE_URL = 'https://dzifzikdeojazyswjguw.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6aWZ6aWtkZW9qYXp5c3dqZ3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MTg3NjgsImV4cCI6MjEwODk5NDc2OH0.Y3rycAN_O1IL99OdMJsC_TRMrSEKJp4vQJho2P4D_W0';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
         let currentExerciseIndex = 0;
         let secondsElapsed = 0;
         let timerInterval = null;
+        let workoutData = null;
+        let alunoId = null;
 
-        let workoutData = {
-            name: "Leg Day",
-            exercises: [
-                {
-                    name: "Agachamento Completo Com Barra",
-                    muscle: "Quadríceps",
-                    equipment: "Barra",
-                    best: "12 kg",
-                    progression: "Progressão linear - Todas as repetições da última vez. Mais 5 kg.",
-                    history: "Da última vez (hoje): 12x8 (RPE 8), 12x8 (RPE 8), 12x8 (RPE 8)",
-                    sets: [
-                        { weight: 17, reps: 8, rpe: 8, done: true },
-                        { weight: 17, reps: 8, rpe: 8, done: false },
-                        { weight: 17, reps: 8, rpe: 8, done: false },
-                        { weight: 17, reps: 8, rpe: 8, done: false }
-                    ]
-                },
-                {
-                    name: "Levantamento Terra Romano com Barra",
-                    muscle: "Isquiotibiais",
-                    equipment: "Barra",
-                    best: "30 kg",
-                    progression: "Progressão linear - Mais 5 kg.",
-                    history: "Da última vez: 30x10 (RPE 9), 30x10 (RPE 9)",
-                    sets: [
-                        { weight: 35, reps: 10, rpe: 9, done: false },
-                        { weight: 35, reps: 10, rpe: 9, done: false },
-                        { weight: 35, reps: 10, rpe: 9, done: false }
-                    ]
-                },
-                {
-                    name: "Leg Press 45 Graus No Sled",
-                    muscle: "Quadríceps",
-                    equipment: "Sled",
-                    best: "25 kg",
-                    progression: "Progressão linear",
-                    history: "Da última vez: 25x12 (RPE 9), 25x12 (RPE 9,5)",
-                    sets: [
-                        { weight: 30, reps: 12, rpe: 9, done: false },
-                        { weight: 30, reps: 12, rpe: 9, done: false },
-                        { weight: 30, reps: 12, rpe: 9, done: false }
-                    ]
-                }
-            ]
-        };
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
 
-        function initWorkout() {
+        async function initWorkout() {
             startTimer();
-            renderExercise();
+            if (!token) {
+                // Modo teste local caso não haja token
+                workoutData = {
+                    name: "Treino Teste",
+                    exercises: [
+                        {
+                            name: "Supino Reto com Barra",
+                            muscle: "Peitoral",
+                            equipment: "Barra",
+                            best: "80 kg",
+                            progression: "Progressão linear",
+                            sets: [
+                                { weight: 80, reps: 10, rpe: 8, done: false },
+                                { weight: 80, reps: 10, rpe: 8, done: false },
+                                { weight: 80, reps: 10, rpe: 9, done: false }
+                            ]
+                        }
+                    ]
+                };
+                renderExercise();
+                return;
+            }
+
+            try {
+                const { data, error } = await supabaseClient.from('alunos').select('*').eq('token', token).single();
+                if (error || !data) {
+                    alert('Aluno não encontrado.');
+                    return;
+                }
+                alunoId = data.id;
+                const treinos = data.treinos || [];
+                if (treinos.length === 0) {
+                    document.getElementById('workoutName').innerText = "Sem treinos cadastrados";
+                    document.getElementById('exerciseWizardContainer').innerHTML = '<p style="text-align:center; color:#9CA3AF; padding: 30px;">O personal ainda não cadastrou exercícios para este treino.</p>';
+                    return;
+                }
+                // Pega o primeiro treino cadastrado ou o selecionado
+                const t = treinos[0];
+                workoutData = {
+                    name: t.nome,
+                    exercises: (t.exercicios || []).map(e => ({
+                        name: e.nome,
+                        muscle: e.musculo,
+                        equipment: e.equipamento,
+                        best: "---",
+                        progression: "Progressão de Carga",
+                        sets: (e.seriesConfig || [1,2,3,4]).map((s, i) => ({
+                            weight: 0,
+                            reps: parseInt(s.repsSugeridas) || 10,
+                            rpe: 8,
+                            done: false
+                        }))
+                    }))
+                };
+                renderExercise();
+            } catch (err) {
+                console.error(err);
+            }
         }
 
         function startTimer() {
@@ -371,8 +183,9 @@
         }
 
         function renderExercise() {
+            if (!workoutData || !workoutData.exercises || workoutData.exercises.length === 0) return;
+            document.getElementById('workoutName').innerText = workoutData.name;
             const container = document.getElementById('exerciseWizardContainer');
-            if (!container || !workoutData.exercises.length) return;
             const ex = workoutData.exercises[currentExerciseIndex];
             const total = workoutData.exercises.length;
 
@@ -381,15 +194,12 @@
                     <div class="exercise-header">
                         <div>
                             <div class="exercise-name">${ex.name}</div>
-                            <div class="exercise-meta">${ex.muscle} • ${ex.equipment} • Melhor: ${ex.best}</div>
+                            <div class="exercise-meta">${ex.muscle} • ${ex.equipment}</div>
                         </div>
                         <div style="font-size: 0.8rem; font-weight: 700; color: var(--accent);">
                             ${currentExerciseIndex + 1}/${total}
                         </div>
                     </div>
-
-                    <div class="progression-badge">📈 ${ex.progression}</div>
-                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 14px;">${ex.history}</div>
 
                     <div class="sets-list">
             `;
@@ -400,15 +210,18 @@
                         <div class="set-number">${sIdx + 1}</div>
                         <div class="set-input-group">
                             <label>Peso (kg)</label>
-                            <input type="number" step="any" value="${set.weight}" onchange="updateSetData(${sIdx}, 'weight', this.value)">
+                            <input type="number" step="any" value="${set.weight || ''}" placeholder="0" onchange="updateSetData(${sIdx}, 'weight', this.value)">
                         </div>
                         <div class="set-input-group">
                             <label>Reps</label>
-                            <input type="number" value="${set.reps}" onchange="updateSetData(${sIdx}, 'reps', this.value)">
+                            <input type="number" value="${set.reps || ''}" placeholder="10" onchange="updateSetData(${sIdx}, 'reps', this.value)">
                         </div>
                         <div class="set-input-group">
-                            <label>RPE</label>
-                            <input type="number" step="0.5" value="${set.rpe}" onchange="updateSetData(${sIdx}, 'rpe', this.value)">
+                            <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="openRpeModal()">
+                                <span>RPE</span>
+                                <span style="color:var(--accent); font-size:0.6rem; text-decoration:underline;">?</span>
+                            </label>
+                            <input type="number" min="1" max="10" step="0.5" value="${set.rpe || ''}" placeholder="1-10" onchange="updateSetData(${sIdx}, 'rpe', this.value)">
                         </div>
                         <button class="btn-check-set" onclick="toggleSet(${sIdx})">✓</button>
                     </div>
@@ -439,7 +252,6 @@
             const set = workoutData.exercises[currentExerciseIndex].sets[sIdx];
             set.done = !set.done;
             renderExercise();
-            checkAutoFinish();
         }
 
         function nextExercise() {
@@ -460,34 +272,29 @@
             }
         }
 
-        function checkAutoFinish() {
-            let allDone = true;
-            workoutData.exercises.forEach(ex => {
-                ex.sets.forEach(s => {
-                    if (!s.done) allDone = false;
-                });
-            });
-            if (allDone) {
-                openFinishModal();
-            }
+        function openRpeModal() {
+            document.getElementById('rpeModal').style.display = 'flex';
+        }
+
+        function closeRpeModal() {
+            document.getElementById('rpeModal').style.display = 'none';
         }
 
         function openFinishModal() {
-            const modal = document.getElementById('finishModal');
-            if (modal) modal.style.display = 'flex';
+            document.getElementById('finishModal').style.display = 'flex';
         }
 
-        function saveAndFinishWorkout() {
+        async function saveAndFinishWorkout() {
             if (timerInterval) clearInterval(timerInterval);
             const timerTxt = document.getElementById('timerDisplay')?.innerText || '00:00';
             alert('Treino salvo com sucesso! Duração total: ' + timerTxt);
-            window.location.href = 'index_3.html';
+            window.location.href = 'index.html';
         }
 
         function discardWorkout() {
             if (confirm('Tem certeza que deseja descartar este treino?')) {
                 if (timerInterval) clearInterval(timerInterval);
-                window.location.href = 'index_3.html';
+                window.location.href = 'index.html';
             }
         }
 
