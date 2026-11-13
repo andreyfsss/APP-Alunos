@@ -162,6 +162,29 @@
             return caixa(o.titulo, '', '<div class="flex items-center gap-4"><div style="flex-shrink:0">' + svg + '</div><div class="flex-1 space-y-1.5 min-w-0">' + leg + '</div></div>');
         }
 
+
+        function somarDiaVal(mapa, data, vol, series) {
+            const dt = new Date(data);
+            if (isNaN(dt)) return;
+            const k = dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate());
+            const e = mapa[k] || (mapa[k] = { k: k, d: dt, vol: 0, series: 0 });
+            e.vol += vol || 0;
+            e.series += series || 0;
+        }
+        function resumoExercicio(regs) {
+            const se = serieExercicio(regs);
+            const v = se.pts.map(p => p.value);
+            if (!v.length) return '';
+            const f = x => se.unit === 's' ? tempo(x) : fmt(x) + ' ' + se.unit;
+            const d = v[v.length - 1] - v[0];
+            const cor = d > 0 ? '#34d399' : (d < 0 ? '#fb7185' : '#94a3b8');
+            return '<div class="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px]"><span class="text-slate-400">Início <b class="text-slate-200">' + f(v[0]) + '</b></span>' +
+                '<span class="text-slate-400">Atual <b style="color:' + cor + '">' + f(v[v.length - 1]) + '</b></span>' +
+                '<span class="font-bold" style="color:' + cor + '">' + (d >= 0 ? '+' : '−') + (se.unit === 's' ? tempo(Math.abs(d)) : fmt(Math.abs(d))) + '</span>' +
+                '<span class="text-slate-500">' + regs.length + ' sessões</span></div>';
+        }
+        const paleta = ['#FF6A00', '#34d399', '#818cf8', '#fbbf24', '#fb7185', '#38bdf8'];
+
         function somarDia(mapa, h) {
             const dt = new Date(h.data);
             if (isNaN(dt)) return;
@@ -184,7 +207,7 @@
             return { pts: pts, unit: sem ? (soTempo ? 's' : 'reps') : 'kg', fmtY: soTempo ? tempo : fmt };
         }
 
-        return { line: line, bars: bars, hbars: hbars, donut: donut, somarDia: somarDia, serieDias: serieDias, serieExercicio: serieExercicio, fmt: fmt };
+        return { line: line, bars: bars, hbars: hbars, donut: donut, somarDiaVal: somarDiaVal, resumoExercicio: resumoExercicio, paleta: paleta, somarDia: somarDia, serieDias: serieDias, serieExercicio: serieExercicio, fmt: fmt };
     })();
     </script>
 
@@ -240,7 +263,7 @@
             <span class="font-black text-[10px] text-af-orange tracking-widest bg-orange-950/60 px-1.5 py-0.5 rounded border border-orange-600/40">PERSONAL ADMIN</span>
         </div>
         <nav class="space-y-1.5 text-sm font-bold">
-            <button data-nav="inicio" onclick="mudarAbaPrincipalAdmin('inicio')" class="nav-btn w-full text-left px-3.5 py-3 rounded-xl border border-transparent hover:text-white">📊&nbsp; Dashboard</button>
+            <button data-nav="inicio" onclick="mudarAbaPrincipalAdmin('inicio')" class="nav-btn w-full text-left px-3.5 py-3 rounded-xl border border-transparent hover:text-white">🏠&nbsp; Início</button>
             <button data-nav="alunos" onclick="mudarAbaPrincipalAdmin('alunos')" class="nav-btn w-full text-left px-3.5 py-3 rounded-xl border border-transparent hover:text-white">👥&nbsp; Alunos</button>
             <button data-nav="agenda" onclick="mudarAbaPrincipalAdmin('agenda')" class="nav-btn w-full text-left px-3.5 py-3 rounded-xl border border-transparent hover:text-white">📅&nbsp; Agenda</button>
             <button data-nav="financeiro" onclick="mudarAbaPrincipalAdmin('financeiro')" class="nav-btn w-full text-left px-3.5 py-3 rounded-xl border border-transparent hover:text-white">💰&nbsp; Financeiro</button>
@@ -286,11 +309,8 @@
             </div>
             <div id="inicio-kpis" class="grid-kpi"></div>
             <div class="grid-paineis">
-                <div id="inicio-volume-semanal"></div>
-                <div id="inicio-sessoes-semanal"></div>
-                <div id="inicio-grupos"></div>
                 <div id="inicio-agenda"></div>
-                <div id="inicio-atencao" class="col-cheio"></div>
+                <div id="inicio-atencao"></div>
                 <div id="inicio-atividade" class="col-cheio"></div>
             </div>
         </div>
@@ -426,6 +446,21 @@
                             <p class="text-[10px] text-slate-400">Métricas analíticas e evolução completa</p>
                         </div>
                         <button onclick="gerarRelatorioPDF()" class="bg-af-orange text-black font-black px-3.5 py-2 rounded-xl text-xs shadow-lg shadow-orange-500/20">📄 Imprimir PDF</button>
+                    </div>
+
+                    <div class="bg-af-card border border-af-orange/40 rounded-2xl p-4 space-y-3 shadow-xl neon-glow">
+                        <div class="flex items-center gap-2">
+                            <span class="text-base">🧠</span>
+                            <div>
+                                <h4 class="font-bold text-xs text-af-orange uppercase">Análise com IA</h4>
+                                <p class="text-[10px] text-slate-400">Monta a análise da semana ou do mês deste aluno a partir do que ele registrou</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="gerarAnaliseIA('semanal')" class="bg-af-orange text-black font-black py-2.5 rounded-xl text-xs shadow-md">📅 Semana (7 dias)</button>
+                            <button onclick="gerarAnaliseIA('mensal')" class="bg-black border border-af-orange text-af-orange font-black py-2.5 rounded-xl text-xs">📆 Mês (30 dias)</button>
+                        </div>
+                        <div id="analise-ia-saida" class="space-y-2"></div>
                     </div>
 
                     <div class="bg-af-card border border-af-orange/40 rounded-2xl p-4 space-y-3 shadow-xl neon-glow">
@@ -746,41 +781,18 @@
                 if (v) aulasHoje.push({ hora: h, nome: v.nome });
             }
 
+            const ultima = {};
+            sessoes.forEach(s => { if (!ultima[s.aluno.id]) ultima[s.aluno.id] = s.t; });
+            const atencao = ativos.map(al => ({ al, dias: ultima[al.id] ? Math.floor((agora - ultima[al.id]) / DIA) : null }))
+                .filter(x => x.dias === null || x.dias >= 7)
+                .sort((x, y) => (y.dias ?? 9999) - (x.dias ?? 9999));
+
             const kpi = (ico, cor, rot, val, sub) => `<div class="kpi-card flex items-center gap-3"><div class="kpi-ico" style="background:${cor}22;border:1px solid ${cor}66;box-shadow:0 0 14px ${cor}33">${ico}</div><div class="min-w-0"><div class="text-[10px] text-slate-400 font-bold uppercase">${rot}</div><div class="text-xl font-black text-white leading-tight">${val}</div><div class="text-[10px]">${sub}</div></div></div>`;
             document.getElementById('inicio-kpis').innerHTML =
                 kpi('👥', '#FF6A00', 'Alunos ativos', ativos.length, `<span class="text-slate-500">${alunosGlobais.length - ativos.length} arquivados</span>`) +
                 kpi('✅', '#34d399', 'Sessões (7 dias)', sem7.length, inicioDelta(sem7.length, semAnt.length) + ' <span class="text-slate-500">vs semana ant.</span>') +
-                kpi('🏋️', '#818cf8', 'Volume (7 dias)', NeonChart.fmt(vol(sem7)) + ' kg', inicioDelta(vol(sem7), vol(semAnt)) + ' <span class="text-slate-500">vs semana ant.</span>') +
+                kpi('⏸️', '#fb7185', 'Alunos parados', atencao.length, '<span class="text-slate-500">7+ dias sem treinar</span>') +
                 kpi('📅', '#fbbf24', 'Aulas hoje', aulasHoje.length, `<span class="text-slate-500">${hojeStr} • ${Math.max(0, 17 - aulasHoje.length)} livres</span>`);
-
-            // volume e sessões por semana (8 semanas, semanas terminando hoje)
-            const semanas = [];
-            for (let k = 7; k >= 0; k--) {
-                const fim = agora.getTime() - k * 7 * DIA, ini = fim - 7 * DIA;
-                const l = sessoes.filter(s => s.t.getTime() > ini && s.t.getTime() <= fim);
-                const d = new Date(ini + DIA);
-                semanas.push({ label: `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`, vol: vol(l), n: l.length });
-            }
-            document.getElementById('inicio-volume-semanal').innerHTML = NeonChart.line(semanas.map(s => ({ label: s.label, value: s.vol })), { titulo: 'Volume por semana (todos os alunos)', unit: 'kg', h: 185 });
-            document.getElementById('inicio-sessoes-semanal').innerHTML = NeonChart.bars(semanas.map(s => ({ label: s.label, value: s.n })), { titulo: 'Sessões por semana', unit: 'sessões', h: 185, fmtY: v => String(Math.round(v)) });
-
-            // séries por grupamento nos últimos 30 dias
-            const g = {};
-            sessoes.filter(s => agora - s.t < 30 * DIA).forEach(s => {
-                const mapa = {};
-                (s.aluno.treinos || []).forEach(t => (t.exercicios || []).forEach(e => { if (e.musculo) mapa[(e.nome || '').toLowerCase()] = e.musculo; }));
-                (s.h.exerciciosRealizados || []).forEach(e => {
-                    const m = e.musculo || mapa[(e.nome || '').toLowerCase()] || 'Outros';
-                    g[m] = (g[m] || 0) + (e.series || []).length;
-                });
-            });
-            const cores = ['#FF6A00', '#34d399', '#818cf8', '#fbbf24', '#fb7185', '#38bdf8'];
-            const ord = Object.entries(g).sort((x, y) => y[1] - x[1]);
-            const top = ord.slice(0, 5).map(([label, value], i) => ({ label, value, cor: cores[i] }));
-            const resto = ord.slice(5).reduce((s, x) => s + x[1], 0);
-            if (resto) top.push({ label: 'Outros grupos', value: resto, cor: cores[5] });
-            const totalSeries = ord.reduce((s, x) => s + x[1], 0);
-            document.getElementById('inicio-grupos').innerHTML = NeonChart.donut(top, { titulo: 'Séries por grupamento (30 dias)', centro: String(totalSeries), sub: 'séries' });
 
             // agenda de hoje
             const agendaHtml = aulasHoje.length
@@ -789,19 +801,14 @@
             document.getElementById('inicio-agenda').innerHTML = inicioPainel(`Agenda de hoje (${hojeStr})`, `<div class="space-y-1.5 max-h-60 overflow-y-auto">${agendaHtml}</div>`, `<button onclick="mudarAbaPrincipalAdmin('agenda')" class="text-[10px] text-af-orange font-bold">Ver agenda →</button>`);
 
             // alunos que precisam de atenção (sem treinar há 7+ dias)
-            const ultima = {};
-            sessoes.forEach(s => { if (!ultima[s.aluno.id]) ultima[s.aluno.id] = s.t; });
-            const atencao = ativos.map(al => ({ al, dias: ultima[al.id] ? Math.floor((agora - ultima[al.id]) / DIA) : null }))
-                .filter(x => x.dias === null || x.dias >= 7)
-                .sort((x, y) => (y.dias ?? 9999) - (x.dias ?? 9999));
             const atHtml = atencao.length
-                ? `<div class="grid gap-2 lg:grid-cols-2">${atencao.map(x => `<div onclick="mudarAbaPrincipalAdmin('alunos'); abrirPainelPorId('${x.al.id}')" class="bg-black/60 border border-slate-800 hover:border-af-orange/60 rounded-xl p-3 flex justify-between items-center cursor-pointer"><span class="font-bold text-sm text-slate-200">${escapeHtml(x.al.nome)}</span><span class="text-[11px] font-bold ${x.dias === null ? 'text-slate-400' : 'text-rose-400'}">${x.dias === null ? 'nunca treinou' : x.dias + ' dias sem treinar'}</span></div>`).join('')}</div>`
+                ? `<div class="grid gap-2">${atencao.map(x => `<div onclick="mudarAbaPrincipalAdmin('alunos'); abrirPainelPorId('${x.al.id}')" class="bg-black/60 border border-slate-800 hover:border-af-orange/60 rounded-xl p-3 flex justify-between items-center cursor-pointer"><span class="font-bold text-sm text-slate-200" style="overflow-wrap:anywhere">${escapeHtml(x.al.nome)}</span><span class="text-[11px] font-bold shrink-0 ml-2 ${x.dias === null ? 'text-slate-400' : 'text-rose-400'}">${x.dias === null ? 'nunca treinou' : x.dias + ' dias sem treinar'}</span></div>`).join('')}</div>`
                 : '<p class="text-[11px] text-emerald-400 text-center py-4 font-bold">Todo mundo treinou nos últimos 7 dias. 👏</p>';
             document.getElementById('inicio-atencao').innerHTML = inicioPainel('Atenção: alunos parados', atHtml, `<span class="text-[10px] text-slate-500">${atencao.length} de ${ativos.length}</span>`);
 
             // atividade recente
             const rec = sessoes.slice(0, 8);
-            const recHtml = rec.length ? `<div class="grid gap-2 lg:grid-cols-2">${rec.map(s => `<div onclick="mudarAbaPrincipalAdmin('alunos'); abrirPainelPorId('${s.aluno.id}')" class="bg-black/60 border border-slate-800 hover:border-af-orange/60 rounded-xl p-3 flex items-center gap-3 cursor-pointer"><div class="w-9 h-9 shrink-0 rounded-xl bg-black text-af-orange font-black flex items-center justify-center text-xs border border-slate-800">${escapeHtml(s.aluno.nome.substring(0, 2).toUpperCase())}</div><div class="flex-1 min-w-0"><div class="text-xs font-bold text-slate-200 truncate">${escapeHtml(s.aluno.nome)} <span class="text-slate-500 font-normal">finalizou</span> ${escapeHtml(s.h.treinoNome || 'um treino')}</div><div class="text-[10px] text-slate-500">${NeonChart.fmt(s.h.volume || 0)} kg • ${s.h.qtdSeriesValidadas || 0} séries</div></div><span class="text-[10px] text-slate-400 shrink-0">${inicioHaQuanto(s.t)}</span></div>`).join('')}</div>` : '<p class="text-[11px] text-slate-500 text-center py-6">Nenhuma sessão registrada ainda.</p>';
+            const recHtml = rec.length ? `<div class="grid gap-2 lg:grid-cols-2">${rec.map(s => `<div onclick="mudarAbaPrincipalAdmin('alunos'); abrirPainelPorId('${s.aluno.id}')" class="bg-black/60 border border-slate-800 hover:border-af-orange/60 rounded-xl p-3 flex items-start gap-3 cursor-pointer"><div class="w-9 h-9 shrink-0 rounded-xl bg-black text-af-orange font-black flex items-center justify-center text-xs border border-slate-800">${escapeHtml(s.aluno.nome.substring(0, 2).toUpperCase())}</div><div class="flex-1 min-w-0" style="overflow-wrap:anywhere"><div class="text-xs font-bold text-slate-100">${escapeHtml(s.aluno.nome)}</div><div class="text-[11px] text-slate-400 leading-snug">finalizou <span class="text-slate-200 font-semibold">${escapeHtml(s.h.treinoNome || 'um treino')}</span></div><div class="text-[10px] text-slate-500 mt-0.5">${NeonChart.fmt(s.h.volume || 0)} kg • ${s.h.qtdSeriesValidadas || 0} séries • ${inicioHaQuanto(s.t)}</div></div></div>`).join('')}</div>` : '<p class="text-[11px] text-slate-500 text-center py-6">Nenhuma sessão registrada ainda.</p>';
             document.getElementById('inicio-atividade').innerHTML = inicioPainel('Atividade recente', recHtml);
         }
 
@@ -1033,7 +1040,7 @@
 
         function calcularEvolucaoRecenteAdmin() {
             const idsTreinosAtivos = new Set(treinosDoAluno.map(t => t.id));
-            const historicoValido = historicoTreinosAluno.filter(h => !h.treinoId || idsTreinosAtivos.has(h.treinoId));
+            const historicoValido = historicoTreinosAluno.filter(h => !h.treinoId || idsTreinosAtivos.has(h.treinoId)).slice().sort((x, y) => new Date(x.data) - new Date(y.data));
 
             let mais = 0, mesmo = 0, menos = 0;
             const evolucaoExerciciosMap = {};
@@ -1409,7 +1416,7 @@
 
         function atualizarRelatoriosAdmin() {
             const idsTreinosAtivos = new Set(treinosDoAluno.map(t => t.id));
-            const historicoValido = historicoTreinosAluno.filter(h => !h.treinoId || idsTreinosAtivos.has(h.treinoId));
+            const historicoValido = historicoTreinosAluno.filter(h => !h.treinoId || idsTreinosAtivos.has(h.treinoId)).slice().sort((x, y) => new Date(x.data) - new Date(y.data));
 
             const mapaMusculo = {};
             treinosDoAluno.forEach(t => (t.exercicios || []).forEach(e => { if (e.musculo) mapaMusculo[e.nome.toLowerCase()] = e.musculo; }));
@@ -1437,10 +1444,11 @@
                 NeonChart.somarDia(porDia, h);
                 (h.exerciciosRealizados || []).forEach(exR => {
                     const musculo = exR.musculo || mapaMusculo[(exR.nome || '').toLowerCase()] || 'Outros';
-                    const g = grupos[musculo] || (grupos[musculo] = { volume: 0, series: 0, exercicios: {} });
+                    const g = grupos[musculo] || (grupos[musculo] = { volume: 0, series: 0, exercicios: {}, dias: {} });
                     const volEx = (typeof exR.volume === 'number') ? exR.volume : (exR.series || []).reduce((s, x) => s + (x.carga || 0) * (x.reps || 0), 0);
                     g.volume += volEx;
                     g.series += (exR.series || []).length;
+                    NeonChart.somarDiaVal(g.dias, h.data, volEx, (exR.series || []).length);
 
                     const exNome = exR.nome;
                     if (!g.exercicios[exNome]) g.exercicios[exNome] = [];
@@ -1492,12 +1500,15 @@
                                 ${MUSCULOS_SEM_CARGA.includes(grupoMuscularFiltroAtivo) ? '' : `<div class="flex justify-between text-slate-300"><span>Volume do Grupo:</span><strong class="text-af-orange">${gData.volume.toLocaleString('pt-BR')} kg</strong></div>`}
                                 <div class="flex justify-between text-slate-300"><span>Séries Totais:</span><strong class="text-white">${gData.series} séries</strong></div>
                             </div>
+                            ${MUSCULOS_SEM_CARGA.includes(grupoMuscularFiltroAtivo) ? '' : NeonChart.line(NeonChart.serieDias(gData.dias, 'vol'), { titulo: 'Volume do grupamento por dia', unit: 'kg', h: 140 })}
+                            ${NeonChart.bars(NeonChart.serieDias(gData.dias, 'series'), { titulo: 'Séries do grupamento por dia', unit: 'séries', h: 130, fmtY: v => String(Math.round(v)) })}
                             <h4 class="text-[10px] uppercase font-bold text-slate-400">Progresso por Exercício neste Grupamento:</h4>
                             ${exerciciosDoGrupo.map(exNome => {
                                 const registros = gData.exercicios[exNome];
                                 return `
                                     <div class="bg-black/60 border border-slate-800 p-3 rounded-xl space-y-2">
                                         <span class="font-bold text-xs text-white block">${escapeHtml(exNome)}</span>
+                                        ${NeonChart.resumoExercicio(registros)}
                                         ${(() => { const se = NeonChart.serieExercicio(registros); return NeonChart.line(se.pts, { titulo: se.unit === 'kg' ? 'Carga máxima por sessão' : 'Melhor marca por sessão', unit: se.unit, fmtY: se.fmtY, h: 130 }); })()}
                                         <div class="space-y-1.5">
                                             ${registros.map(r => `
@@ -1514,6 +1525,7 @@
                     `;
                 } else {
                     container.innerHTML = `
+                        ${NeonChart.donut(nomesGrupos.map((n, i) => ({ label: n, value: grupos[n].series, cor: NeonChart.paleta[i % NeonChart.paleta.length] })), { titulo: 'Distribuição de séries no período', centro: String(totalSeriesGrupos(grupos)), sub: 'séries' })}
                         ${NeonChart.hbars(nomesGrupos.map(n => ({ label: n, value: grupos[n].series })), { titulo: 'Séries por grupamento', unit: 'séries' })}
                         ${NeonChart.hbars(nomesGrupos.filter(n => !MUSCULOS_SEM_CARGA.includes(n)).map(n => ({ label: n, value: grupos[n].volume })), { titulo: 'Volume por grupamento', unit: 'kg' })}
                         <p class="text-[10px] text-slate-400">Toque em um grupamento para ver o progresso detalhado dos exercícios:</p>
@@ -1529,6 +1541,8 @@
                 }
             }
         }
+
+        function totalSeriesGrupos(g) { return Object.values(g).reduce((s, x) => s + x.series, 0); }
 
         function verificarRegrasMusculo() {
             const musculo = document.getElementById('select-musculo-ex').value;
@@ -1684,6 +1698,121 @@
         function copiarLinkDirect(link) {
             navigator.clipboard.writeText(link);
             alert('Link do aluno copiado!');
+        }
+
+        // ===== ANÁLISE COM IA (semana / mês) =====
+        // Para gerar o texto direto no app, publique a Edge Function (arquivo analise-ia-edge-function.ts) e cole a URL aqui.
+        const ANALISE_IA_URL = '';
+        let ultimoPromptAnalise = '';
+
+        function rpeNum(r) { const n = parseFloat(String(r ?? '').replace(',', '.')); return isFinite(n) ? n : null; }
+
+        function agruparPorExercicio(lista) {
+            const m = {};
+            lista.forEach(h => (h.exerciciosRealizados || []).forEach(e => {
+                const sem = e.semCarga === true || MUSCULOS_SEM_CARGA.includes(e.musculo);
+                const o = m[e.nome] || (m[e.nome] = { musculo: e.musculo || 'Outros', sem, sess: 0, series: 0, vol: 0, ini: null, fim: 0, max: 0, reps: [], rpes: [], tempo: 0 });
+                const ss = e.series || [];
+                const cm = Math.max(...ss.map(s => s.carga || 0), 0);
+                o.sess++; o.series += ss.length;
+                o.vol += (typeof e.volume === 'number') ? e.volume : ss.reduce((acc, s) => acc + (s.carga || 0) * (s.reps || 0), 0);
+                if (o.ini === null) o.ini = cm;
+                o.fim = cm; o.max = Math.max(o.max, cm);
+                ss.forEach(s => { if (s.reps) o.reps.push(s.reps); const r = rpeNum(s.rpe); if (r !== null) o.rpes.push(r); if (s.tempoSeg) o.tempo = Math.max(o.tempo, s.tempoSeg); });
+            }));
+            return m;
+        }
+
+        function montarPromptAnalise(periodo) {
+            const agora = new Date(), DIA = 86400000, dias = periodo === 'semanal' ? 7 : 30;
+            const ids = new Set(treinosDoAluno.map(t => t.id));
+            const val = historicoTreinosAluno.filter(h => h && h.data && !isNaN(new Date(h.data)) && (!h.treinoId || ids.has(h.treinoId))).sort((x, y) => new Date(x.data) - new Date(y.data));
+            const atual = val.filter(h => agora - new Date(h.data) < dias * DIA);
+            const ant = val.filter(h => { const d = agora - new Date(h.data); return d >= dias * DIA && d < 2 * dias * DIA; });
+            if (!atual.length) return null;
+            const A = agruparPorExercicio(atual), P = agruparPorExercicio(ant);
+            const meta = {};
+            treinosDoAluno.forEach(t => (t.exercicios || []).forEach(e => { meta[e.nome] = [...new Set((e.seriesConfig || []).map(s => s.repsSugeridas).filter(Boolean))].join(' / '); }));
+            const f = n => NeonChart.fmt(n);
+            const media = arr => arr.length ? f(arr.reduce((s, x) => s + x, 0) / arr.length) : 'n/d';
+            const faixa = arr => arr.length ? (Math.min(...arr) === Math.max(...arr) ? String(arr[0]) : `${Math.min(...arr)}-${Math.max(...arr)}`) : 'n/d';
+
+            const porGrupo = {};
+            Object.entries(A).forEach(([nome, o]) => { (porGrupo[o.musculo] = porGrupo[o.musculo] || []).push([nome, o]); });
+            let txtGrupos = '';
+            Object.entries(porGrupo).forEach(([musc, lista]) => {
+                const serA = lista.reduce((s, [, o]) => s + o.series, 0);
+                const serP = Object.values(P).filter(o => o.musculo === musc).reduce((s, o) => s + o.series, 0);
+                txtGrupos += `\n## ${musc} — ${serA} séries (período anterior: ${serP})\n`;
+                lista.forEach(([nome, o]) => {
+                    const p = P[nome];
+                    let l = `- ${nome}: ${o.sess} sessão(ões), ${o.series} séries; `;
+                    l += o.sem ? (o.tempo > 0 && !o.reps.length ? `melhor tempo ${o.tempo}s; ` : `reps ${faixa(o.reps)}; `) : `carga máx ${f(o.ini)}→${f(o.fim)} kg (pico ${f(o.max)}); reps ${faixa(o.reps)}; volume ${f(o.vol)} kg; `;
+                    l += `RPE médio ${media(o.rpes)}`;
+                    if (meta[nome]) l += `; meta de reps prescrita: ${meta[nome]}`;
+                    l += p ? ` | período anterior: ${p.sem ? `reps ${faixa(p.reps)}` : `carga máx ${f(p.max)} kg, reps ${faixa(p.reps)}, volume ${f(p.vol)} kg`}, RPE médio ${media(p.rpes)}` : ' | período anterior: sem registro';
+                    txtGrupos += l + '\n';
+                });
+            });
+
+            const sessoes = atual.map(h => `- ${new Date(h.data).toLocaleDateString('pt-BR')} ${h.treinoNome || ''}: ${f(h.volume || 0)} kg, ${h.qtdSeriesValidadas || 0} séries` + (h.energiaInicio ? `, energia: ${h.energiaInicio}` : '') + (h.sensacaoFim ? `, sensação final: ${h.sensacaoFim}` : '') + (h.comentarioAtleta ? `, comentário do aluno: "${String(h.comentarioAtleta).slice(0, 200)}"` : '')).join('\n');
+            const rotulo = periodo === 'semanal' ? 'SEMANA (últimos 7 dias)' : 'MÊS (últimos 30 dias)';
+
+            return `Você está me ajudando, como personal trainer (formação em Educação Física, foco em correção postural, mobilidade e execução), a analisar o aluno ${alunoSelecionado.nome}. Período: ${rotulo}, comparado ao período anterior de mesma duração.
+
+REGRAS: use só os dados abaixo; não invente números. O app NÃO registra amplitude nem cadência: não opine sobre elas como se tivesse dado; quando os padrões sugerirem problema (ex.: reps caindo com a mesma carga, RPE subindo, carga estagnada), diga em quais exercícios eu devo observar amplitude/cadência presencialmente. Seja direto, sem elogio genérico. Se os dados forem insuficientes para decidir algo, diga isso.
+
+ENTREGUE:
+1) Resumo geral do período (frequência, volume, tendência).
+2) Análise por grupamento (séries e volume vs. período anterior; equilíbrio entre grupos).
+3) Por exercício, uma decisão clara: AUMENTAR carga / MANTER / REDUZIR carga para sustentar as repetições / REVISAR execução, sempre com o motivo em números (reps vs. meta prescrita, RPE, evolução de carga).
+4) Pontos de atenção (queda de desempenho, RPE alto, energia ou sensação ruim, falta de frequência).
+5) Plano objetivo para o próximo ${periodo === 'semanal' ? 'ciclo semanal' : 'mês'}.
+
+SESSÕES NO PERÍODO:
+${sessoes}
+
+DADOS POR GRUPAMENTO E EXERCÍCIO:${txtGrupos}`;
+        }
+
+        function mdSimples(t) {
+            return escapeHtml(t)
+                .replace(/^###? (.*)$/gm, '<h5 class="font-black text-af-orange text-xs uppercase mt-3">$1</h5>')
+                .replace(/^## (.*)$/gm, '<h5 class="font-black text-af-orange text-xs uppercase mt-3">$1</h5>')
+                .replace(/\*\*(.+?)\*\*/g, '<strong class="text-white">$1</strong>')
+                .replace(/^[-*] (.*)$/gm, '<div class="pl-3">• $1</div>')
+                .replace(/\n/g, '<br>');
+        }
+
+        function copiarPromptAnalise() {
+            navigator.clipboard.writeText(ultimoPromptAnalise).then(() => alert('Análise copiada! Cole no Claude ou no ChatGPT.'));
+        }
+
+        async function gerarAnaliseIA(periodo) {
+            if (!alunoSelecionado) return;
+            const saida = document.getElementById('analise-ia-saida');
+            const prompt = montarPromptAnalise(periodo);
+            if (!prompt) { saida.innerHTML = '<p class="text-[11px] text-slate-500 text-center py-3">Esse aluno não tem sessões nesse período para analisar.</p>'; return; }
+            ultimoPromptAnalise = prompt;
+            const blocoPrompt = `
+                <details class="bg-black/40 rounded-xl border border-slate-800">
+                    <summary class="cursor-pointer text-[10px] uppercase font-bold text-slate-400 p-2.5">Ver dados enviados à IA</summary>
+                    <textarea readonly class="w-full h-48 bg-black text-slate-300 text-[11px] p-2.5 rounded-b-xl border-0" style="font-size:11px !important">${escapeHtml(prompt)}</textarea>
+                </details>
+                <button onclick="copiarPromptAnalise()" class="w-full bg-black border border-slate-700 text-slate-200 font-bold py-2 rounded-xl text-xs">📋 Copiar análise para colar no Claude / ChatGPT</button>`;
+            if (!ANALISE_IA_URL) {
+                saida.innerHTML = `<p class="text-[11px] text-slate-400">Os dados do aluno já estão organizados com as instruções. Copie e cole no Claude ou no ChatGPT para receber a análise.</p>${blocoPrompt}`;
+                return;
+            }
+            saida.innerHTML = '<p class="text-xs text-af-orange text-center py-4 animate-pulse font-bold">Gerando análise...</p>';
+            try {
+                const r = await fetch(ANALISE_IA_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_KEY, 'apikey': SUPABASE_KEY }, body: JSON.stringify({ prompt }) });
+                const j = await r.json();
+                if (!r.ok || !j.texto) throw new Error(j.erro || 'Falha ao gerar a análise');
+                saida.innerHTML = `<div class="bg-black/60 border border-slate-800 rounded-xl p-3 text-xs text-slate-200 leading-relaxed">${mdSimples(j.texto)}</div>${blocoPrompt}`;
+            } catch (e) {
+                saida.innerHTML = `<p class="text-[11px] text-rose-400">Não consegui gerar pela IA (${escapeHtml(e.message)}). Você ainda pode copiar os dados:</p>${blocoPrompt}`;
+            }
         }
 
         function gerarRelatorioPDF() { window.print(); }
