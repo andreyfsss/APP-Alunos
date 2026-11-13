@@ -881,7 +881,7 @@
             if (aba === 'agenda') { carregarAgenda().then(renderizarGradeAgenda); }
         }
 
-        // ===== DASHBOARD INÍCIO =====
+        // ===== DASHBOARD INÍCIO (usa alunosGlobais, que já traz historico de todos) =====
         function inicioSessoes() {
             const out = [];
             alunosGlobais.filter(al => !al.arquivado).forEach(al => {
@@ -921,6 +921,7 @@
             const ativos = alunosGlobais.filter(a => !a.arquivado);
             const sem7 = sessoes.filter(s => agora - s.t < 7 * DIA && s.t <= agora);
             const semAnt = sessoes.filter(s => agora - s.t >= 7 * DIA && agora - s.t < 14 * DIA);
+            const vol = l => l.reduce((s, x) => s + (x.h.volume || 0), 0);
 
             const dias = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
             const hojeStr = dias[agora.getDay()];
@@ -943,6 +944,7 @@
                 kpi('⏸️', '#fb7185', 'Alunos parados', atencao.length, '<span class="text-slate-500">7+ dias sem treinar</span>') +
                 kpi('📅', '#fbbf24', 'Aulas hoje', aulasHoje.length, `<span class="text-slate-500">${hojeStr} • ${Math.max(0, 17 - aulasHoje.length)} livres</span>`);
 
+            // anéis de metas
             const treinaram = ativos.filter(al => ultima[al.id] && agora - ultima[al.id] < 7 * DIA).length;
             const comFicha = ativos.filter(al => al.perfil && al.perfil.sessoesSemana > 0);
             const esperado = comFicha.reduce((s, al) => s + al.perfil.sessoesSemana, 0);
@@ -951,16 +953,19 @@
             const aulasFeitas = aulasHoje.filter(x => x.hora <= hora).length;
             document.getElementById('inicio-aneis').innerHTML = inicioPainel('Metas da semana e do dia', `<div class="grid grid-cols-3 gap-2">${NeonChart.ring(treinaram, ativos.length, { label: 'Adesão', sub: `${treinaram} de ${ativos.length} alunos treinaram`, cor: '#34d399', centro: ativos.length ? undefined : '—' })}${NeonChart.ring(Math.min(feitas, esperado), esperado, { label: 'Sessões combinadas', sub: esperado ? `${feitas} de ${esperado} na semana` : 'preencha nas fichas', cor: '#FF6A00', centro: esperado ? undefined : '—' })}${NeonChart.ring(aulasFeitas, aulasHoje.length, { label: 'Aulas de hoje', sub: aulasHoje.length ? `${aulasFeitas} de ${aulasHoje.length} já passaram` : 'sem aulas hoje', cor: '#818cf8', centro: aulasHoje.length ? undefined : '—' })}</div>`);
 
+            // agenda de hoje
             const agendaHtml = aulasHoje.length
                 ? aulasHoje.map(x => `<div class="flex items-center gap-3 text-xs ${x.hora < hora ? 'opacity-40' : ''}"><span class="font-black text-af-orange w-12">${String(x.hora).padStart(2, '0')}:00</span><span class="flex-1 bg-black/60 border border-slate-800 rounded-xl px-3 py-2 font-bold text-slate-200">${escapeHtml(x.nome)}</span></div>`).join('')
                 : '<p class="text-[11px] text-slate-500 text-center py-6">Nenhuma aula marcada para hoje.</p>';
             document.getElementById('inicio-agenda').innerHTML = inicioPainel(`Agenda de hoje (${hojeStr})`, `<div class="space-y-1.5 max-h-60 overflow-y-auto">${agendaHtml}</div>`, `<button onclick="mudarAbaPrincipalAdmin('agenda')" class="text-[10px] text-af-orange font-bold">Ver agenda →</button>`);
 
+            // alunos que precisam de atenção (sem treinar há 7+ dias)
             const atHtml = atencao.length
                 ? `<div class="grid gap-2">${atencao.map(x => `<div onclick="mudarAbaPrincipalAdmin('alunos'); abrirPainelPorId('${x.al.id}')" class="bg-black/60 border border-slate-800 hover:border-af-orange/60 rounded-xl p-3 flex justify-between items-center cursor-pointer"><span class="font-bold text-sm text-slate-200" style="overflow-wrap:anywhere">${escapeHtml(x.al.nome)}</span><span class="text-[11px] font-bold shrink-0 ml-2 ${x.dias === null ? 'text-slate-400' : 'text-rose-400'}">${x.dias === null ? 'nunca treinou' : x.dias + ' dias sem treinar'}</span></div>`).join('')}</div>`
                 : '<p class="text-[11px] text-emerald-400 text-center py-4 font-bold">Todo mundo treinou nos últimos 7 dias. 👏</p>';
             document.getElementById('inicio-atencao').innerHTML = inicioPainel('Atenção: alunos parados', atHtml, `<span class="text-[10px] text-slate-500">${atencao.length} de ${ativos.length}</span>`);
 
+            // renovações próximas (campo opcional da ficha)
             const hoje0 = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
             const renov = ativos.filter(al => al.perfil && al.perfil.renovacao).map(al => {
                 const [y, m, d] = String(al.perfil.renovacao).split('-').map(Number);
@@ -968,6 +973,7 @@
             }).filter(x => x.dias <= 15).sort((x, y) => x.dias - y.dias);
             document.getElementById('inicio-renovacoes').innerHTML = renov.length ? inicioPainel('Renovações próximas', `<div class="grid gap-2 lg:grid-cols-2">${renov.map(x => `<div onclick="mudarAbaPrincipalAdmin('alunos'); abrirPainelPorId('${x.al.id}')" class="bg-black/60 border border-slate-800 hover:border-af-orange/60 rounded-xl p-3 flex justify-between items-center gap-2 cursor-pointer"><span class="font-bold text-sm text-slate-200" style="overflow-wrap:anywhere">${escapeHtml(x.al.nome)}</span><span class="text-[11px] font-bold shrink-0 ${x.dias < 0 ? 'text-rose-400' : x.dias <= 5 ? 'text-amber-300' : 'text-slate-300'}">${x.dias < 0 ? 'venceu há ' + Math.abs(x.dias) + ' d' : x.dias === 0 ? 'renova hoje' : 'renova em ' + x.dias + ' d'}</span></div>`).join('')}</div>`) : '';
 
+            // atividade recente
             const rec = sessoes.slice(0, 8);
             const recHtml = rec.length ? `<div class="grid gap-2 lg:grid-cols-2">${rec.map(s => `<div onclick="mudarAbaPrincipalAdmin('alunos'); abrirPainelPorId('${s.aluno.id}')" class="bg-black/60 border border-slate-800 hover:border-af-orange/60 rounded-xl p-3 flex items-start gap-3 cursor-pointer"><div class="w-9 h-9 shrink-0 rounded-xl bg-black text-af-orange font-black flex items-center justify-center text-xs border border-slate-800">${escapeHtml(s.aluno.nome.substring(0, 2).toUpperCase())}</div><div class="flex-1 min-w-0" style="overflow-wrap:anywhere"><div class="text-xs font-bold text-slate-100">${escapeHtml(s.aluno.nome)}</div><div class="text-[11px] text-slate-400 leading-snug">finalizou <span class="text-slate-200 font-semibold">${escapeHtml(s.h.treinoNome || 'um treino')}</span></div><div class="text-[10px] text-slate-500 mt-0.5">${NeonChart.fmt(s.h.volume || 0)} kg • ${s.h.qtdSeriesValidadas || 0} séries • ${inicioHaQuanto(s.t)}</div></div></div>`).join('')}</div>` : '<p class="text-[11px] text-slate-500 text-center py-6">Nenhuma sessão registrada ainda.</p>';
             document.getElementById('inicio-atividade').innerHTML = inicioPainel('Atividade recente', recHtml);
@@ -1000,7 +1006,9 @@
             document.getElementById('resumo-total-semana').innerText = totalSemana;
         }
 
-        function escapeHtml(t) { return String(t ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+        function escapeHtml(t) {
+            return String(t ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
 
         function abrirPainelPorId(id) {
             const aluno = alunosGlobais.find(a => String(a.id) === String(id));
@@ -1012,8 +1020,12 @@
         const AGENDA_LS_KEY = 'afpro_agenda_v1';
         let agendaNoServidor = true;
 
-        function lerAgendaLocal() { try { return JSON.parse(localStorage.getItem(AGENDA_LS_KEY) || '{}'); } catch (e) { return {}; } }
-        function gravarAgendaLocal() { try { localStorage.setItem(AGENDA_LS_KEY, JSON.stringify(agendaDados)); } catch (e) {} }
+        function lerAgendaLocal() {
+            try { return JSON.parse(localStorage.getItem(AGENDA_LS_KEY) || '{}'); } catch (e) { return {}; }
+        }
+        function gravarAgendaLocal() {
+            try { localStorage.setItem(AGENDA_LS_KEY, JSON.stringify(agendaDados)); } catch (e) {}
+        }
 
         async function carregarAgenda() {
             const { data, error } = await supabaseClient.from('agenda').select('slot, aluno_id, aluno_nome');
@@ -1100,7 +1112,1270 @@
             } catch (err) {}
         }
 
-        // Demais funções do painel original mantidas intactas
+        // ===== FICHA DO ALUNO (perfil) =====
+        const SQL_PERFIL = "alter table alunos add column if not exists perfil jsonb default '{}'::jsonb;";
+        const CAMPOS_NUM = ['idade', 'pesoInicial', 'altura', 'pesoAlvo', 'sessoesSemana', 'valorPago'];
+        const CAMPOS_PERFIL = ['sexo', 'nivel', 'modalidade', 'telefone', 'objetivo', 'proximoObjetivo', 'nascimento', 'idade', 'pesoInicial', 'altura', 'pesoAlvo', 'sessoesSemana', 'valorPago', 'inicio', 'renovacao'];
+
+        function formPerfilHTML(p) {
+            const inp = 'w-full bg-black border border-slate-800 rounded-xl px-3 py-2.5 text-white text-xs focus:border-af-orange focus:outline-none';
+            const lab = 'block text-[10px] text-slate-400 uppercase font-bold mb-1';
+            const sel = (id, ops) => `<select id="pf-${p}-${id}" class="${inp}">${ops.map(o => `<option value="${o[0]}">${o[1]}</option>`).join('')}</select>`;
+            const inpt = (id, tipo, ph, extra) => `<input type="${tipo}" id="pf-${p}-${id}" placeholder="${ph || ''}" ${extra || ''} class="${inp}">`;
+            const c = (label, html) => `<div><label class="${lab}">${label}</label>${html}</div>`;
+            const titulo = t => `<h4 class="text-[10px] font-black text-af-orange uppercase tracking-wider pt-3 pb-1.5">${t}</h4>`;
+            return `
+                ${titulo('Perfil')}
+                <div class="grid grid-cols-2 gap-2.5">
+                    ${c('Sexo', sel('sexo', [['', 'Não informado'], ['Masculino', 'Masculino'], ['Feminino', 'Feminino']]))}
+                    ${c('Nível', sel('nivel', [['', 'Não informado'], ['iniciante', 'Iniciante'], ['intermediario', 'Intermediário'], ['avancado', 'Avançado']]))}
+                    ${c('Modalidade', sel('modalidade', [['', 'Não informado'], ['Presencial', 'Presencial'], ['Online', 'Online']]))}
+                    ${c('Telefone', inpt('telefone', 'tel', '(19) 9....-....', 'inputmode="tel"'))}
+                </div>
+                ${titulo('Objetivos')}
+                <div class="space-y-2.5">
+                    ${c('Objetivo', inpt('objetivo', 'text', 'Ex: emagrecimento, definição, perder barriga', `list="dl-obj-${p}"`))}
+                    <datalist id="dl-obj-${p}"><option value="Emagrecimento"><option value="Definição"><option value="Hipertrofia"><option value="Perder barriga"><option value="Ganhar abdômen"><option value="Condicionamento"><option value="Saúde e mobilidade"><option value="Correção postural"></datalist>
+                    ${c('Próximo objetivo', inpt('proximoObjetivo', 'text', 'Opcional'))}
+                </div>
+                ${titulo('Corpo')}
+                <div class="grid grid-cols-2 gap-2.5">
+                    ${c('Nascimento', inpt('nascimento', 'date', '', `onchange="calcIdadePerfil('${p}')"`))}
+                    ${c('Idade', inpt('idade', 'number', 'anos', 'inputmode="numeric" min="0"'))}
+                    ${c('Peso inicial (kg)', inpt('pesoInicial', 'number', '', 'inputmode="decimal" step="0.1" min="0"'))}
+                    ${c('Altura (cm)', inpt('altura', 'number', '', 'inputmode="numeric" min="0"'))}
+                    ${c('Peso alvo (kg)', inpt('pesoAlvo', 'number', '', 'inputmode="decimal" step="0.1" min="0"'))}
+                </div>
+                ${titulo('Acompanhamento')}
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div>${c('Sessões por semana', inpt('sessoesSemana', 'number', 'Ex: 3', `inputmode="numeric" min="0" max="14" oninput="hintMesPerfil('${p}')"`))}<p id="pf-${p}-mes" class="text-[10px] text-af-orange mt-1 font-bold"></p></div>
+                    ${c('Valor pago (R$)', inpt('valorPago', 'number', '', 'inputmode="decimal" step="0.01" min="0"'))}
+                    ${c('Início do acompanhamento', inpt('inicio', 'date'))}
+                    ${c('Renovação', inpt('renovacao', 'date'))}
+                </div>`;
+        }
+        function calcIdadePerfil(p) {
+            const v = document.getElementById(`pf-${p}-nascimento`).value;
+            if (!v) return;
+            const [y, m, d] = v.split('-').map(Number), h = new Date();
+            let idade = h.getFullYear() - y;
+            if (h.getMonth() + 1 < m || (h.getMonth() + 1 === m && h.getDate() < d)) idade--;
+            if (idade >= 0 && idade < 120) document.getElementById(`pf-${p}-idade`).value = idade;
+        }
+        function hintMesPerfil(p) {
+            const n = parseFloat(document.getElementById(`pf-${p}-sessoesSemana`).value);
+            document.getElementById(`pf-${p}-mes`).innerText = n > 0 ? `≈ ${Math.round(n * 52 / 12)} sessões por mês` : '';
+        }
+        function lerPerfil(p) {
+            const o = {};
+            CAMPOS_PERFIL.forEach(k => {
+                const el = document.getElementById(`pf-${p}-${k}`);
+                if (!el) return;
+                let v = el.value.trim();
+                if (v === '') return;
+                if (CAMPOS_NUM.includes(k)) { v = parseFloat(String(v).replace(',', '.')); if (!isFinite(v)) return; }
+                o[k] = v;
+            });
+            return o;
+        }
+        function preencherPerfil(p, perfil) {
+            perfil = perfil || {};
+            CAMPOS_PERFIL.forEach(k => { const el = document.getElementById(`pf-${p}-${k}`); if (el) el.value = perfil[k] ?? ''; });
+            hintMesPerfil(p);
+        }
+        function perfilAtual() {
+            if (!alunoSelecionado) return {};
+            const al = alunosGlobais.find(x => String(x.id) === String(alunoSelecionado.id));
+            return (al && al.perfil && typeof al.perfil === 'object') ? al.perfil : {};
+        }
+        function montarFormsPerfil() {
+            document.getElementById('form-perfil-novo').innerHTML = formPerfilHTML('novo');
+            document.getElementById('form-perfil-edit').innerHTML = formPerfilHTML('edit');
+        }
+        function resumoFicha(pf) {
+            const nv = { iniciante: 'Iniciante', intermediario: 'Intermediário', avancado: 'Avançado' }[pf.nivel];
+            const partes = [pf.objetivo, nv, pf.modalidade, pf.sessoesSemana ? `${pf.sessoesSemana}×/sem` : ''].filter(Boolean);
+            return '📋 Ficha do aluno' + (partes.length ? ' — ' + partes.join(' • ') : ' — toque para completar');
+        }
+        function mostrarFichaAluno() {
+            const pf = perfilAtual();
+            preencherPerfil('edit', pf);
+            document.getElementById('ficha-resumo').innerText = resumoFicha(pf);
+        }
+        function avisoPerfilSQL(msg) {
+            if (/perfil/i.test(msg || '')) alert('Falta criar a coluna "perfil" no Supabase.\n\nNo Supabase abra SQL Editor, cole e rode:\n\n' + SQL_PERFIL + '\n\nDepois tente de novo.');
+            else alert('Erro: ' + msg);
+        }
+        async function salvarPerfilAluno(perfil) {
+            if (!alunoSelecionado) return false;
+            const { data, error } = await supabaseClient.from('alunos').update({ perfil }).eq('id', alunoSelecionado.id).select('id');
+            if (error || !data || !data.length) { avisoPerfilSQL(error ? error.message : 'Não foi possível salvar.'); return false; }
+            const al = alunosGlobais.find(x => String(x.id) === String(alunoSelecionado.id));
+            if (al) al.perfil = perfil;
+            return true;
+        }
+        async function salvarFicha() {
+            const novo = lerPerfil('edit');
+            const atual = perfilAtual();
+            if (atual.metasVolume) novo.metasVolume = atual.metasVolume;
+            if (await salvarPerfilAluno(novo)) {
+                document.getElementById('ficha-resumo').innerText = resumoFicha(novo);
+                renderizarPainelVolume();
+                alert('Ficha salva!');
+            }
+        }
+
+        // ===== ASSISTENTE DE VOLUME SEMANAL =====
+        // Metas = ponto de partida (séries/semana por grupamento, diretas + 0,5 por indireta), ajustáveis por aluno.
+        const CLASSE_MUSCULO = { 'Quadríceps': 'grande', 'Peitoral': 'grande', 'Costas': 'grande', 'Glúteos': 'grande', 'Posterior': 'grande', 'Ombros': 'pequeno', 'Tríceps': 'pequeno', 'Bíceps': 'pequeno', 'Panturrilhas': 'core', 'Abdômen': 'core' };
+        const NOME_MUSCULO = { 'Posterior': 'Posterior de coxa' };
+        const METAS_NIVEL = {
+            iniciante: { grande: [8, 12], pequeno: [6, 10], core: [6, 10] },
+            intermediario: { grande: [10, 16], pequeno: [8, 14], core: [8, 12] },
+            avancado: { grande: [12, 20], pequeno: [10, 18], core: [8, 16] }
+        };
+        const INDIRETAS = [['Peitoral', 'Tríceps'], ['Peitoral', 'Ombros'], ['Costas', 'Bíceps']];
+
+        function metaPadrao(g, nivel) { return METAS_NIVEL[nivel || 'intermediario'][CLASSE_MUSCULO[g]]; }
+        function repsMeio(txt) { const n = String(txt || '').match(/\d+/g); if (!n) return null; const v = n.slice(0, 2).map(Number); return v.reduce((s, x) => s + x, 0) / v.length; }
+        function zonaReps(m) { return m <= 6 ? 'força (até 6 reps)' : m <= 10 ? 'moderada-pesada (7–10)' : m <= 15 ? 'moderada (11–15)' : 'leve (16+)'; }
+
+        function analisarVolume() {
+            const pf = perfilAtual();
+            const nivel = ['iniciante', 'intermediario', 'avancado'].includes(pf.nivel) ? pf.nivel : null;
+            const nivelUso = nivel || 'intermediario';
+            const direto = {}, porTreino = {}, zonas = {};
+            let totalEx = 0;
+            (treinosDoAluno || []).forEach(t => (t.exercicios || []).forEach(ex => {
+                const g = ex.musculo; if (!g || !CLASSE_MUSCULO[g]) return;
+                const cfg = ex.seriesConfig || [];
+                const n = parseInt(ex.qtdSeries) || cfg.length; if (!n) return;
+                totalEx++;
+                direto[g] = (direto[g] || 0) + n;
+                (porTreino[g] = porTreino[g] || {})[t.id] = (porTreino[g][t.id] || 0) + n;
+                for (let i = 0; i < n; i++) {
+                    const c = cfg[i] || cfg[0] || {};
+                    if (c.tipoMeta === 'tempo') continue;
+                    const m = repsMeio(c.repsSugeridas); if (m === null) continue;
+                    const z = zonaReps(m);
+                    const zt = ((zonas[g] = zonas[g] || {})[t.id] = zonas[g][t.id] || {});
+                    zt[z] = (zt[z] || 0) + 1;
+                }
+            }));
+            const metasAluno = pf.metasVolume || {};
+            const linhas = Object.keys(CLASSE_MUSCULO).map(g => {
+                const meta = (metasAluno[g] && metasAluno[g].length === 2) ? metasAluno[g] : metaPadrao(g, nivelUso);
+                const dir = direto[g] || 0;
+                const ind = INDIRETAS.filter(x => x[1] === g).reduce((s, x) => s + 0.5 * (direto[x[0]] || 0), 0);
+                const efet = dir + ind;
+                const status = efet === 0 ? 'vazio' : efet < meta[0] ? 'baixo' : efet > meta[1] ? 'alto' : 'ok';
+                return { g, meta, dir, ind, efet, status };
+            });
+            const avisos = [];
+            if (!totalEx) return { linhas, avisos, totalEx, nivel, nivelUso, pf };
+            if (!nivel) avisos.push(['info', 'Nível do aluno não informado: usando metas de intermediário. Preencha na ficha para ajustar.']);
+            const ndiv = (treinosDoAluno || []).length;
+            if (pf.sessoesSemana && pf.sessoesSemana !== ndiv) avisos.push(['info', `Ficha: ${pf.sessoesSemana} sessões/semana, mas existem ${ndiv} divisão(ões). O cálculo considera cada divisão 1× por semana.`]);
+            linhas.forEach(l => {
+                const nome = NOME_MUSCULO[l.g] || l.g;
+                const fmtN = v => NeonChart.fmt(v);
+                if (l.status === 'baixo') avisos.push(['atencao', `${nome}: ${fmtN(l.efet)} séries/semana, abaixo da meta (${l.meta[0]}–${l.meta[1]}). Faltam ~${Math.ceil(l.meta[0] - l.efet)} séries para o mínimo.`]);
+                if (l.status === 'alto') avisos.push(['atencao', `${nome}: ${fmtN(l.efet)} séries/semana, acima da meta (${l.meta[0]}–${l.meta[1]}). Confira se a recuperação do aluno aguenta.`]);
+                if (l.status === 'vazio' && CLASSE_MUSCULO[l.g] === 'grande') avisos.push(['info', `${nome}: nenhum exercício nos treinos (ignore se for intencional).`]);
+                const pt = porTreino[l.g] || {};
+                Object.entries(pt).forEach(([tid, n]) => { if (n > 10) avisos.push(['info', `${nome}: ${n} séries no mesmo treino. Considere dividir esse volume em 2 dias.`]); });
+                const dom = Object.values(zonas[l.g] || {}).map(zt => Object.entries(zt).sort((x, y) => y[1] - x[1])[0][0]);
+                if (dom.length >= 2 && dom.every(z => z === dom[0])) avisos.push(['onda', `${nome}: aparece em ${dom.length} treinos, todos na faixa ${dom[0]}. Para ondulatória, varie a faixa de repetições entre os treinos (ex.: um mais pesado, outro moderado, outro mais leve).`]);
+            });
+            return { linhas, avisos, totalEx, nivel, nivelUso, pf };
+        }
+
+        function htmlPainelVolume(compacto) {
+            const r = analisarVolume();
+            const nivelTxt = { iniciante: 'Iniciante', intermediario: 'Intermediário', avancado: 'Avançado' }[r.nivelUso] + (r.nivel ? '' : ' (padrão)');
+            if (!r.totalEx) return compacto ? '' : `<div class="bg-af-card rounded-2xl p-4"><h3 class="font-bold text-xs text-af-orange uppercase tracking-wider">🎯 Volume semanal planejado</h3><p class="text-[11px] text-slate-500 mt-2">Adicione exercícios aos treinos para ver o volume por grupamento contra a meta do aluno.</p></div>`;
+            const cor = { ok: '#34d399', baixo: '#fbbf24', alto: '#fb7185', vazio: '#475569' };
+            const linhas = r.linhas.filter(l => l.status !== 'vazio' || !compacto).map(l => {
+                const escala = Math.max(l.meta[1] * 1.25, l.efet * 1.05, 1);
+                const nome = NOME_MUSCULO[l.g] || l.g;
+                const txt = l.status === 'vazio' ? '<span class="text-slate-500">sem exercícios</span>' : `<strong style="color:${cor[l.status]}">${NeonChart.fmt(l.efet)} séries</strong>${l.ind ? `<span class="text-slate-500"> (${l.dir} + ${NeonChart.fmt(l.ind)} indireta)</span>` : ''}`;
+                return `<div class="space-y-1"><div class="flex justify-between items-center gap-2 text-[11px]"><span class="font-bold text-slate-200">${nome}</span><span>${txt} <span class="text-slate-500">• meta ${l.meta[0]}–${l.meta[1]}</span></span></div>
+                    <div style="position:relative;height:10px;background:#0b0f19;border:1px solid #1e293b;border-radius:99px;overflow:hidden">
+                        <div style="position:absolute;left:${(l.meta[0] / escala * 100).toFixed(1)}%;width:${((l.meta[1] - l.meta[0]) / escala * 100).toFixed(1)}%;top:0;bottom:0;background:rgba(52,211,153,.16);border-left:1px dashed rgba(52,211,153,.6);border-right:1px dashed rgba(52,211,153,.6)"></div>
+                        <div style="position:absolute;left:0;top:0;bottom:0;width:${Math.min(l.efet / escala * 100, 100).toFixed(1)}%;border-radius:99px;background:${cor[l.status]};box-shadow:0 0 8px ${cor[l.status]}"></div>
+                    </div></div>`;
+            }).join('');
+            const icone = { atencao: '⚠️', info: 'ℹ️', onda: '🌊' };
+            const avisosHtml = r.avisos.length ? `<div class="space-y-1.5">${r.avisos.map(([t, m]) => `<div class="text-[11px] leading-snug rounded-xl px-2.5 py-2 ${t === 'atencao' ? 'bg-amber-950/40 border border-amber-800/60 text-amber-200' : t === 'onda' ? 'bg-indigo-950/40 border border-indigo-800/60 text-indigo-200' : 'bg-black/50 border border-slate-800 text-slate-400'}">${icone[t]} ${escapeHtml(m)}</div>`).join('')}</div>` : '<div class="text-[11px] rounded-xl px-2.5 py-2 bg-emerald-950/30 border border-emerald-800/50 text-emerald-300">✅ Volume dentro da meta nos grupamentos trabalhados.</div>';
+            let ajustes = '';
+            if (!compacto) {
+                const m = r.pf.metasVolume || {};
+                ajustes = `<details class="bg-black/40 rounded-xl border border-slate-800"><summary class="cursor-pointer text-[10px] uppercase font-bold text-slate-400 p-2.5">Ajustar metas deste aluno</summary><div class="p-2.5 pt-0 space-y-2">
+                    <div class="grid gap-1.5">${r.linhas.map((l, i) => `<div class="flex items-center gap-2 text-[11px]"><span class="flex-1 text-slate-300">${NOME_MUSCULO[l.g] || l.g}</span><input id="mv-${i}-min" type="number" inputmode="numeric" min="0" value="${l.meta[0]}" class="w-16 bg-black border border-slate-700 rounded-lg px-2 py-1.5 text-center text-white"><span class="text-slate-500">a</span><input id="mv-${i}-max" type="number" inputmode="numeric" min="0" value="${l.meta[1]}" class="w-16 bg-black border border-slate-700 rounded-lg px-2 py-1.5 text-center text-white"></div>`).join('')}</div>
+                    <div class="flex gap-2"><button onclick="salvarMetasVolume()" class="flex-1 bg-af-orange text-black font-black py-2 rounded-xl text-xs">Salvar metas</button><button onclick="restaurarMetasVolume()" class="bg-black border border-slate-700 text-slate-300 font-bold px-3 py-2 rounded-xl text-xs">Padrão</button></div></div></details>`;
+            }
+            return `<div class="bg-af-card rounded-2xl p-4 space-y-3 shadow-lg"><div class="flex justify-between items-center gap-2"><h3 class="font-bold text-xs text-af-orange uppercase tracking-wider">🎯 Volume semanal planejado</h3><span class="text-[10px] text-slate-400">Nível: ${nivelTxt}</span></div>
+                <div class="space-y-2.5">${linhas}</div>${avisosHtml}${ajustes}
+                ${compacto ? '' : '<p class="text-[10px] text-slate-500 leading-snug">Conta séries de cada grupamento por semana (indiretas valem 0,5, como nos estudos de dose-resposta). Metas são ponto de partida: a literatura mostra ganho crescente com o volume, com retorno cada vez menor, e a necessidade individual varia.</p>'}</div>`;
+        }
+        function renderizarPainelVolume() {
+            const a1 = document.getElementById('painel-volume-semanal'), a2 = document.getElementById('painel-volume-montagem');
+            if (a1) a1.innerHTML = htmlPainelVolume(false);
+            if (a2) a2.innerHTML = htmlPainelVolume(true);
+        }
+        async function salvarMetasVolume() {
+            const pf = Object.assign({}, perfilAtual());
+            const nivel = ['iniciante', 'intermediario', 'avancado'].includes(pf.nivel) ? pf.nivel : 'intermediario';
+            const metas = {};
+            Object.keys(CLASSE_MUSCULO).forEach((g, i) => {
+                const mn = parseInt(document.getElementById(`mv-${i}-min`).value), mx = parseInt(document.getElementById(`mv-${i}-max`).value);
+                const pad = metaPadrao(g, nivel);
+                if (isFinite(mn) && isFinite(mx) && mx >= mn && (mn !== pad[0] || mx !== pad[1])) metas[g] = [mn, mx];
+            });
+            if (Object.keys(metas).length) pf.metasVolume = metas; else delete pf.metasVolume;
+            if (await salvarPerfilAluno(pf)) { renderizarPainelVolume(); alert('Metas salvas!'); }
+        }
+        async function restaurarMetasVolume() {
+            const pf = Object.assign({}, perfilAtual()); delete pf.metasVolume;
+            if (await salvarPerfilAluno(pf)) renderizarPainelVolume();
+        }
+
+        async function cadastrarAluno() {
+            const input = document.getElementById('nome-novo-aluno');
+            const nome = input.value.trim();
+            if (!nome) return;
+            
+            const token = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+
+            const perfil = lerPerfil('novo');
+            let { error } = await supabaseClient.from('alunos').insert([{ nome, token, treinos: [], historico: [], arquivado: false, perfil }]);
+            if (error && /perfil/i.test(error.message)) {
+                avisoPerfilSQL(error.message);
+                ({ error } = await supabaseClient.from('alunos').insert([{ nome, token, treinos: [], historico: [], arquivado: false }]));
+            }
+            if (error) alert('Erro: ' + error.message);
+            else { input.value = ''; document.getElementById('form-perfil-novo').innerHTML = formPerfilHTML('novo'); await carregarAlunos(); }
+        }
+
+        async function arquivarAluno(id, arquivar) {
+            const { error } = await supabaseClient.from('alunos').update({ arquivado: arquivar }).eq('id', id);
+            if (error) alert('Erro: ' + error.message);
+            else await carregarAlunos();
+        }
+
+        async function apagarAlunoDefinitivo(id) {
+            const aluno = alunosGlobais.find(a => String(a.id) === String(id));
+            const nome = aluno ? aluno.nome : 'este aluno';
+            if (!confirm(`Deseja PERMANENTEMENTE apagar o aluno "${nome}" e todo o seu banco de dados e histórico?`)) return;
+
+            const { data, error } = await supabaseClient.from('alunos').delete().eq('id', aluno ? aluno.id : id).select('id');
+            if (error || !data || data.length === 0) {
+                alert('Erro ao apagar no banco.');
+                return;
+            }
+
+            alunosGlobais = alunosGlobais.filter(a => String(a.id) !== String(id));
+            Object.keys(agendaDados).forEach(k => { if (agendaDados[k] && String(agendaDados[k].id) === String(id)) delete agendaDados[k]; });
+            gravarAgendaLocal();
+            if (agendaNoServidor) await supabaseClient.from('agenda').delete().eq('aluno_id', id);
+
+            await carregarAlunos();
+            renderizarGradeAgenda();
+        }
+
+        async function zerarHistoricoAlunoComConfirmacao() {
+            if (!alunoSelecionado) return;
+            if (!confirm(`Deseja realmente ZERAR todo o histórico de treinos do aluno "${alunoSelecionado.nome}"?`)) return;
+            try {
+                const { error } = await supabaseClient.from('alunos').update({ historico: [] }).eq('id', alunoSelecionado.id);
+                if (error) throw error;
+                historicoTreinosAluno = [];
+                calcularEvolucaoRecenteAdmin();
+                atualizarRelatoriosAdmin();
+                popularSelectRaioXAdmin();
+                alert('Histórico limpo com sucesso!');
+            } catch (err) { alert('Erro: ' + err.message); }
+        }
+
+        async function abrirPainelAluno(id, nome, token, link) {
+            alunoSelecionado = { id, nome, token, link };
+            document.getElementById('detalhe-nome-aluno').innerText = nome;
+            document.getElementById('nome-aluno-relatorio-titulo').innerText = nome;
+            document.getElementById('btn-copiar-link-aluno').onclick = () => copiarLinkDirect(link);
+            document.getElementById('btn-testar-link-aluno').onclick = () => window.open(link, '_blank');
+            document.getElementById('view-lista-alunos').classList.add('hidden');
+            document.getElementById('view-detalhe-aluno').classList.remove('hidden');
+
+            document.getElementById('bloco-agenda-hoje-admin').style.display = 'none';
+
+            try {
+                const { data } = await supabaseClient.from('alunos').select('treinos, historico').eq('id', id).single();
+                treinosDoAluno = (data && data.treinos) ? data.treinos : [];
+                historicoTreinosAluno = (data && data.historico && Array.isArray(data.historico)) ? data.historico : [];
+                calcularEvolucaoRecenteAdmin();
+                popularSelectRaioXAdmin();
+                atualizarRelatoriosAdmin();
+            } catch (e) {
+                treinosDoAluno = [];
+                historicoTreinosAluno = [];
+            }
+            mostrarFichaAluno();
+            renderizarTreinosAluno();
+        }
+
+        function toggleMinimizarResumoAdmin() {
+            resumoAdminMinimizado = !resumoAdminMinimizado;
+            const conteudo = document.getElementById('conteudo-resumo-evolucao-admin');
+            const seta = document.getElementById('icone-seta-resumo-admin');
+            if (resumoAdminMinimizado) {
+                conteudo.classList.add('hidden');
+                seta.innerText = '▶';
+            } else {
+                conteudo.classList.remove('hidden');
+                seta.innerText = '▼';
+            }
+        }
+
+        function calcularEvolucaoRecenteAdmin() {
+            const idsTreinosAtivos = new Set(treinosDoAluno.map(t => t.id));
+            const historicoValido = historicoTreinosAluno.filter(h => !h.treinoId || idsTreinosAtivos.has(h.treinoId)).slice().sort((x, y) => new Date(x.data) - new Date(y.data));
+
+            let mais = 0, mesmo = 0, menos = 0;
+            const evolucaoExerciciosMap = {};
+
+            if (historicoValido && historicoValido.length > 0) {
+                historicoValido.forEach(h => {
+                    if (h.comparativo === 'mais') mais++;
+                    else if (h.comparativo === 'menos') menos++;
+                    else mesmo++;
+
+                    (h.exerciciosRealizados || []).forEach(exR => {
+                        const nomeEx = exR.nome;
+                        const ss = exR.series || [];
+                        const cargaMax = Math.max(...ss.map(s => s.carga || 0), 0);
+                        if (!evolucaoExerciciosMap[nomeEx]) {
+                            evolucaoExerciciosMap[nomeEx] = { inicial: cargaMax, atual: cargaMax };
+                        } else {
+                            evolucaoExerciciosMap[nomeEx].atual = cargaMax;
+                        }
+                    });
+                });
+            }
+
+            document.getElementById('val-mais-peso').innerText = mais;
+            document.getElementById('val-mesmo-peso').innerText = mesmo;
+            document.getElementById('val-menos-peso').innerText = menos;
+
+            const listaEl = document.getElementById('lista-evolucao-exercicios-admin');
+            const chavesEx = Object.keys(evolucaoExerciciosMap);
+            if (chavesEx.length === 0) {
+                listaEl.innerHTML = `<p class="text-[11px] text-slate-500 text-center">Nenhum exercício registrado ainda.</p>`;
+            } else {
+                listaEl.innerHTML = chavesEx.map(nome => {
+                    const obj = evolucaoExerciciosMap[nome];
+                    const diff = obj.atual - obj.inicial;
+                    const cor = diff > 0 ? 'text-emerald-400' : (diff < 0 ? 'text-rose-400' : 'text-slate-300');
+                    return `
+                        <div class="bg-black/60 border border-slate-800 p-2 rounded-xl flex justify-between items-center text-[11px]">
+                            <span class="font-bold text-slate-200">${escapeHtml(nome)}</span>
+                            <span class="${cor} font-bold">${obj.inicial}kg → ${obj.atual}kg (${diff >= 0 ? '+' : ''}${diff}kg)</span>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        async function recarregarHistoricoAdmin() {
+            if (!alunoSelecionado) return;
+            const { data, error } = await supabaseClient.from('alunos').select('treinos, historico').eq('id', alunoSelecionado.id).single();
+            if (error) return;
+            treinosDoAluno = (data && data.treinos) ? data.treinos : [];
+            historicoTreinosAluno = (data && data.historico && Array.isArray(data.historico)) ? data.historico : [];
+        }
+
+        async function mudarAbaAdminAluno(aba) {
+            document.getElementById('sec-admin-treinos').classList.add('hidden');
+            document.getElementById('sec-admin-relatorios').classList.add('hidden');
+            document.getElementById('tab-admin-treinos').className = 'flex-1 py-2 rounded-xl text-slate-400 hover:text-white font-bold transition-all';
+            document.getElementById('tab-admin-relatorios').className = 'flex-1 py-2 rounded-xl text-slate-400 hover:text-white font-bold transition-all';
+
+            if (aba === 'treinos') {
+                document.getElementById('sec-admin-treinos').classList.remove('hidden');
+                document.getElementById('tab-admin-treinos').className = 'flex-1 py-2 rounded-xl bg-af-orange text-black font-bold shadow-md transition-all';
+            } else {
+                document.getElementById('sec-admin-relatorios').classList.remove('hidden');
+                document.getElementById('tab-admin-relatorios').className = 'flex-1 py-2 rounded-xl bg-af-orange text-black font-bold shadow-md transition-all';
+                await recarregarHistoricoAdmin();
+                calcularEvolucaoRecenteAdmin();
+                popularSelectRaioXAdmin();
+                atualizarRelatoriosAdmin();
+            }
+        }
+
+        function popularSelectRaioXAdmin() {
+            const select = document.getElementById('select-analise-exercicio-admin');
+            const exerciciosUnicos = new Set();
+            treinosDoAluno.forEach(t => (t.exercicios || []).forEach(e => exerciciosUnicos.add(e.nome)));
+            historicoTreinosAluno.forEach(h => (h.exerciciosRealizados || []).forEach(e => exerciciosUnicos.add(e.nome)));
+            select.innerHTML = `<option value="">Selecione um exercício para auditar...</option>` + Array.from(exerciciosUnicos).map(ex => `<option value="${escapeHtml(ex)}">${escapeHtml(ex)}</option>`).join('');
+        }
+
+        function renderizarRaioXExercicioAdmin() {
+            const nomeEx = document.getElementById('select-analise-exercicio-admin').value;
+            const container = document.getElementById('container-raio-x-admin');
+            if (!nomeEx) {
+                container.innerHTML = `<p class="text-[11px] text-slate-500 text-center py-2">Selecione um exercício acima para carregar a curva de progressão.</p>`;
+                return;
+            }
+
+            const registros = [];
+            historicoTreinosAluno.forEach(h => {
+                const exR = (h.exerciciosRealizados || []).find(e => (e.nome || '').toLowerCase() === nomeEx.toLowerCase());
+                if (exR) {
+                    const dataFmt = new Date(h.data).toLocaleDateString('pt-BR');
+                    const ss = exR.series || [];
+                    const cargaMax = Math.max(...ss.map(s => s.carga || 0), 0);
+                    const volEx = exR.volume || ss.reduce((acc, s) => acc + (s.carga || 0) * (s.reps || 0), 0);
+                    const semCarga = exR.semCarga === true || MUSCULOS_SEM_CARGA.includes(exR.musculo);
+                    registros.push({
+                        iso: h.data, data: dataFmt, cargaMax, volume: volEx, series: ss.length, semCarga,
+                        melhorReps: Math.max(...ss.map(s => s.reps || 0), 0),
+                        melhorTempo: Math.max(...ss.map(s => s.tempoSeg || 0), 0)
+                    });
+                }
+            });
+            registros.sort((a, b) => new Date(a.iso) - new Date(b.iso));
+
+            if (registros.length === 0) {
+                container.innerHTML = `<p class="text-[11px] text-slate-500 text-center py-2">Nenhum registro encontrado para "${escapeHtml(nomeEx)}" no histórico.</p>`;
+                return;
+            }
+
+            const se = NeonChart.serieExercicio(registros);
+            const vals = se.pts.map(p => p.value);
+            const ini = vals[0], atual = vals[vals.length - 1], melhor = Math.max(...vals);
+            const diff = atual - ini;
+            const corDiff = diff > 0 ? 'text-emerald-400' : (diff < 0 ? 'text-rose-400' : 'text-slate-300');
+            const fv = v => se.unit === 's' ? formatarTempo(v) : NeonChart.fmt(v) + ' ' + se.unit;
+            const fd = (diff >= 0 ? '+' : '-') + (se.unit === 's' ? formatarTempo(Math.abs(diff)) : NeonChart.fmt(Math.abs(diff)) + ' ' + se.unit);
+            const semCargaEx = se.unit !== 'kg';
+
+            container.innerHTML = `
+                <div class="grid grid-cols-3 gap-2 text-center">
+                    <div class="bg-black/60 border border-slate-800 p-2 rounded-xl"><div class="text-sm font-black text-slate-200">${fv(ini)}</div><div class="text-[9px] font-bold text-slate-400 uppercase">Inicial</div></div>
+                    <div class="bg-black/60 border border-slate-800 p-2 rounded-xl"><div class="text-sm font-black ${corDiff}">${fv(atual)}</div><div class="text-[9px] font-bold text-slate-400 uppercase">Atual (${fd})</div></div>
+                    <div class="bg-black/60 border border-slate-800 p-2 rounded-xl"><div class="text-sm font-black text-af-orange">${fv(melhor)}</div><div class="text-[9px] font-bold text-slate-400 uppercase">Melhor</div></div>
+                </div>
+                ${NeonChart.line(se.pts, { titulo: semCargaEx ? 'Evolução da melhor marca' : 'Evolução da carga máxima', unit: se.unit, fmtY: se.fmtY })}
+                ${semCargaEx ? '' : NeonChart.bars(registros.map(r => ({ label: r.data.slice(0, 5), value: r.volume })), { titulo: 'Volume por sessão', unit: 'kg' })}
+                ${NeonChart.bars(registros.map(r => ({ label: r.data.slice(0, 5), value: r.series })), { titulo: 'Séries por sessão', unit: 'séries' })}
+                <details class="bg-black/40 rounded-xl border border-slate-800">
+                    <summary class="cursor-pointer text-[10px] uppercase font-bold text-slate-400 p-2.5">Ver histórico detalhado (${registros.length} sessões)</summary>
+                    <div class="space-y-1.5 max-h-48 overflow-y-auto p-2.5 pt-0">
+                        ${registros.slice().reverse().map(r => `
+                            <div class="bg-black/60 border border-slate-800 p-2.5 rounded-xl flex justify-between items-center text-xs">
+                                <div>
+                                    <span class="text-[10px] text-slate-500 font-bold block">📅 ${r.data}</span>
+                                    <span class="text-slate-300 font-bold">${r.series} séries realizadas</span>
+                                </div>
+                                <div class="text-right">
+                                    ${r.semCarga
+                                        ? `<strong class="text-af-orange block">Melhor: ${(r.melhorTempo > 0 && r.melhorReps === 0) ? formatarTempo(r.melhorTempo) : r.melhorReps + ' reps'}</strong>`
+                                        : `<strong class="text-af-orange block">Carga Máx: ${r.cargaMax}kg</strong>
+                                           <span class="text-[10px] text-slate-400">Vol: ${r.volume.toLocaleString('pt-BR')}kg</span>`
+                                    }
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </details>
+            `;
+        }
+
+        function moverTreinoOrdem(idx, direcao) {
+            const novoIdx = idx + direcao;
+            if (novoIdx < 0 || novoIdx >= treinosDoAluno.length) return;
+            const temp = treinosDoAluno[idx];
+            treinosDoAluno[idx] = treinosDoAluno[novoIdx];
+            treinosDoAluno[novoIdx] = temp;
+            salvarTreinosNoSupabase();
+            renderizarTreinosAluno();
+        }
+
+        function moverExercicioOrdem(idx, direcao) {
+            const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
+            if (!treino || !treino.exercicios) return;
+            const novoIdx = idx + direcao;
+            if (novoIdx < 0 || novoIdx >= treino.exercicios.length) return;
+            const temp = treino.exercicios[idx];
+            treino.exercicios[idx] = treino.exercicios[novoIdx];
+            treino.exercicios[novoIdx] = temp;
+            salvarTreinosNoSupabase();
+            renderizarListaExerciciosDivisao();
+        }
+
+        function conjugarExercicioComCima(idx) {
+            const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
+            if (!treino || idx <= 0) return;
+            const exAtual = treino.exercicios[idx];
+            const exAcima = treino.exercicios[idx - 1];
+            
+            let grupoAtual = exAtual.conjugado && exAtual.conjugado !== 'Nenhum' ? exAtual.conjugado : null;
+            let grupoAcima = exAcima.conjugado && exAcima.conjugado !== 'Nenhum' ? exAcima.conjugado : null;
+
+            if (!grupoAcima && !grupoAtual) {
+                exAcima.conjugado = 'Bi-Set A';
+                exAtual.conjugado = 'Bi-Set A';
+            } else if (grupoAcima) {
+                exAtual.conjugado = grupoAcima;
+            } else {
+                exAcima.conjugado = grupoAtual;
+            }
+            salvarTreinosNoSupabase();
+            renderizarListaExerciciosDivisao();
+        }
+
+        function desconjugarExercicio(idx) {
+            const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
+            if (!treino || !treino.exercicios[idx]) return;
+            treino.exercicios[idx].conjugado = 'Nenhum';
+            salvarTreinosNoSupabase();
+            renderizarListaExerciciosDivisao();
+        }
+
+        function renderizarTreinosAluno() {
+            renderizarPainelVolume();
+            const container = document.getElementById('container-treinos-aluno');
+            if (!treinosDoAluno || treinosDoAluno.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-600 text-center py-6">Nenhuma divisão criada.</p>`;
+                return;
+            }
+            container.innerHTML = treinosDoAluno.map((t, idx) => `
+                <div class="bg-af-card rounded-2xl p-4 flex justify-between items-center shadow-sm">
+                    <div onclick="abrirMontagemTreino('${t.id}')" class="flex-1 cursor-pointer">
+                        <h3 class="font-bold text-xs text-af-orange uppercase tracking-wider">${escapeHtml(t.nome)}</h3>
+                        <p class="text-[10px] text-slate-500">${t.exercicios ? t.exercicios.length : 0} exercício(s)</p>
+                    </div>
+                    <div class="flex gap-1 items-center" onclick="event.stopPropagation()">
+                        <button onclick="moverTreinoOrdem(${idx}, -1)" ${idx === 0 ? 'disabled class="opacity-30 text-xs bg-black p-1.5 rounded-lg"' : 'class="text-xs bg-black text-slate-300 border border-slate-800 p-1.5 rounded-lg"'}>⬆️</button>
+                        <button onclick="moverTreinoOrdem(${idx}, 1)" ${idx === treinosDoAluno.length - 1 ? 'disabled class="opacity-30 text-xs bg-black p-1.5 rounded-lg"' : 'class="text-xs bg-black text-slate-300 border border-slate-800 p-1.5 rounded-lg"'}>⬇️</button>
+                        <button onclick="renomearTreino('${t.id}')" class="text-xs bg-black text-slate-300 border border-slate-800 px-2 py-1.5 rounded-lg">✏️</button>
+                        <button onclick="excluirTreino('${t.id}')" class="text-xs bg-black text-rose-400 border border-slate-800 px-2 py-1.5 rounded-lg">🗑️</button>
+                        <button onclick="abrirMontagemTreino('${t.id}')" class="text-xs bg-af-orange text-black px-2.5 py-1.5 rounded-lg font-black shadow-md">Abrir</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderizarListaExerciciosDivisao() {
+            renderizarPainelVolume();
+            const container = document.getElementById('container-lista-exercicios-divisao');
+            const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
+            if (!treino || !treino.exercicios || treino.exercicios.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-600 text-center py-4">Nenhum exercício adicionado ainda.</p>`;
+                return;
+            }
+            container.innerHTML = treino.exercicios.map((ex, idx) => {
+                const conj = ex.conjugado && ex.conjugado !== 'Nenhum' ? ex.conjugado : null;
+                return `
+                    <div class="bg-black/60 border ${conj ? 'border-amber-500/60' : 'border-slate-900'} p-3 rounded-xl flex justify-between items-center text-xs shadow-sm">
+                        <div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-[10px] text-af-orange font-bold uppercase">${escapeHtml(ex.musculo)} • ${escapeHtml(ex.equipamento)}</span>
+                                ${conj ? `<span class="text-[9px] bg-amber-950 text-amber-400 border border-amber-800 px-1.5 py-0.5 rounded font-black">🔗 ${conj}</span>` : ''}
+                            </div>
+                            <div class="font-bold text-slate-200">${idx + 1}. ${escapeHtml(ex.nome)} (${ex.qtdSeries} Séries)</div>
+                        </div>
+                        <div class="flex gap-1 items-center">
+                            ${idx > 0 ? `<button onclick="conjugarExercicioComCima(${idx})" class="text-[10px] text-amber-400 bg-slate-900 border border-slate-800 px-2 py-1 rounded-lg font-bold" title="Conjugar com o de cima">🔗 Bi-Set</button>` : ''}
+                            ${conj ? `<button onclick="desconjugarExercicio(${idx})" class="text-[10px] text-rose-400 bg-slate-900 border border-slate-800 px-1.5 py-1 rounded-lg font-bold" title="Desconjugar">🔓</button>` : ''}
+                            <button onclick="moverExercicioOrdem(${idx}, -1)" ${idx === 0 ? 'disabled class="opacity-30 text-xs bg-slate-900 p-1 rounded-lg"' : 'class="text-xs bg-slate-900 text-slate-300 border border-slate-800 p-1 rounded-lg"'}>⬆️</button>
+                            <button onclick="moverExercicioOrdem(${idx}, 1)" ${idx === treino.exercicios.length - 1 ? 'disabled class="opacity-30 text-xs bg-slate-900 p-1 rounded-lg"' : 'class="text-xs bg-slate-900 text-slate-300 border border-slate-800 p-1 rounded-lg"'}>⬇️</button>
+                            <button onclick="prepararEdicaoExercicio(${idx})" class="text-xs text-slate-300 bg-slate-900 border border-slate-800 px-2 py-1 rounded-lg">✏️</button>
+                            <button onclick="removerExercicioDivisao(${idx})" class="text-xs text-rose-400 bg-slate-900 border border-slate-800 px-2 py-1 rounded-lg">✕</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function prepararEdicaoExercicio(idx) {
+            const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
+            if (!treino || !treino.exercicios[idx]) return;
+            const ex = treino.exercicios[idx];
+
+            indiceExercicioEditando = idx;
+            document.getElementById('input-busca-ex').value = ex.nome;
+            document.getElementById('select-musculo-ex').value = ex.musculo;
+            document.getElementById('select-equipamento-ex').value = ex.equipamento;
+            document.getElementById('input-qtd-series-ex').value = ex.qtdSeries;
+            document.getElementById('select-metodo-geral-ex').value = ex.metodoGeral || 'Nulo';
+            document.getElementById('select-exige-rpe').value = ex.exigeRpe !== false ? 'sim' : 'nao';
+            
+            verificarRegrasMusculo();
+            alternarVisibilidadeMetodoMacro(ex.metodoGeral || 'Nulo');
+
+            if (ex.metodoGeral && ex.metodoGeral !== 'Nulo') {
+                document.getElementById('input-reps-piramide').value = ex.repsPiramide || '10 a 12';
+            } else {
+                gerarCamposSeriesAdmin(ex.qtdSeries, ex.seriesConfig);
+            }
+            verificarRegrasEquipamento();
+
+            document.getElementById('titulo-modo-exercicio').innerText = 'Editar Exercício';
+            document.getElementById('btn-salvar-exercicio').innerText = 'Atualizar Exercício';
+            document.getElementById('btn-cancelar-edicao').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function cancelarEdicaoExercicio() {
+            indiceExercicioEditando = null;
+            document.getElementById('input-busca-ex').value = '';
+            document.getElementById('input-qtd-series-ex').value = '4';
+            document.getElementById('select-musculo-ex').value = 'Quadríceps';
+            document.getElementById('select-equipamento-ex').value = 'Barra';
+            document.getElementById('select-metodo-geral-ex').value = 'Nulo';
+            document.getElementById('select-exige-rpe').value = 'sim';
+            verificarRegrasMusculo();
+            alternarVisibilidadeMetodoMacro('Nulo');
+            gerarCamposSeriesAdmin(4);
+            verificarRegrasEquipamento();
+            document.getElementById('titulo-modo-exercicio').innerText = 'Adicionar Exercício';
+            document.getElementById('btn-salvar-exercicio').innerText = 'Salvar Exercício na Divisão';
+            document.getElementById('btn-cancelar-edicao').classList.add('hidden');
+        }
+
+        async function salvarExercicioDefinitivo() {
+            const nome = document.getElementById('input-busca-ex').value.trim();
+            const musculo = document.getElementById('select-musculo-ex').value;
+            const equipamento = document.getElementById('select-equipamento-ex').value;
+            const qtdSeries = parseInt(document.getElementById('input-qtd-series-ex').value) || 4;
+            const metodoGeral = (musculo === 'Abdômen' || musculo === 'Alongamentos' || musculo === 'Mobilidade') ? 'Nulo' : document.getElementById('select-metodo-geral-ex').value;
+            const exigeRpe = (equipamento === 'Corporal' || equipamento === 'Elástico' || musculo === 'Abdômen' || musculo === 'Alongamentos' || musculo === 'Mobilidade') ? false : (document.getElementById('select-exige-rpe').value === 'sim');
+
+            if (!nome) { alert('Digite o nome do exercício!'); return; }
+            if (!baseExerciciosGlobais.includes(nome)) baseExerciciosGlobais.push(nome);
+
+            const seriesConfig = [];
+            let repsPiramide = '';
+
+            if (metodoGeral !== 'Nulo') {
+                repsPiramide = document.getElementById('input-reps-piramide').value.trim() || '10 a 12';
+                for (let i = 1; i <= qtdSeries; i++) {
+                    seriesConfig.push({ num: i, metodo: 'Série Normal', tipoMeta: 'reps', descanso: 90, repsSugeridas: repsPiramide });
+                }
+            } else {
+                document.querySelectorAll('#container-config-series-admin .serie-config-item').forEach(item => {
+                    const num = parseInt(item.getAttribute('data-serie'));
+                    const metodo = item.querySelector('.select-metodo-serie')?.value || 'Série Normal';
+                    const tipoMeta = item.querySelector('.input-tipo-meta').value === 'tempo' ? 'tempo' : 'reps';
+                    const descanso = parseInt(item.querySelector('.input-descanso-serie').value) || 90;
+                    if (tipoMeta === 'tempo') {
+                        const metaSeg = ((parseInt(item.querySelector('.input-tempo-min').value) || 0) * 60 + (parseInt(item.querySelector('.input-tempo-seg').value) || 0)) || 30;
+                        seriesConfig.push({ num, metodo, tipoMeta, descanso, repsSugeridas: formatarTempo(metaSeg), metaSeg });
+                    } else {
+                        const repsSugeridas = item.querySelector('.input-reps-sugeridas').value.trim() || '10 a 12';
+                        seriesConfig.push({ num, metodo, tipoMeta, descanso, repsSugeridas });
+                    }
+                });
+            }
+
+            const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
+            if (treino) {
+                if (!treino.exercicios) treino.exercicios = [];
+                const dadosEx = { nome, musculo, equipamento, conjugado: 'Nenhum', qtdSeries, metodoGeral, repsPiramide, exigeRpe, seriesConfig };
+                if (indiceExercicioEditando !== null) {
+                    dadosEx.conjugado = treino.exercicios[indiceExercicioEditando].conjugado || 'Nenhum';
+                    treino.exercicios[indiceExercicioEditando] = dadosEx;
+                } else {
+                    treino.exercicios.push(dadosEx);
+                }
+                cancelarEdicaoExercicio();
+                await salvarTreinosNoSupabase();
+                renderizarListaExerciciosDivisao();
+            }
+        }
+
+        function mudarPeriodoRelatorio(periodo) {
+            periodoRelatorioAtual = periodo;
+            grupoMuscularFiltroAtivo = null;
+            document.getElementById('btn-periodo-semanal').className = periodo === 'semanal' ? 'flex-1 py-1.5 rounded-lg bg-af-orange text-black font-bold shadow-md transition-all' : 'flex-1 py-1.5 rounded-lg text-slate-400 font-bold transition-all';
+            document.getElementById('btn-periodo-mensal').className = periodo === 'mensal' ? 'flex-1 py-1.5 rounded-lg bg-af-orange text-black font-bold shadow-md transition-all' : 'flex-1 py-1.5 rounded-lg text-slate-400 font-bold transition-all';
+            document.getElementById('label-periodo-ativo').innerText = periodo === 'semanal' ? 'Relatório Semanal (Últimos 7 dias)' : 'Relatório Mensal (Mês Atual)';
+            atualizarRelatoriosAdmin();
+        }
+
+        function mudarSubAbaRelatorio(sub) {
+            subAbaRelatorioAtual = sub;
+            grupoMuscularFiltroAtivo = null;
+            ['peso', 'series', 'grupos'].forEach(s => {
+                document.getElementById(`subtab-${s}`).className = s === sub ? 'flex-1 py-1.5 rounded-lg bg-af-orange text-black font-bold shadow-md' : 'flex-1 py-1.5 rounded-lg text-slate-400 font-bold';
+            });
+            atualizarRelatoriosAdmin();
+        }
+
+        function atualizarRelatoriosAdmin() {
+            const idsTreinosAtivos = new Set(treinosDoAluno.map(t => t.id));
+            const historicoValido = historicoTreinosAluno.filter(h => !h.treinoId || idsTreinosAtivos.has(h.treinoId)).slice().sort((x, y) => new Date(x.data) - new Date(y.data));
+
+            const mapaMusculo = {};
+            treinosDoAluno.forEach(t => (t.exercicios || []).forEach(e => { if (e.musculo) mapaMusculo[e.nome.toLowerCase()] = e.musculo; }));
+
+            const agora = new Date();
+            const historicoFiltrado = historicoValido.filter(h => {
+                if (!h.data) return false;
+                const d = new Date(h.data);
+                if (periodoRelatorioAtual === 'semanal') {
+                    const seteDiasAtras = new Date();
+                    seteDiasAtras.setDate(agora.getDate() - 7);
+                    return d >= seteDiasAtras && d <= agora;
+                } else {
+                    return d.getMonth() === agora.getMonth() && d.getFullYear() === agora.getFullYear();
+                }
+            });
+
+            const grupos = {};
+            let volTotal = 0, totalSeries = 0;
+            const porDia = {};
+
+            historicoFiltrado.forEach(h => {
+                volTotal += h.volume || 0;
+                totalSeries += h.qtdSeriesValidadas || 0;
+                NeonChart.somarDia(porDia, h);
+                (h.exerciciosRealizados || []).forEach(exR => {
+                    const musculo = exR.musculo || mapaMusculo[(exR.nome || '').toLowerCase()] || 'Outros';
+                    const g = grupos[musculo] || (grupos[musculo] = { volume: 0, series: 0, exercicios: {}, dias: {} });
+                    const volEx = (typeof exR.volume === 'number') ? exR.volume : (exR.series || []).reduce((s, x) => s + (x.carga || 0) * (x.reps || 0), 0);
+                    g.volume += volEx;
+                    g.series += (exR.series || []).length;
+                    NeonChart.somarDiaVal(g.dias, h.data, volEx, (exR.series || []).length);
+
+                    const exNome = exR.nome;
+                    if (!g.exercicios[exNome]) g.exercicios[exNome] = [];
+                    g.exercicios[exNome].push({
+                        data: new Date(h.data).toLocaleDateString('pt-BR'),
+                        cargaMax: Math.max(...(exR.series || []).map(s => s.carga || 0), 0),
+                        volume: volEx,
+                        series: (exR.series || []).length,
+                        semCarga: exR.semCarga === true || MUSCULOS_SEM_CARGA.includes(musculo),
+                        melhorReps: Math.max(...(exR.series || []).map(s => s.reps || 0), 0),
+                        melhorTempo: Math.max(...(exR.series || []).map(s => s.tempoSeg || 0), 0)
+                    });
+                });
+            });
+
+            const container = document.getElementById('relatorio-conteudo-dinamico');
+
+            if (subAbaRelatorioAtual === 'peso') {
+                container.innerHTML = `
+                    <div class="bg-black/60 p-4 rounded-xl border border-slate-800 text-center space-y-1 shadow-inner">
+                        <span class="text-[10px] uppercase text-slate-500 font-bold block">Volume Total (Carga × Reps)</span>
+                        <strong class="text-xl font-black text-af-orange">${volTotal.toLocaleString('pt-BR')} kg</strong>
+                        <p class="text-[10px] text-slate-400">Sessões computadas: ${historicoFiltrado.length}</p>
+                    </div>
+                    ${NeonChart.bars(NeonChart.serieDias(porDia, 'vol'), { titulo: 'Volume por dia de treino', unit: 'kg', somar: true })}
+                `;
+            } else if (subAbaRelatorioAtual === 'series') {
+                container.innerHTML = `
+                    <div class="bg-black/60 p-4 rounded-xl border border-slate-800 text-center space-y-1 shadow-inner">
+                        <span class="text-[10px] uppercase text-slate-500 font-bold block">Total de Séries Validadas</span>
+                        <strong class="text-xl font-black text-white">${totalSeries} séries</strong>
+                    </div>
+                    ${NeonChart.bars(NeonChart.serieDias(porDia, 'series'), { titulo: 'Séries por dia de treino', unit: 'séries', somar: true })}
+                `;
+            } else {
+                const nomesGrupos = Object.keys(grupos);
+                if (nomesGrupos.length === 0) {
+                    container.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">Nenhum grupamento registrado no período.</p>`;
+                } else if (grupoMuscularFiltroAtivo) {
+                    const gData = grupos[grupoMuscularFiltroAtivo];
+                    const exerciciosDoGrupo = Object.keys(gData.exercicios);
+                    container.innerHTML = `
+                        <div class="flex items-center justify-between bg-black/60 p-2.5 rounded-xl border border-slate-800">
+                            <button onclick="grupoMuscularFiltroAtivo=null; atualizarRelatoriosAdmin();" class="text-xs text-af-orange font-bold">← Voltar para Grupos</button>
+                            <span class="text-xs text-white font-bold uppercase">${escapeHtml(grupoMuscularFiltroAtivo)}</span>
+                        </div>
+                        <div class="space-y-3 pt-1">
+                            <div class="bg-black/60 p-3 rounded-xl border border-slate-800 space-y-1 text-xs">
+                                ${MUSCULOS_SEM_CARGA.includes(grupoMuscularFiltroAtivo) ? '' : `<div class="flex justify-between text-slate-300"><span>Volume do Grupo:</span><strong class="text-af-orange">${gData.volume.toLocaleString('pt-BR')} kg</strong></div>`}
+                                <div class="flex justify-between text-slate-300"><span>Séries Totais:</span><strong class="text-white">${gData.series} séries</strong></div>
+                            </div>
+                            ${BodyMap.render({ valores: { [grupoMuscularFiltroAtivo]: Math.max(gData.series, 1) }, selecionado: grupoMuscularFiltroAtivo, mini: true })}
+                            ${MUSCULOS_SEM_CARGA.includes(grupoMuscularFiltroAtivo) ? '' : NeonChart.line(NeonChart.serieDias(gData.dias, 'vol'), { titulo: 'Volume do grupamento por dia', unit: 'kg', h: 140 })}
+                            ${NeonChart.bars(NeonChart.serieDias(gData.dias, 'series'), { titulo: 'Séries do grupamento por dia', unit: 'séries', h: 130, fmtY: v => String(Math.round(v)) })}
+                            <h4 class="text-[10px] uppercase font-bold text-slate-400">Progresso por Exercício neste Grupamento:</h4>
+                            ${exerciciosDoGrupo.map(exNome => {
+                                const registros = gData.exercicios[exNome];
+                                return `
+                                    <div class="bg-black/60 border border-slate-800 p-3 rounded-xl space-y-2">
+                                        <span class="font-bold text-xs text-white block">${escapeHtml(exNome)}</span>
+                                        ${NeonChart.resumoExercicio(registros)}
+                                        ${(() => { const se = NeonChart.serieExercicio(registros); return NeonChart.line(se.pts, { titulo: se.unit === 'kg' ? 'Carga máxima por sessão' : 'Melhor marca por sessão', unit: se.unit, fmtY: se.fmtY, h: 130 }); })()}
+                                        <div class="space-y-1.5">
+                                            ${registros.map(r => `
+                                                <div class="flex justify-between items-center text-[11px] border-t border-slate-900 pt-1.5">
+                                                    <span class="text-slate-400">${r.data} (${r.series} séries)</span>
+                                                    <span class="text-af-orange font-bold">${r.semCarga ? ((r.melhorTempo > 0 && r.melhorReps === 0) ? formatarTempo(r.melhorTempo) : r.melhorReps + ' reps') : r.cargaMax + 'kg máx'}</span>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = `
+                        ${BodyMap.render({ valores: Object.fromEntries(nomesGrupos.map(n => [n, grupos[n].series])), onSelect: 'selecionarGrupoAdmin', titulo: 'Mapa muscular: séries no período' })}
+                        ${NeonChart.donut(nomesGrupos.map((n, i) => ({ label: n, value: grupos[n].series, cor: NeonChart.paleta[i % NeonChart.paleta.length] })), { titulo: 'Distribuição de séries no período', centro: String(totalSeriesGrupos(grupos)), sub: 'séries' })}
+                        ${NeonChart.hbars(nomesGrupos.map(n => ({ label: n, value: grupos[n].series })), { titulo: 'Séries por grupamento', unit: 'séries' })}
+                        ${NeonChart.hbars(nomesGrupos.filter(n => !MUSCULOS_SEM_CARGA.includes(n)).map(n => ({ label: n, value: grupos[n].volume })), { titulo: 'Volume por grupamento', unit: 'kg' })}
+                        <p class="text-[10px] text-slate-400">Toque em um grupamento para ver o progresso detalhado dos exercícios:</p>
+                        <div class="space-y-2">
+                            ${nomesGrupos.map(n => `
+                                <div onclick="grupoMuscularFiltroAtivo='${n}'; atualizarRelatoriosAdmin();" onmouseenter="BodyMap.destacar('${n}')" onmouseleave="BodyMap.destacar(null)" class="bg-black/60 border border-slate-800 p-3 rounded-xl flex justify-between items-center cursor-pointer hover:border-af-orange transition-all">
+                                    <span class="font-bold text-sm text-af-orange">${escapeHtml(n)}</span>
+                                    <span class="text-xs text-slate-200">${MUSCULOS_SEM_CARGA.includes(n) ? '' : grupos[n].volume.toLocaleString('pt-BR') + ' kg • '}${grupos[n].series} séries</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        function totalSeriesGrupos(g) { return Object.values(g).reduce((s, x) => s + x.series, 0); }
+
+        function verificarRegrasMusculo() {
+            const musculo = document.getElementById('select-musculo-ex').value;
+            const blocoMetodoGeral = document.getElementById('bloco-select-metodo-geral');
+            const selectEquip = document.getElementById('select-equipamento-ex');
+
+            if (musculo === 'Abdômen' || musculo === 'Alongamentos' || musculo === 'Mobilidade') {
+                blocoMetodoGeral.classList.add('hidden');
+                document.getElementById('select-metodo-geral-ex').value = 'Nulo';
+                alternarVisibilidadeMetodoMacro('Nulo');
+                if (musculo === 'Abdômen') selectEquip.value = 'Corporal';
+            } else {
+                blocoMetodoGeral.classList.remove('hidden');
+            }
+            const qtd = parseInt(document.getElementById('input-qtd-series-ex').value) || 4;
+            gerarCamposSeriesAdmin(qtd, lerSeriesAdminAtuais());
+        }
+
+        function verificarRegrasEquipamento() {
+            const eq = document.getElementById('select-equipamento-ex').value;
+            const musculo = document.getElementById('select-musculo-ex').value;
+            if (eq === 'Corporal' || eq === 'Elástico' || musculo === 'Abdômen' || musculo === 'Alongamentos' || musculo === 'Mobilidade') {
+                document.getElementById('select-exige-rpe').value = 'nao';
+            }
+        }
+
+        function alternarVisibilidadeMetodoMacro(valor) {
+            const blocoModular = document.getElementById('bloco-configuracao-modular');
+            const blocoPiramideReps = document.getElementById('bloco-piramide-reps');
+            if (valor !== 'Nulo') {
+                blocoModular.classList.add('hidden');
+                blocoPiramideReps.classList.remove('hidden');
+            } else {
+                blocoModular.classList.remove('hidden');
+                blocoPiramideReps.classList.add('hidden');
+            }
+        }
+
+        function parseTempoTexto(txt) {
+            if (txt === undefined || txt === null) return 30;
+            const t = String(txt).toLowerCase().trim();
+            let m = t.match(/(\d+)\s*:\s*(\d+)/);
+            if (m) return parseInt(m[1]) * 60 + parseInt(m[2]);
+            m = t.match(/(\d+)\s*min\w*\s*(?:(\d+)\s*s?)?/);
+            if (m) return parseInt(m[1]) * 60 + (parseInt(m[2]) || 0);
+            m = t.match(/(\d+)/);
+            return m ? parseInt(m[1]) : 30;
+        }
+
+        function lerSeriesAdminAtuais() {
+            return Array.from(document.querySelectorAll('#container-config-series-admin .serie-config-item')).map(item => ({
+                metodo: item.querySelector('.select-metodo-serie')?.value,
+                tipoMeta: item.querySelector('.input-tipo-meta').value,
+                repsSugeridas: item.querySelector('.input-reps-sugeridas').value,
+                metaSeg: (parseInt(item.querySelector('.input-tempo-min').value) || 0) * 60 + (parseInt(item.querySelector('.input-tempo-seg').value) || 0),
+                descanso: parseInt(item.querySelector('.input-descanso-serie').value) || 90
+            }));
+        }
+
+        function aplicarTipoMetaNoItem(item, tipo) {
+            item.querySelector('.input-tipo-meta').value = tipo;
+            item.querySelector('.bloco-meta-reps').classList.toggle('hidden', tipo !== 'reps');
+            item.querySelector('.bloco-meta-tempo').classList.toggle('hidden', tipo !== 'tempo');
+            item.querySelectorAll('.btn-tipo').forEach(b => {
+                const ativo = b.getAttribute('data-tipo') === tipo;
+                b.className = 'btn-tipo px-3 py-1.5 rounded-lg transition-all ' + (ativo ? 'bg-af-orange text-black font-bold' : 'text-slate-400 font-semibold');
+            });
+        }
+
+        function definirTipoMeta(btn, tipo) {
+            aplicarTipoMetaNoItem(btn.closest('.serie-config-item'), tipo);
+        }
+
+        function definirTipoTodasSeries(tipo) {
+            document.querySelectorAll('#container-config-series-admin .serie-config-item').forEach(i => aplicarTipoMetaNoItem(i, tipo));
+        }
+
+        function gerarCamposSeriesAdmin(qtd, valoresExistentes = []) {
+            qtd = parseInt(qtd) || 0;
+            const container = document.getElementById('container-config-series-admin');
+            const musculo = document.getElementById('select-musculo-ex').value;
+            const escondeMetodo = MUSCULOS_SEM_CARGA.includes(musculo);
+            const inputBase = 'w-full bg-black border border-slate-700 rounded-xl px-2.5 py-2 text-center text-white font-bold focus:border-af-orange focus:outline-none';
+            const labelBase = 'block text-[9px] text-slate-500 uppercase font-bold mb-1 tracking-wider';
+
+            let html = '';
+            for (let i = 1; i <= qtd; i++) {
+                const sData = valoresExistentes[i - 1] || {};
+                const metodoSel = sData.metodo || 'Série Normal';
+                const tipoMetaSel = sData.tipoMeta === 'tempo' ? 'tempo' : 'reps';
+                const repsSel = (tipoMetaSel === 'reps' && sData.repsSugeridas) ? sData.repsSugeridas : '10 a 12';
+                const metaSeg = sData.metaSeg || (tipoMetaSel === 'tempo' ? parseTempoTexto(sData.repsSugeridas) : 30);
+                const tMin = Math.floor(metaSeg / 60), tSeg = metaSeg % 60;
+                const descansoSel = sData.descanso || 90;
+
+                html += `
+                    <div class="serie-config-item bg-slate-900/60 border border-slate-800 rounded-2xl p-3 space-y-3" data-serie="${i}">
+                        <div class="flex items-center gap-2">
+                            <div class="w-7 h-7 shrink-0 rounded-full bg-af-orange text-black font-black text-xs flex items-center justify-center">${i}</div>
+                            ${escondeMetodo ? `<span class="flex-1 text-[11px] font-bold text-slate-300 uppercase tracking-wider">Série ${i}</span>` : `
+                            <select onchange="atualizarMetodoSerieAdmin(this)" class="select-metodo-serie flex-1 min-w-0 bg-black border border-slate-700 rounded-xl px-2.5 py-1.5 text-slate-100 font-semibold focus:border-af-orange focus:outline-none">
+                                <option value="Série Normal" ${metodoSel==='Série Normal'?'selected':''}>Série Normal</option>
+                                <option value="Drop Set" ${metodoSel==='Drop Set'?'selected':''}>Drop-Set</option>
+                                <option value="Rest Pause" ${metodoSel==='Rest Pause'?'selected':''}>Rest-Pause</option>
+                                <option value="Cluster Set" ${metodoSel==='Cluster Set'?'selected':''}>Cluster Set</option>
+                                <option value="FST-7" ${metodoSel==='FST-7'?'selected':''}>FST-7</option>
+                            </select>`}
+                            <div class="flex shrink-0 bg-black border border-slate-700 rounded-xl p-0.5 text-[11px]">
+                                <button type="button" data-tipo="reps" onclick="definirTipoMeta(this,'reps')" class="btn-tipo">Reps</button>
+                                <button type="button" data-tipo="tempo" onclick="definirTipoMeta(this,'tempo')" class="btn-tipo">Tempo</button>
+                            </div>
+                            <input type="hidden" class="input-tipo-meta" value="${tipoMetaSel}">
+                        </div>
+                        <div class="grid grid-cols-5 gap-2.5">
+                            <div class="col-span-3">
+                                <div class="bloco-meta-reps">
+                                    <label class="${labelBase}">Meta de repetições</label>
+                                    <input type="text" value="${repsSel}" placeholder="Ex: 10 a 12" class="input-reps-sugeridas ${inputBase}">
+                                </div>
+                                <div class="bloco-meta-tempo">
+                                    <label class="${labelBase}">Meta de tempo</label>
+                                    <div class="grid grid-cols-2 gap-1.5">
+                                        <input type="number" inputmode="numeric" min="0" value="${tMin || ''}" placeholder="min" oninput="this.value=this.value.replace(/[^0-9]/g,'')" class="input-tempo-min ${inputBase}">
+                                        <input type="number" inputmode="numeric" min="0" value="${tSeg}" placeholder="seg" oninput="this.value=this.value.replace(/[^0-9]/g,'')" class="input-tempo-seg ${inputBase}">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-span-2">
+                                <label class="${labelBase}">Descanso (s)</label>
+                                <input type="number" inputmode="numeric" value="${descansoSel}" oninput="validarApenasNumeros(this)" class="input-descanso-serie ${inputBase} !text-af-orange">
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+            container.querySelectorAll('.serie-config-item').forEach(item => {
+                aplicarTipoMetaNoItem(item, item.querySelector('.input-tipo-meta').value);
+            });
+        }
+
+        function atualizarMetodoSerieAdmin(select) {}
+
+        async function removerExercicioDivisao(idx) {
+            const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
+            if (treino && treino.exercicios) {
+                treino.exercicios.splice(idx, 1);
+                await salvarTreinosNoSupabase();
+                renderizarListaExerciciosDivisao();
+            }
+        }
+
+        function copiarLinkDirect(link) {
+            navigator.clipboard.writeText(link);
+            alert('Link do aluno copiado!');
+        }
+
+        // ===== ANÁLISE COM IA (semana / mês) =====
+        // Para gerar o texto direto no app, publique a Edge Function (arquivo analise-ia-edge-function.ts) e cole a URL aqui.
+        const ANALISE_IA_URL = '';
+        let ultimoPromptAnalise = '';
+
+        function rpeNum(r) { const n = parseFloat(String(r ?? '').replace(',', '.')); return isFinite(n) ? n : null; }
+
+        function agruparPorExercicio(lista) {
+            const m = {};
+            lista.forEach(h => (h.exerciciosRealizados || []).forEach(e => {
+                const sem = e.semCarga === true || MUSCULOS_SEM_CARGA.includes(e.musculo);
+                const o = m[e.nome] || (m[e.nome] = { musculo: e.musculo || 'Outros', sem, sess: 0, series: 0, vol: 0, ini: null, fim: 0, max: 0, reps: [], rpes: [], tempo: 0 });
+                const ss = e.series || [];
+                const cm = Math.max(...ss.map(s => s.carga || 0), 0);
+                o.sess++; o.series += ss.length;
+                o.vol += (typeof e.volume === 'number') ? e.volume : ss.reduce((acc, s) => acc + (s.carga || 0) * (s.reps || 0), 0);
+                if (o.ini === null) o.ini = cm;
+                o.fim = cm; o.max = Math.max(o.max, cm);
+                ss.forEach(s => { if (s.reps) o.reps.push(s.reps); const r = rpeNum(s.rpe); if (r !== null) o.rpes.push(r); if (s.tempoSeg) o.tempo = Math.max(o.tempo, s.tempoSeg); });
+            }));
+            return m;
+        }
+
+        function montarPromptAnalise(periodo) {
+            const agora = new Date(), DIA = 86400000, dias = periodo === 'semanal' ? 7 : 30;
+            const ids = new Set(treinosDoAluno.map(t => t.id));
+            const val = historicoTreinosAluno.filter(h => h && h.data && !isNaN(new Date(h.data)) && (!h.treinoId || ids.has(h.treinoId))).sort((x, y) => new Date(x.data) - new Date(y.data));
+            const atual = val.filter(h => agora - new Date(h.data) < dias * DIA);
+            const ant = val.filter(h => { const d = agora - new Date(h.data); return d >= dias * DIA && d < 2 * dias * DIA; });
+            if (!atual.length) return null;
+            const A = agruparPorExercicio(atual), P = agruparPorExercicio(ant);
+            const meta = {};
+            treinosDoAluno.forEach(t => (t.exercicios || []).forEach(e => { meta[e.nome] = [...new Set((e.seriesConfig || []).map(s => s.repsSugeridas).filter(Boolean))].join(' / '); }));
+            const f = n => NeonChart.fmt(n);
+            const media = arr => arr.length ? f(arr.reduce((s, x) => s + x, 0) / arr.length) : 'n/d';
+            const faixa = arr => arr.length ? (Math.min(...arr) === Math.max(...arr) ? String(arr[0]) : `${Math.min(...arr)}-${Math.max(...arr)}`) : 'n/d';
+
+            const porGrupo = {};
+            Object.entries(A).forEach(([nome, o]) => { (porGrupo[o.musculo] = porGrupo[o.musculo] || []).push([nome, o]); });
+            let txtGrupos = '';
+            Object.entries(porGrupo).forEach(([musc, lista]) => {
+                const serA = lista.reduce((s, [, o]) => s + o.series, 0);
+                const serP = Object.values(P).filter(o => o.musculo === musc).reduce((s, o) => s + o.series, 0);
+                txtGrupos += `\n## ${musc} — ${serA} séries (período anterior: ${serP})\n`;
+                lista.forEach(([nome, o]) => {
+                    const p = P[nome];
+                    let l = `- ${nome}: ${o.sess} sessão(ões), ${o.series} séries; `;
+                    l += o.sem ? (o.tempo > 0 && !o.reps.length ? `melhor tempo ${o.tempo}s; ` : `reps ${faixa(o.reps)}; `) : `carga máx ${f(o.ini)}→${f(o.fim)} kg (pico ${f(o.max)}); reps ${faixa(o.reps)}; volume ${f(o.vol)} kg; `;
+                    l += `RPE médio ${media(o.rpes)}`;
+                    if (meta[nome]) l += `; meta de reps prescrita: ${meta[nome]}`;
+                    l += p ? ` | período anterior: ${p.sem ? `reps ${faixa(p.reps)}` : `carga máx ${f(p.max)} kg, reps ${faixa(p.reps)}, volume ${f(p.vol)} kg`}, RPE médio ${media(p.rpes)}` : ' | período anterior: sem registro';
+                    txtGrupos += l + '\n';
+                });
+            });
+
+            const sessoes = atual.map(h => `- ${new Date(h.data).toLocaleDateString('pt-BR')} ${h.treinoNome || ''}: ${f(h.volume || 0)} kg, ${h.qtdSeriesValidadas || 0} séries` + (h.energiaInicio ? `, energia: ${h.energiaInicio}` : '') + (h.sensacaoFim ? `, sensação final: ${h.sensacaoFim}` : '') + (h.comentarioAtleta ? `, comentário do aluno: "${String(h.comentarioAtleta).slice(0, 200)}"` : '')).join('\n');
+            const rotulo = periodo === 'semanal' ? 'SEMANA (últimos 7 dias)' : 'MÊS (últimos 30 dias)';
+
+            return `Você está me ajudando, como personal trainer (formação em Educação Física, foco em correção postural, mobilidade e execução), a analisar o aluno ${alunoSelecionado.nome}. Período: ${rotulo}, comparado ao período anterior de mesma duração.${perfilParaPrompt()}
+
+REGRAS: use só os dados abaixo; não invente números. O app NÃO registra amplitude nem cadência: não opine sobre elas como se tivesse dado; quando os padrões sugerirem problema (ex.: reps caindo com a mesma carga, RPE subindo, carga estagnada), diga em quais exercícios eu devo observar amplitude/cadência presencialmente. Seja direto, sem elogio genérico. Se os dados forem insuficientes para decidir algo, diga isso.
+
+ENTREGUE:
+1) Resumo geral do período (frequência, volume, tendência).
+2) Análise por grupamento (séries e volume vs. período anterior; equilíbrio entre grupos).
+3) Por exercício, uma decisão clara: AUMENTAR carga / MANTER / REDUZIR carga para sustentar as repetições / REVISAR execução, sempre com o motivo em números (reps vs. meta prescrita, RPE, evolução de carga).
+4) Pontos de atenção (queda de desempenho, RPE alto, energia ou sensação ruim, falta de frequência).
+5) Plano objetivo para o próximo ${periodo === 'semanal' ? 'ciclo semanal' : 'mês'}.
+
+SESSÕES NO PERÍODO:
+${sessoes}
+
+DADOS POR GRUPAMENTO E EXERCÍCIO:${txtGrupos}`;
+        }
+
+        function perfilParaPrompt() {
+            const p = perfilAtual();
+            const nv = { iniciante: 'iniciante', intermediario: 'intermediário', avancado: 'avançado' }[p.nivel];
+            const it = [p.objetivo && `objetivo: ${p.objetivo}`, p.proximoObjetivo && `próximo objetivo: ${p.proximoObjetivo}`, nv && `nível: ${nv}`, p.modalidade && `modalidade: ${p.modalidade}`, p.sexo && `sexo: ${p.sexo}`, p.idade && `idade: ${p.idade} anos`, p.pesoInicial && `peso inicial: ${p.pesoInicial} kg`, p.pesoAlvo && `peso alvo: ${p.pesoAlvo} kg`, p.altura && `altura: ${p.altura} cm`, p.sessoesSemana && `sessões por semana combinadas: ${p.sessoesSemana}`].filter(Boolean);
+            return it.length ? `\nPerfil do aluno: ${it.join('; ')}.` : '';
+        }
+
+        function mdSimples(t) {
+            return escapeHtml(t)
+                .replace(/^###? (.*)$/gm, '<h5 class="font-black text-af-orange text-xs uppercase mt-3">$1</h5>')
+                .replace(/^## (.*)$/gm, '<h5 class="font-black text-af-orange text-xs uppercase mt-3">$1</h5>')
+                .replace(/\*\*(.+?)\*\*/g, '<strong class="text-white">$1</strong>')
+                .replace(/^[-*] (.*)$/gm, '<div class="pl-3">• $1</div>')
+                .replace(/\n/g, '<br>');
+        }
+
+        function copiarPromptAnalise() {
+            navigator.clipboard.writeText(ultimoPromptAnalise).then(() => alert('Análise copiada! Cole no Claude ou no ChatGPT.'));
+        }
+
+        async function gerarAnaliseIA(periodo) {
+            if (!alunoSelecionado) return;
+            const saida = document.getElementById('analise-ia-saida');
+            const prompt = montarPromptAnalise(periodo);
+            if (!prompt) { saida.innerHTML = '<p class="text-[11px] text-slate-500 text-center py-3">Esse aluno não tem sessões nesse período para analisar.</p>'; return; }
+            ultimoPromptAnalise = prompt;
+            const blocoPrompt = `
+                <details class="bg-black/40 rounded-xl border border-slate-800">
+                    <summary class="cursor-pointer text-[10px] uppercase font-bold text-slate-400 p-2.5">Ver dados enviados à IA</summary>
+                    <textarea readonly class="w-full h-48 bg-black text-slate-300 text-[11px] p-2.5 rounded-b-xl border-0" style="font-size:11px !important">${escapeHtml(prompt)}</textarea>
+                </details>
+                <button onclick="copiarPromptAnalise()" class="w-full bg-black border border-slate-700 text-slate-200 font-bold py-2 rounded-xl text-xs">📋 Copiar análise para colar no Claude / ChatGPT</button>`;
+            if (!ANALISE_IA_URL) {
+                saida.innerHTML = `<p class="text-[11px] text-slate-400">Os dados do aluno já estão organizados com as instruções. Copie e cole no Claude ou no ChatGPT para receber a análise.</p>${blocoPrompt}`;
+                return;
+            }
+            saida.innerHTML = '<p class="text-xs text-af-orange text-center py-4 animate-pulse font-bold">Gerando análise...</p>';
+            try {
+                const r = await fetch(ANALISE_IA_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_KEY, 'apikey': SUPABASE_KEY }, body: JSON.stringify({ prompt }) });
+                const j = await r.json();
+                if (!r.ok || !j.texto) throw new Error(j.erro || 'Falha ao gerar a análise');
+                saida.innerHTML = `<div class="bg-black/60 border border-slate-800 rounded-xl p-3 text-xs text-slate-200 leading-relaxed">${mdSimples(j.texto)}</div>${blocoPrompt}`;
+            } catch (e) {
+                saida.innerHTML = `<p class="text-[11px] text-rose-400">Não consegui gerar pela IA (${escapeHtml(e.message)}). Você ainda pode copiar os dados:</p>${blocoPrompt}`;
+            }
+        }
+
+        function gerarRelatorioPDF() { window.print(); }
+        function voltarParaLista() {
+            alunoSelecionado = null;
+            document.getElementById('view-detalhe-aluno').classList.add('hidden');
+            document.getElementById('view-lista-alunos').classList.remove('hidden');
+            carregarAlunos();
+        }
+
+        async function criarTreinoDivisao() {
+            const input = document.getElementById('input-nome-treino');
+            const nome = input.value.trim();
+            if (!nome) return;
+            treinosDoAluno.push({ id: 't_' + Date.now(), nome, exercicios: [] });
+            input.value = '';
+            await salvarTreinosNoSupabase();
+            renderizarTreinosAluno();
+        }
+
+        async function renomearTreino(treinoId) {
+            const treino = treinosDoAluno.find(t => t.id === treinoId);
+            if (!treino) return;
+            const novoNome = prompt("Renomear divisão:", treino.nome);
+            if (!novoNome || !novoNome.trim()) return;
+            treino.nome = novoNome.trim();
+            await salvarTreinosNoSupabase();
+            renderizarTreinosAluno();
+        }
+
+        async function excluirTreino(treinoId) {
+            if (!confirm("Deseja realmente apagar esta divisão?")) return;
+            treinosDoAluno = treinosDoAluno.filter(t => t.id !== treinoId);
+            await salvarTreinosNoSupabase();
+            renderizarTreinosAluno();
+            atualizarRelatoriosAdmin();
+            calcularEvolucaoRecenteAdmin();
+        }
+
+        async function salvarTreinosNoSupabase() {
+            if (!alunoSelecionado) return;
+            try {
+                const { data, error } = await supabaseClient.from('alunos').update({ treinos: treinosDoAluno }).eq('id', alunoSelecionado.id).select('id');
+                if (error || !data || data.length === 0) throw new Error('Erro ao salvar no banco.');
+                atualizarHoraSincronizacao();
+            } catch (err) { alert('Erro ao salvar o treino: ' + err.message); }
+        }
+
+        function abrirMontagemTreino(treinoId) {
+            treinoAtivoId = treinoId;
+            cancelarEdicaoExercicio();
+            const treino = treinosDoAluno.find(t => t.id === treinoId);
+            if (!treino) return;
+            document.getElementById('titulo-treino-ativo').innerText = treino.nome;
+            document.getElementById('view-detalhe-aluno').classList.add('hidden');
+            document.getElementById('view-montar-exercicios').classList.remove('hidden');
+            gerarCamposSeriesAdmin(4);
+            renderizarListaExerciciosDivisao();
+        }
+
+        function voltarParaTreinos() {
+            treinoAtivoId = null;
+            document.getElementById('view-montar-exercicios').classList.add('hidden');
+            document.getElementById('view-detalhe-aluno').classList.remove('hidden');
+            renderizarTreinosAluno();
+        }
+
+        function filtrarSugestoesExercicios(texto) {
+            const box = document.getElementById('sugestoes-autocomplete');
+            if (!texto.trim()) { box.classList.add('hidden'); return; }
+            const filtrados = baseExerciciosGlobais.filter(e => e.toLowerCase().includes(texto.toLowerCase()));
+            if (filtrados.length === 0) { box.classList.add('hidden'); return; }
+            box.innerHTML = filtrados.map(f => `<div onclick="selecionarSugestaoExercicio('${escapeHtml(f)}')" class="p-2.5 hover:bg-slate-800 cursor-pointer text-xs text-slate-200 border-b border-slate-800/50">${escapeHtml(f)}</div>`).join('');
+            box.classList.remove('hidden');
+        }
+
+        function selecionarSugestaoExercicio(nome) {
+            document.getElementById('input-busca-ex').value = nome;
+            document.getElementById('sugestoes-autocomplete').classList.add('hidden');
+        }
+
+        function carregarFinanceiro() {}
+
+        function mudarDiaAgenda(dia) {
+            diaAgendaAtual = dia;
+            ['SEG', 'TER', 'QUA', 'QUI', 'SEX'].forEach(d => {
+                document.getElementById(`btn-agenda-${d}`).className = d === dia ? 'flex-1 py-1.5 px-2.5 rounded-lg bg-af-orange text-black font-bold shadow-md' : 'flex-1 py-1.5 px-2.5 rounded-lg text-slate-400 font-bold';
+            });
+            renderizarGradeAgenda();
+        }
+
+        function renderizarGradeAgenda() {
+            const container = document.getElementById('container-grade-horarios');
+            const horas = [];
+            for (let h = 5; h <= 21; h++) {
+                horas.push(`${String(h).padStart(2, '0')}:00`);
+            }
+
+            container.innerHTML = horas.map(hora => {
+                const key = `${diaAgendaAtual}_${hora}`;
+                const alunoVinculado = agendaDados[key] ? agendaDados[key].nome : '';
+                return `
+                    <div onclick="abrirModalAgenda('${hora}')" class="bg-black/60 border border-slate-800 p-3 rounded-xl flex justify-between items-center cursor-pointer hover:border-af-orange transition-all shadow-sm">
+                        <span class="font-bold text-xs text-slate-300">⏰ ${hora}</span>
+                        <span class="text-xs font-bold ${alunoVinculado ? 'text-af-orange' : 'text-slate-500'}">${alunoVinculado ? escapeHtml(alunoVinculado) : 'Livre'}</span>
+                    </div>
+                `;
+            }).join('');
+            atualizarResumoAgendaTelaAlunos();
+        }
+
+        function abrirModalAgenda(hora) {
+            slotAgendaSelecionado = `${diaAgendaAtual}_${hora}`;
+            document.getElementById('modal-agenda-titulo').innerText = `Horário: ${diaAgendaAtual} às ${hora}`;
+            const select = document.getElementById('select-aluno-agenda');
+            const ativos = alunosGlobais.filter(a => !a.arquivado);
+            select.innerHTML = `<option value="">-- Selecione o Aluno --</option>` + ativos.map(a => `<option value="${escapeHtml(a.id)}">${escapeHtml(a.nome)}</option>`).join('');
+            const atual = agendaDados[slotAgendaSelecionado];
+            if (atual) select.value = String(atual.id);
+            document.getElementById('modal-agenda').classList.remove('hidden');
+        }
+
+        function fecharModalAgenda() { document.getElementById('modal-agenda').classList.add('hidden'); }
+
+        async function salvarHorarioAgenda() {
+            const select = document.getElementById('select-aluno-agenda');
+            const alunoId = select.value;
+            if (!alunoId) { alert('Selecione um aluno!'); return; }
+            const aluno = alunosGlobais.find(a => String(a.id) === String(alunoId));
+            if (!aluno) { alert('Aluno não encontrado.'); return; }
+            const slot = slotAgendaSelecionado;
+            agendaDados[slot] = { id: aluno.id, nome: aluno.nome };
+            gravarAgendaLocal();
+            fecharModalAgenda();
+            renderizarGradeAgenda();
+            if (agendaNoServidor) {
+                await supabaseClient.from('agenda').upsert({ slot, aluno_id: aluno.id, aluno_nome: aluno.nome });
+            }
+        }
+
+        async function liberarHorarioAgenda() {
+            const slot = slotAgendaSelecionado;
+            delete agendaDados[slot];
+            gravarAgendaLocal();
+            fecharModalAgenda();
+            renderizarGradeAgenda();
+            if (agendaNoServidor) {
+                await supabaseClient.from('agenda').delete().eq('slot', slot);
+            }
+        }
+
         window.onload = () => { montarFormsPerfil(); try { alternarNavLateral(localStorage.getItem('af_nav_recolhida') === '1'); } catch (e) {} document.querySelectorAll('[data-nav="inicio"]').forEach(b => b.classList.add('ativo')); carregarDadosGerais(); };
     </script>
 </body>
