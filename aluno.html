@@ -71,7 +71,6 @@
             cursor: pointer;
         }
 
-        /* Paginação / Wizard de Exercícios */
         .exercise-card {
             background: var(--card-bg);
             border: 1px solid var(--card-border);
@@ -184,7 +183,6 @@
             color: #fff;
         }
 
-        /* Botões de Navegação Anterior / Próximo */
         .wizard-nav {
             display: flex;
             gap: 12px;
@@ -221,7 +219,6 @@
             cursor: not-allowed;
         }
 
-        /* Modais */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -293,10 +290,8 @@
         <button class="btn-finish-top" onclick="openFinishModal()">Terminar</button>
     </header>
 
-    <!-- Container do Exercício Ativo (Wizard) -->
     <div id="exerciseWizardContainer"></div>
 
-    <!-- Modal de Finalização -->
     <div class="modal-overlay" id="finishModal">
         <div class="modal-card">
             <div class="modal-title">Finalizar Treino?</div>
@@ -309,7 +304,6 @@
     </div>
 
     <script>
-        // Estado do Treino e Exemplo de Exercícios
         let currentExerciseIndex = 0;
         let secondsElapsed = 0;
         let timerInterval = null;
@@ -366,16 +360,19 @@
         }
 
         function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
             timerInterval = setInterval(() => {
                 secondsElapsed++;
                 const mins = Math.floor(secondsElapsed / 60).toString().padStart(2, '0');
                 const secs = (secondsElapsed % 60).toString().padStart(2, '0');
-                document.getElementById('timerDisplay').innerText = `${mins}:${secs}`;
+                const elTimer = document.getElementById('timerDisplay');
+                if (elTimer) elTimer.innerText = `${mins}:${secs}`;
             }, 1000);
         }
 
         function renderExercise() {
             const container = document.getElementById('exerciseWizardContainer');
+            if (!container || !workoutData.exercises.length) return;
             const ex = workoutData.exercises[currentExerciseIndex];
             const total = workoutData.exercises.length;
 
@@ -403,7 +400,7 @@
                         <div class="set-number">${sIdx + 1}</div>
                         <div class="set-input-group">
                             <label>Peso (kg)</label>
-                            <input type="number" value="${set.weight}" onchange="updateSetData(${sIdx}, 'weight', this.value)">
+                            <input type="number" step="any" value="${set.weight}" onchange="updateSetData(${sIdx}, 'weight', this.value)">
                         </div>
                         <div class="set-input-group">
                             <label>Reps</label>
@@ -434,15 +431,14 @@
         }
 
         function updateSetData(sIdx, field, val) {
-            workoutData.exercises[currentExerciseIndex].sets[sIdx][field] = val;
+            const parsed = field === 'rpe' || field === 'weight' ? parseFloat(String(val).replace(',', '.')) : parseInt(val, 10);
+            workoutData.exercises[currentExerciseIndex].sets[sIdx][field] = isNaN(parsed) ? 0 : parsed;
         }
 
         function toggleSet(sIdx) {
             const set = workoutData.exercises[currentExerciseIndex].sets[sIdx];
             set.done = !set.done;
             renderExercise();
-
-            // Verifica se todos os sets de todos os exercícios foram concluídos
             checkAutoFinish();
         }
 
@@ -477,19 +473,21 @@
         }
 
         function openFinishModal() {
-            document.getElementById('finishModal').style.display = 'flex';
+            const modal = document.getElementById('finishModal');
+            if (modal) modal.style.display = 'flex';
         }
 
         function saveAndFinishWorkout() {
-            clearInterval(timerInterval);
-            alert('Treino salvo com sucesso! Duração total: ' + document.getElementById('timerDisplay').innerText);
-            window.location.href = 'index_2.html'; // Retorna ao painel admin/dashboard
+            if (timerInterval) clearInterval(timerInterval);
+            const timerTxt = document.getElementById('timerDisplay')?.innerText || '00:00';
+            alert('Treino salvo com sucesso! Duração total: ' + timerTxt);
+            window.location.href = 'index_3.html';
         }
 
         function discardWorkout() {
             if (confirm('Tem certeza que deseja descartar este treino?')) {
-                clearInterval(timerInterval);
-                window.location.href = 'index_2.html';
+                if (timerInterval) clearInterval(timerInterval);
+                window.location.href = 'index_3.html';
             }
         }
 

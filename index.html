@@ -921,7 +921,6 @@
             const ativos = alunosGlobais.filter(a => !a.arquivado);
             const sem7 = sessoes.filter(s => agora - s.t < 7 * DIA && s.t <= agora);
             const semAnt = sessoes.filter(s => agora - s.t >= 7 * DIA && agora - s.t < 14 * DIA);
-            const vol = l => l.reduce((s, x) => s + (x.h.volume || 0), 0);
 
             const dias = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
             const hojeStr = dias[agora.getDay()];
@@ -965,7 +964,7 @@
                 : '<p class="text-[11px] text-emerald-400 text-center py-4 font-bold">Todo mundo treinou nos últimos 7 dias. 👏</p>';
             document.getElementById('inicio-atencao').innerHTML = inicioPainel('Atenção: alunos parados', atHtml, `<span class="text-[10px] text-slate-500">${atencao.length} de ${ativos.length}</span>`);
 
-            // renovações próximas (campo opcional da ficha)
+            // renovações próximas
             const hoje0 = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
             const renov = ativos.filter(al => al.perfil && al.perfil.renovacao).map(al => {
                 const [y, m, d] = String(al.perfil.renovacao).split('-').map(Number);
@@ -991,7 +990,8 @@
         function atualizarResumoAgendaTelaAlunos() {
             const diasSemanaMap = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
             const diaHojeStr = diasSemanaMap[new Date().getDay()] || 'SEG';
-            document.getElementById('resumo-agenda-titulo').innerText = `Agenda de Hoje (${diaHojeStr})`;
+            const elResumo = document.getElementById('resumo-agenda-titulo');
+            if (elResumo) elResumo.innerText = `Agenda de Hoje (${diaHojeStr})`;
 
             let ocupadosHoje = 0;
             for (let h = 5; h <= 21; h++) {
@@ -1001,9 +1001,13 @@
             const livresHoje = Math.max(0, 17 - ocupadosHoje);
             let totalSemana = Object.keys(agendaDados).length;
 
-            document.getElementById('resumo-ocupados-hoje').innerText = ocupadosHoje;
-            document.getElementById('resumo-livres-hoje').innerText = livresHoje;
-            document.getElementById('resumo-total-semana').innerText = totalSemana;
+            const elOcupados = document.getElementById('resumo-ocupados-hoje');
+            const elLivres = document.getElementById('resumo-livres-hoje');
+            const elTotal = document.getElementById('resumo-total-semana');
+
+            if (elOcupados) elOcupados.innerText = ocupadosHoje;
+            if (elLivres) elLivres.innerText = livresHoje;
+            if (elTotal) elTotal.innerText = totalSemana;
         }
 
         function escapeHtml(t) {
@@ -1164,7 +1168,8 @@
         }
         function hintMesPerfil(p) {
             const n = parseFloat(document.getElementById(`pf-${p}-sessoesSemana`).value);
-            document.getElementById(`pf-${p}-mes`).innerText = n > 0 ? `≈ ${Math.round(n * 52 / 12)} sessões por mês` : '';
+            const elMes = document.getElementById(`pf-${p}-mes`);
+            if (elMes) elMes.innerText = n > 0 ? `≈ ${Math.round(n * 52 / 12)} sessões por mês` : '';
         }
         function lerPerfil(p) {
             const o = {};
@@ -1189,8 +1194,10 @@
             return (al && al.perfil && typeof al.perfil === 'object') ? al.perfil : {};
         }
         function montarFormsPerfil() {
-            document.getElementById('form-perfil-novo').innerHTML = formPerfilHTML('novo');
-            document.getElementById('form-perfil-edit').innerHTML = formPerfilHTML('edit');
+            const elNovo = document.getElementById('form-perfil-novo');
+            const elEdit = document.getElementById('form-perfil-edit');
+            if (elNovo) elNovo.innerHTML = formPerfilHTML('novo');
+            if (elEdit) elEdit.innerHTML = formPerfilHTML('edit');
         }
         function resumoFicha(pf) {
             const nv = { iniciante: 'Iniciante', intermediario: 'Intermediário', avancado: 'Avançado' }[pf.nivel];
@@ -1200,7 +1207,8 @@
         function mostrarFichaAluno() {
             const pf = perfilAtual();
             preencherPerfil('edit', pf);
-            document.getElementById('ficha-resumo').innerText = resumoFicha(pf);
+            const elResumo = document.getElementById('ficha-resumo');
+            if (elResumo) elResumo.innerText = resumoFicha(pf);
         }
         function avisoPerfilSQL(msg) {
             if (/perfil/i.test(msg || '')) alert('Falta criar a coluna "perfil" no Supabase.\n\nNo Supabase abra SQL Editor, cole e rode:\n\n' + SQL_PERFIL + '\n\nDepois tente de novo.');
@@ -1219,14 +1227,14 @@
             const atual = perfilAtual();
             if (atual.metasVolume) novo.metasVolume = atual.metasVolume;
             if (await salvarPerfilAluno(novo)) {
-                document.getElementById('ficha-resumo').innerText = resumoFicha(novo);
+                const elResumo = document.getElementById('ficha-resumo');
+                if (elResumo) elResumo.innerText = resumoFicha(novo);
                 renderizarPainelVolume();
                 alert('Ficha salva!');
             }
         }
 
         // ===== ASSISTENTE DE VOLUME SEMANAL =====
-        // Metas = ponto de partida (séries/semana por grupamento, diretas + 0,5 por indireta), ajustáveis por aluno.
         const CLASSE_MUSCULO = { 'Quadríceps': 'grande', 'Peitoral': 'grande', 'Costas': 'grande', 'Glúteos': 'grande', 'Posterior': 'grande', 'Ombros': 'pequeno', 'Tríceps': 'pequeno', 'Bíceps': 'pequeno', 'Panturrilhas': 'core', 'Abdômen': 'core' };
         const NOME_MUSCULO = { 'Posterior': 'Posterior de coxa' };
         const METAS_NIVEL = {
@@ -1285,7 +1293,7 @@
                 const pt = porTreino[l.g] || {};
                 Object.entries(pt).forEach(([tid, n]) => { if (n > 10) avisos.push(['info', `${nome}: ${n} séries no mesmo treino. Considere dividir esse volume em 2 dias.`]); });
                 const dom = Object.values(zonas[l.g] || {}).map(zt => Object.entries(zt).sort((x, y) => y[1] - x[1])[0][0]);
-                if (dom.length >= 2 && dom.every(z => z === dom[0])) avisos.push(['onda', `${nome}: aparece em ${dom.length} treinos, todos na faixa ${dom[0]}. Para ondulatória, varie a faixa de repetições entre os treinos (ex.: um mais pesado, outro moderado, outro mais leve).`]);
+                if (dom.length >= 2 && dom.every(z => z === dom[0])) avisos.push(['onda', `${nome}: aparece em ${dom.length} treinos, todos na faixa ${dom[0]}. Para ondulatória, varie a faixa de repetições entre os treinos.`]);
             });
             return { linhas, avisos, totalEx, nivel, nivelUso, pf };
         }
@@ -1315,8 +1323,7 @@
                     <div class="flex gap-2"><button onclick="salvarMetasVolume()" class="flex-1 bg-af-orange text-black font-black py-2 rounded-xl text-xs">Salvar metas</button><button onclick="restaurarMetasVolume()" class="bg-black border border-slate-700 text-slate-300 font-bold px-3 py-2 rounded-xl text-xs">Padrão</button></div></div></details>`;
             }
             return `<div class="bg-af-card rounded-2xl p-4 space-y-3 shadow-lg"><div class="flex justify-between items-center gap-2"><h3 class="font-bold text-xs text-af-orange uppercase tracking-wider">🎯 Volume semanal planejado</h3><span class="text-[10px] text-slate-400">Nível: ${nivelTxt}</span></div>
-                <div class="space-y-2.5">${linhas}</div>${avisosHtml}${ajustes}
-                ${compacto ? '' : '<p class="text-[10px] text-slate-500 leading-snug">Conta séries de cada grupamento por semana (indiretas valem 0,5, como nos estudos de dose-resposta). Metas são ponto de partida: a literatura mostra ganho crescente com o volume, com retorno cada vez menor, e a necessidade individual varia.</p>'}</div>`;
+                <div class="space-y-2.5">${linhas}</div>${avisosHtml}${ajustes}</div>`;
         }
         function renderizarPainelVolume() {
             const a1 = document.getElementById('painel-volume-semanal'), a2 = document.getElementById('painel-volume-montagem');
@@ -1472,7 +1479,7 @@
             const listaEl = document.getElementById('lista-evolucao-exercicios-admin');
             const chavesEx = Object.keys(evolucaoExerciciosMap);
             if (chavesEx.length === 0) {
-                listaEl.innerHTML = `<p class="text-[11px] text-slate-500 text-center">Nenhum exercício registrado ainda.</p>`;
+                listaEl.innerHTML = `<p class="text-[11px] text-slate-500 text-center">Nenhum exercício evoluído registrado ainda.</p>`;
             } else {
                 listaEl.innerHTML = chavesEx.map(nome => {
                     const obj = evolucaoExerciciosMap[nome];
@@ -2105,8 +2112,6 @@
             alert('Link do aluno copiado!');
         }
 
-        // ===== ANÁLISE COM IA (semana / mês) =====
-        // Para gerar o texto direto no app, publique a Edge Function (arquivo analise-ia-edge-function.ts) e cole a URL aqui.
         const ANALISE_IA_URL = '';
         let ultimoPromptAnalise = '';
 
@@ -2166,13 +2171,6 @@
             return `Você está me ajudando, como personal trainer (formação em Educação Física, foco em correção postural, mobilidade e execução), a analisar o aluno ${alunoSelecionado.nome}. Período: ${rotulo}, comparado ao período anterior de mesma duração.${perfilParaPrompt()}
 
 REGRAS: use só os dados abaixo; não invente números. O app NÃO registra amplitude nem cadência: não opine sobre elas como se tivesse dado; quando os padrões sugerirem problema (ex.: reps caindo com a mesma carga, RPE subindo, carga estagnada), diga em quais exercícios eu devo observar amplitude/cadência presencialmente. Seja direto, sem elogio genérico. Se os dados forem insuficientes para decidir algo, diga isso.
-
-ENTREGUE:
-1) Resumo geral do período (frequência, volume, tendência).
-2) Análise por grupamento (séries e volume vs. período anterior; equilíbrio entre grupos).
-3) Por exercício, uma decisão clara: AUMENTAR carga / MANTER / REDUZIR carga para sustentar as repetições / REVISAR execução, sempre com o motivo em números (reps vs. meta prescrita, RPE, evolução de carga).
-4) Pontos de atenção (queda de desempenho, RPE alto, energia ou sensação ruim, falta de frequência).
-5) Plano objetivo para o próximo ${periodo === 'semanal' ? 'ciclo semanal' : 'mês'}.
 
 SESSÕES NO PERÍODO:
 ${sessoes}
