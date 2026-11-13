@@ -14,6 +14,96 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- ===== MAPA MUSCULAR (bonequinho clicável, SVG puro) ===== -->
+    <script>
+    window.BodyMap = (function () {
+        let uid = 0;
+        const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const MIR = 'matrix(-1 0 0 1 120 0)';
+        const BRACO = [20, 82, 7.5, 17, 8];
+        const R = {
+            f: {
+                'Ombros': { m: 1, el: [30, 54, 11, 11, 0] },
+                'Peitoral': { m: 1, p: 'M44 50 L59 52 L59 82 Q47 90 36 80 Q34 62 44 50 Z' },
+                'Abdômen': { m: 0, r: [47, 90, 26, 54, 7], dec: '<path class="bm-dec" d="M60 93 L60 141 M48 108 L72 108 M48 124 L72 124" stroke="rgba(0,0,0,.4)" stroke-width="1" fill="none"/>' },
+                'Bíceps': { m: 1, el: BRACO },
+                'Quadríceps': { m: 1, p: 'M41 152 L59 152 L58 214 Q50 221 43 214 Z' },
+                'Panturrilhas': { m: 1, el: [49, 250, 7, 21, 0] }
+            },
+            b: {
+                'Costas': { m: 0, p: 'M46 44 L74 44 L90 64 Q92 104 80 128 L40 128 Q28 104 30 64 Z' },
+                'Ombros': { m: 1, el: [30, 54, 11, 11, 0] },
+                'Tríceps': { m: 1, el: BRACO },
+                'Glúteos': { m: 1, el: [49, 148, 12, 13, 0] },
+                'Posterior': { m: 1, p: 'M41 164 L59 164 L58 218 Q50 224 43 218 Z' },
+                'Panturrilhas': { m: 1, el: [49, 252, 7, 20, 0] }
+            }
+        };
+        const NOME = { 'Posterior': 'Posterior de coxa' };
+        const lado = '<path d="M30 48 Q16 52 14 70 L10 112 Q9 124 14 128 L22 128 Q26 124 26 112 L32 74 Z"/><path d="M40 148 L60 148 L58 218 L56 284 L44 284 L42 218 Z"/>';
+        const SIL = '<g fill="#0b1220" stroke="#334155" stroke-width="1.2"><circle cx="60" cy="20" r="13"/><rect x="54" y="31" width="12" height="10" rx="3"/><path d="M32 46 Q60 38 88 46 L84 100 Q82 128 80 150 L40 150 Q38 128 36 100 Z"/>' + lado + '<g transform="' + MIR + '">' + lado + '</g></g>';
+
+        if (!document.getElementById('bm-css')) {
+            document.head.insertAdjacentHTML('beforeend', '<style id="bm-css">.bm-g{transition:filter .15s}.bm-g:hover path:not(.bm-dec),.bm-g:hover ellipse,.bm-g:hover rect,.bm-g.hl path:not(.bm-dec),.bm-g.hl ellipse,.bm-g.hl rect,.bm-g.sel path:not(.bm-dec),.bm-g.sel ellipse,.bm-g.sel rect{stroke:#fff !important;stroke-width:1.8 !important;filter:drop-shadow(0 0 5px #FF6A00) drop-shadow(0 0 10px rgba(255,106,0,.7))}</style>');
+        }
+
+        function forma(d, st) {
+            if (d.p) return '<path d="' + d.p + '" ' + st + '/>';
+            if (d.el) {
+                const e = d.el;
+                return '<ellipse cx="' + e[0] + '" cy="' + e[1] + '" rx="' + e[2] + '" ry="' + e[3] + '"' + (e[4] ? ' transform="rotate(' + e[4] + ' ' + e[0] + ' ' + e[1] + ')"' : '') + ' ' + st + '/>';
+            }
+            const r = d.r;
+            return '<rect x="' + r[0] + '" y="' + r[1] + '" width="' + r[2] + '" height="' + r[3] + '" rx="' + r[4] + '" ' + st + '/>';
+        }
+        function regiao(nome, d, v, max, o) {
+            const a = v > 0 ? (0.18 + 0.72 * v / max) : 0;
+            const st = v > 0 ? 'fill="rgba(255,106,0,' + a.toFixed(2) + ')" stroke="rgba(255,106,0,' + (a > 0.3 ? 0.95 : 0.5) + ')" stroke-width="1"' : 'fill="#111a2b" stroke="#2b3a52" stroke-width="1"';
+            const clic = v > 0 && o.onSelect;
+            let corpo = forma(d, st) + (d.dec || '');
+            if (d.m) corpo += '<g transform="' + MIR + '">' + forma(d, st) + '</g>';
+            return '<g class="bm-g' + (o.selecionado === nome ? ' sel' : '') + '" data-g="' + esc(nome) + '" data-v="' + v + '"' + (clic ? ' onclick="' + o.onSelect + '(\'' + nome + '\')" style="cursor:pointer"' : '') + ' onmouseenter="BodyMap.hover(this)" onmouseleave="BodyMap.sair(this)">' + corpo + '</g>';
+        }
+        function padrao(o) { return o.mini ? '' : 'Passe o mouse ou toque em um músculo'; }
+
+        function render(o) {
+            o = o || {};
+            const v = o.valores || {};
+            const max = Math.max(1, ...Object.values(v).map(Number).filter(isFinite));
+            const lg = o.mini ? 170 : 340;
+            let svg = '<svg viewBox="0 0 250 306" style="width:100%;max-width:' + lg + 'px;display:block;margin:0 auto" role="img" aria-label="Mapa muscular, frente e costas">';
+            svg += '<g>' + SIL + Object.keys(R.f).map(n => regiao(n, R.f[n], +v[n] || 0, max, o)).join('') + '</g>';
+            svg += '<g transform="translate(130 0)">' + SIL + Object.keys(R.b).map(n => regiao(n, R.b[n], +v[n] || 0, max, o)).join('') + '</g>';
+            svg += '<text x="60" y="301" text-anchor="middle" font-size="8" fill="#64748b">FRENTE</text><text x="190" y="301" text-anchor="middle" font-size="8" fill="#64748b">COSTAS</text></svg>';
+            const info = '<div class="bm-info text-center text-[11px] text-slate-400" style="min-height:1.2rem" data-padrao="' + esc(padrao(o)) + '">' + esc(padrao(o)) + '</div>';
+            const leg = o.mini ? '' : '<div class="flex items-center gap-2 text-[9px] text-slate-500 justify-center"><span>menos</span><span style="width:90px;height:6px;border-radius:9px;background:linear-gradient(90deg,rgba(255,106,0,.18),rgba(255,106,0,.95));box-shadow:0 0 8px rgba(255,106,0,.5)"></span><span>mais séries</span></div>';
+            const tit = o.titulo ? '<div class="text-[10px] uppercase font-bold text-slate-400">' + esc(o.titulo) + '</div>' : '';
+            return '<div class="bm-wrap bg-black/60 border border-slate-800 rounded-xl p-3 space-y-2">' + tit + svg + info + leg + '</div>';
+        }
+        function textoInfo(g, v) {
+            const nome = NOME[g] || g;
+            return '<b style="color:#FF6A00">' + esc(nome) + '</b> • ' + (v > 0 ? v + ' séries no período — toque para ver a evolução' : 'sem registros no período');
+        }
+        function hover(el) {
+            const w = el.closest('.bm-wrap'); if (!w) return;
+            const i = w.querySelector('.bm-info');
+            if (i && !w.classList.contains('bm-mini')) i.innerHTML = textoInfo(el.dataset.g, +el.dataset.v);
+        }
+        function sair(el) {
+            const w = el.closest('.bm-wrap'); if (!w) return;
+            const i = w.querySelector('.bm-info'); if (i) i.innerText = i.dataset.padrao || '';
+        }
+        function destacar(g) {
+            document.querySelectorAll('.bm-g').forEach(e => e.classList.toggle('hl', g !== null && e.dataset.g === g));
+            document.querySelectorAll('.bm-wrap').forEach(w => {
+                const i = w.querySelector('.bm-info'); if (!i) return;
+                const alvo = g !== null ? w.querySelector('.bm-g[data-g="' + g + '"]') : null;
+                if (alvo) i.innerHTML = textoInfo(g, +alvo.dataset.v); else i.innerText = i.dataset.padrao || '';
+            });
+        }
+        return { render: render, hover: hover, sair: sair, destacar: destacar };
+    })();
+    </script>
     <!-- ===== GRÁFICOS NEON (SVG puro, sem biblioteca, funciona offline) ===== -->
     <script>
     window.NeonChart = (function () {
@@ -163,6 +253,19 @@
         }
 
 
+
+        function ring(valor, max, o) {
+            o = o || {};
+            const r = 34, c = 2 * Math.PI * r;
+            const pct = max > 0 ? Math.min(valor / max, 1) : 0;
+            const cor = o.cor || COR;
+            const centro = o.centro !== undefined ? o.centro : Math.round(pct * 100) + '%';
+            const svg = '<svg viewBox="0 0 100 100" style="width:92px;height:92px;display:block;margin:0 auto"><circle cx="50" cy="50" r="' + r + '" fill="none" stroke="#0f172a" stroke-width="9"/>' +
+                '<circle cx="50" cy="50" r="' + r + '" fill="none" stroke="' + cor + '" stroke-width="9" stroke-linecap="round" stroke-dasharray="' + (pct * c).toFixed(1) + ' ' + c.toFixed(1) + '" transform="rotate(-90 50 50)" style="filter:drop-shadow(0 0 4px ' + cor + ') drop-shadow(0 0 9px ' + cor + '88)"/>' +
+                '<text x="50" y="56" text-anchor="middle" font-size="19" font-weight="800" fill="#fff">' + esc(centro) + '</text></svg>';
+            return '<div class="text-center min-w-0">' + svg + '<div class="text-[11px] font-bold text-slate-200 mt-1.5">' + esc(o.label || '') + '</div><div class="text-[10px] text-slate-500 leading-tight">' + esc(o.sub || '') + '</div></div>';
+        }
+
         function somarDiaVal(mapa, data, vol, series) {
             const dt = new Date(data);
             if (isNaN(dt)) return;
@@ -207,7 +310,7 @@
             return { pts: pts, unit: sem ? (soTempo ? 's' : 'reps') : 'kg', fmtY: soTempo ? tempo : fmt };
         }
 
-        return { line: line, bars: bars, hbars: hbars, donut: donut, somarDiaVal: somarDiaVal, resumoExercicio: resumoExercicio, paleta: paleta, somarDia: somarDia, serieDias: serieDias, serieExercicio: serieExercicio, fmt: fmt };
+        return { line: line, bars: bars, hbars: hbars, donut: donut, ring: ring, somarDiaVal: somarDiaVal, resumoExercicio: resumoExercicio, paleta: paleta, somarDia: somarDia, serieDias: serieDias, serieExercicio: serieExercicio, fmt: fmt };
     })();
     </script>
 
@@ -245,6 +348,24 @@
             #sec-adm-inicio .grid-paineis { grid-template-columns: repeat(2, minmax(0,1fr)); gap:1rem; }
             #sec-adm-inicio .col-cheio { grid-column: 1 / -1; }
         }
+
+        /* ===== VISUAL GLASS / NEON ===== */
+        body { background-image: radial-gradient(60rem 40rem at 85% -10%, rgba(255,106,0,.14), transparent 60%), radial-gradient(50rem 40rem at -10% 110%, rgba(99,102,241,.11), transparent 60%); background-attachment: fixed; }
+        .bg-af-card { background: rgba(255,255,255,.035) !important; -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border: 1px solid rgba(255,106,0,.17); box-shadow: 0 8px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.05); }
+        .kpi-card { background: rgba(255,255,255,.04); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); box-shadow: 0 6px 24px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.05); }
+        #nav-lateral .nav-btn { display: flex; align-items: center; gap: .7rem; }
+        .nav-ico { font-size: 1.15rem; width: 1.5rem; text-align: center; }
+        .nav-brand-mini { display: none; }
+        @media (min-width: 1024px) {
+            #nav-lateral { background: rgba(10,10,10,.78); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); transition: width .2s; }
+            body { transition: padding-left .2s; }
+            body.nav-recolhida { padding-left: 6.5rem !important; }
+            body.nav-recolhida #nav-lateral { width: 4.75rem; padding: 1.25rem .6rem; }
+            body.nav-recolhida .nav-txt, body.nav-recolhida .nav-brand-full { display: none !important; }
+            body.nav-recolhida .nav-brand-mini { display: block; }
+            body.nav-recolhida #nav-lateral .nav-btn { justify-content: center; padding-left: 0; padding-right: 0; }
+            body.nav-recolhida #nav-rodape { flex-direction: column; gap: .5rem; }
+        }
         input, select, textarea { font-size: 16px !important; }
         html { touch-action: manipulation; }
         @media print {
@@ -259,18 +380,20 @@
     <!-- NAV LATERAL (desktop) -->
     <aside id="nav-lateral" class="no-print">
         <div class="mb-6 px-1">
-            <div class="font-black text-xl text-white tracking-tighter">ANDREY FRANCO</div>
-            <span class="font-black text-[10px] text-af-orange tracking-widest bg-orange-950/60 px-1.5 py-0.5 rounded border border-orange-600/40">PERSONAL ADMIN</span>
+            <div class="nav-brand-mini font-black text-xl text-af-orange text-center">AF</div>
+            <div class="nav-brand-full font-black text-xl text-white tracking-tighter">ANDREY FRANCO</div>
+            <span class="nav-brand-full inline-block font-black text-[10px] text-af-orange tracking-widest bg-orange-950/60 px-1.5 py-0.5 rounded border border-orange-600/40">PERSONAL ADMIN</span>
         </div>
         <nav class="space-y-1.5 text-sm font-bold">
-            <button data-nav="inicio" onclick="mudarAbaPrincipalAdmin('inicio')" class="nav-btn w-full text-left px-3.5 py-3 rounded-xl border border-transparent hover:text-white">🏠&nbsp; Início</button>
-            <button data-nav="alunos" onclick="mudarAbaPrincipalAdmin('alunos')" class="nav-btn w-full text-left px-3.5 py-3 rounded-xl border border-transparent hover:text-white">👥&nbsp; Alunos</button>
-            <button data-nav="agenda" onclick="mudarAbaPrincipalAdmin('agenda')" class="nav-btn w-full text-left px-3.5 py-3 rounded-xl border border-transparent hover:text-white">📅&nbsp; Agenda</button>
-            <button data-nav="financeiro" onclick="mudarAbaPrincipalAdmin('financeiro')" class="nav-btn w-full text-left px-3.5 py-3 rounded-xl border border-transparent hover:text-white">💰&nbsp; Financeiro</button>
+            <button data-nav="inicio" onclick="mudarAbaPrincipalAdmin('inicio')" class="nav-btn w-full text-left px-3.5 py-3 rounded-xl border border-transparent hover:text-white" title="Início"><span class="nav-ico">🏠</span><span class="nav-txt">Início</span></button>
+            <button data-nav="alunos" onclick="mudarAbaPrincipalAdmin('alunos')" class="nav-btn w-full text-left px-3.5 py-3 rounded-xl border border-transparent hover:text-white" title="Alunos"><span class="nav-ico">👥</span><span class="nav-txt">Alunos</span></button>
+            <button data-nav="agenda" onclick="mudarAbaPrincipalAdmin('agenda')" class="nav-btn w-full text-left px-3.5 py-3 rounded-xl border border-transparent hover:text-white" title="Agenda"><span class="nav-ico">📅</span><span class="nav-txt">Agenda</span></button>
+            <button data-nav="financeiro" onclick="mudarAbaPrincipalAdmin('financeiro')" class="nav-btn w-full text-left px-3.5 py-3 rounded-xl border border-transparent hover:text-white" title="Financeiro"><span class="nav-ico">💰</span><span class="nav-txt">Financeiro</span></button>
         </nav>
-        <div class="mt-auto pt-4 border-t border-slate-800 flex items-center justify-between">
-            <div class="flex items-center gap-2"><span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span><span id="status-sincronizacao-lateral" class="text-[10px] text-slate-400">Sincronizado</span></div>
+        <div id="nav-rodape" class="mt-auto pt-4 border-t border-slate-800 flex items-center justify-between gap-2">
+            <div class="nav-txt flex items-center gap-2"><span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span><span id="status-sincronizacao-lateral" class="text-[10px] text-slate-400">Sincronizado</span></div>
             <button onclick="carregarDadosGerais()" class="bg-black/80 text-slate-300 p-2 rounded-xl border border-slate-800 text-xs" title="Atualizar">🔄</button>
+            <button id="btn-recolher" onclick="alternarNavLateral()" class="bg-black/80 text-slate-300 px-2.5 py-2 rounded-xl border border-slate-800 text-xs font-bold" title="Recolher menu">«</button>
         </div>
     </aside>
 
@@ -309,6 +432,7 @@
             </div>
             <div id="inicio-kpis" class="grid-kpi"></div>
             <div class="grid-paineis">
+                <div id="inicio-aneis" class="col-cheio"></div>
                 <div id="inicio-agenda"></div>
                 <div id="inicio-atencao"></div>
                 <div id="inicio-renovacoes" class="col-cheio"></div>
@@ -717,6 +841,7 @@
         let periodoRelatorioAtual = 'semanal';
         let subAbaRelatorioAtual = 'peso';
         let grupoMuscularFiltroAtivo = null;
+        function selecionarGrupoAdmin(n) { grupoMuscularFiltroAtivo = n; atualizarRelatoriosAdmin(); }
         let alunosGlobais = [];
         let agendaDados = {};
         let diaAgendaAtual = 'SEG';
@@ -733,6 +858,14 @@
         }
 
         function validarApenasNumeros(input) { input.value = input.value.replace(/[^0-9.]/g, ''); }
+
+        function alternarNavLateral(forcar) {
+            const rec = forcar !== undefined ? forcar : !document.body.classList.contains('nav-recolhida');
+            document.body.classList.toggle('nav-recolhida', rec);
+            const b = document.getElementById('btn-recolher');
+            if (b) { b.innerText = rec ? '»' : '«'; b.title = rec ? 'Expandir menu' : 'Recolher menu'; }
+            try { localStorage.setItem('af_nav_recolhida', rec ? '1' : '0'); } catch (e) {}
+        }
 
         function mudarAbaPrincipalAdmin(aba) {
             ['inicio', 'alunos', 'financeiro', 'agenda'].forEach(x => {
@@ -810,6 +943,15 @@
                 kpi('✅', '#34d399', 'Sessões (7 dias)', sem7.length, inicioDelta(sem7.length, semAnt.length) + ' <span class="text-slate-500">vs semana ant.</span>') +
                 kpi('⏸️', '#fb7185', 'Alunos parados', atencao.length, '<span class="text-slate-500">7+ dias sem treinar</span>') +
                 kpi('📅', '#fbbf24', 'Aulas hoje', aulasHoje.length, `<span class="text-slate-500">${hojeStr} • ${Math.max(0, 17 - aulasHoje.length)} livres</span>`);
+
+            // anéis de metas
+            const treinaram = ativos.filter(al => ultima[al.id] && agora - ultima[al.id] < 7 * DIA).length;
+            const comFicha = ativos.filter(al => al.perfil && al.perfil.sessoesSemana > 0);
+            const esperado = comFicha.reduce((s, al) => s + al.perfil.sessoesSemana, 0);
+            const idsFicha = new Set(comFicha.map(al => al.id));
+            const feitas = sem7.filter(s => idsFicha.has(s.aluno.id)).length;
+            const aulasFeitas = aulasHoje.filter(x => x.hora <= hora).length;
+            document.getElementById('inicio-aneis').innerHTML = inicioPainel('Metas da semana e do dia', `<div class="grid grid-cols-3 gap-2">${NeonChart.ring(treinaram, ativos.length, { label: 'Adesão', sub: `${treinaram} de ${ativos.length} alunos treinaram`, cor: '#34d399', centro: ativos.length ? undefined : '—' })}${NeonChart.ring(Math.min(feitas, esperado), esperado, { label: 'Sessões combinadas', sub: esperado ? `${feitas} de ${esperado} na semana` : 'preencha nas fichas', cor: '#FF6A00', centro: esperado ? undefined : '—' })}${NeonChart.ring(aulasFeitas, aulasHoje.length, { label: 'Aulas de hoje', sub: aulasHoje.length ? `${aulasFeitas} de ${aulasHoje.length} já passaram` : 'sem aulas hoje', cor: '#818cf8', centro: aulasHoje.length ? undefined : '—' })}</div>`);
 
             // agenda de hoje
             const agendaHtml = aulasHoje.length
@@ -1761,6 +1903,7 @@
                                 ${MUSCULOS_SEM_CARGA.includes(grupoMuscularFiltroAtivo) ? '' : `<div class="flex justify-between text-slate-300"><span>Volume do Grupo:</span><strong class="text-af-orange">${gData.volume.toLocaleString('pt-BR')} kg</strong></div>`}
                                 <div class="flex justify-between text-slate-300"><span>Séries Totais:</span><strong class="text-white">${gData.series} séries</strong></div>
                             </div>
+                            ${BodyMap.render({ valores: { [grupoMuscularFiltroAtivo]: Math.max(gData.series, 1) }, selecionado: grupoMuscularFiltroAtivo, mini: true })}
                             ${MUSCULOS_SEM_CARGA.includes(grupoMuscularFiltroAtivo) ? '' : NeonChart.line(NeonChart.serieDias(gData.dias, 'vol'), { titulo: 'Volume do grupamento por dia', unit: 'kg', h: 140 })}
                             ${NeonChart.bars(NeonChart.serieDias(gData.dias, 'series'), { titulo: 'Séries do grupamento por dia', unit: 'séries', h: 130, fmtY: v => String(Math.round(v)) })}
                             <h4 class="text-[10px] uppercase font-bold text-slate-400">Progresso por Exercício neste Grupamento:</h4>
@@ -1786,13 +1929,14 @@
                     `;
                 } else {
                     container.innerHTML = `
+                        ${BodyMap.render({ valores: Object.fromEntries(nomesGrupos.map(n => [n, grupos[n].series])), onSelect: 'selecionarGrupoAdmin', titulo: 'Mapa muscular: séries no período' })}
                         ${NeonChart.donut(nomesGrupos.map((n, i) => ({ label: n, value: grupos[n].series, cor: NeonChart.paleta[i % NeonChart.paleta.length] })), { titulo: 'Distribuição de séries no período', centro: String(totalSeriesGrupos(grupos)), sub: 'séries' })}
                         ${NeonChart.hbars(nomesGrupos.map(n => ({ label: n, value: grupos[n].series })), { titulo: 'Séries por grupamento', unit: 'séries' })}
                         ${NeonChart.hbars(nomesGrupos.filter(n => !MUSCULOS_SEM_CARGA.includes(n)).map(n => ({ label: n, value: grupos[n].volume })), { titulo: 'Volume por grupamento', unit: 'kg' })}
                         <p class="text-[10px] text-slate-400">Toque em um grupamento para ver o progresso detalhado dos exercícios:</p>
                         <div class="space-y-2">
                             ${nomesGrupos.map(n => `
-                                <div onclick="grupoMuscularFiltroAtivo='${n}'; atualizarRelatoriosAdmin();" class="bg-black/60 border border-slate-800 p-3 rounded-xl flex justify-between items-center cursor-pointer hover:border-af-orange transition-all">
+                                <div onclick="grupoMuscularFiltroAtivo='${n}'; atualizarRelatoriosAdmin();" onmouseenter="BodyMap.destacar('${n}')" onmouseleave="BodyMap.destacar(null)" class="bg-black/60 border border-slate-800 p-3 rounded-xl flex justify-between items-center cursor-pointer hover:border-af-orange transition-all">
                                     <span class="font-bold text-sm text-af-orange">${escapeHtml(n)}</span>
                                     <span class="text-xs text-slate-200">${MUSCULOS_SEM_CARGA.includes(n) ? '' : grupos[n].volume.toLocaleString('pt-BR') + ' kg • '}${grupos[n].series} séries</span>
                                 </div>
@@ -2232,7 +2376,7 @@ DADOS POR GRUPAMENTO E EXERCÍCIO:${txtGrupos}`;
             }
         }
 
-        window.onload = () => { montarFormsPerfil(); document.querySelectorAll('[data-nav="inicio"]').forEach(b => b.classList.add('ativo')); carregarDadosGerais(); };
+        window.onload = () => { montarFormsPerfil(); try { alternarNavLateral(localStorage.getItem('af_nav_recolhida') === '1'); } catch (e) {} document.querySelectorAll('[data-nav="inicio"]').forEach(b => b.classList.add('ativo')); carregarDadosGerais(); };
     </script>
 </body>
 </html>
