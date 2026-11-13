@@ -58,6 +58,7 @@
             background: rgba(255, 106, 0, 0.1);
             padding: 4px 8px;
             border-radius: 6px;
+            display: none;
         }
 
         .btn-finish-top {
@@ -69,9 +70,48 @@
             font-weight: 600;
             font-size: 0.85rem;
             cursor: pointer;
+            display: none;
         }
 
-        /* Paginação / Wizard de Exercícios */
+        /* Tela de Seleção de Treino */
+        #selectionScreen { display: block; }
+        #activeWorkoutScreen { display: none; }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 800;
+            margin-bottom: 16px;
+            color: #fff;
+        }
+
+        .workout-select-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .workout-select-card:hover { border-color: var(--accent); }
+
+        .btn-start-workout {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            box-shadow: 0 4px 12px var(--accent-glow);
+        }
+
+        /* Wizard de Exercícios */
         .exercise-card {
             background: var(--card-bg);
             border: 1px solid var(--card-border);
@@ -103,18 +143,24 @@
         .progression-badge {
             background: rgba(16, 185, 129, 0.15);
             color: var(--success);
-            padding: 6px 10px;
+            padding: 8px 12px;
             border-radius: 8px;
-            font-size: 0.75rem;
+            font-size: 0.8rem;
             font-weight: 600;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        .history-text {
+            font-size: 0.75rem;
+            color: var(--text-muted);
             margin-bottom: 16px;
-            display: inline-block;
         }
 
         .set-row {
             display: grid;
-            grid-template-columns: 40px 1fr 1fr 1fr 40px;
-            gap: 8px;
+            grid-template-columns: 32px 1fr 1fr 1.3fr 36px;
+            gap: 6px;
             align-items: center;
             margin-bottom: 10px;
             background: rgba(0,0,0,0.2);
@@ -147,19 +193,19 @@
             text-transform: uppercase;
         }
 
-        .set-input-group input {
+        .set-input-group input, .set-input-group select {
             background: #0d0f12;
             border: 1px solid var(--card-border);
             border-radius: 6px;
             color: #fff;
-            padding: 8px;
+            padding: 8px 4px;
             text-align: center;
-            font-size: 0.95rem;
+            font-size: 0.85rem;
             font-weight: 600;
             width: 100%;
         }
 
-        .set-input-group input:focus {
+        .set-input-group input:focus, .set-input-group select:focus {
             border-color: var(--accent);
             outline: none;
         }
@@ -184,7 +230,6 @@
             color: #fff;
         }
 
-        /* Botões de Navegação Anterior / Próximo */
         .wizard-nav {
             display: flex;
             gap: 12px;
@@ -205,23 +250,11 @@
             gap: 8px;
         }
 
-        .btn-prev {
-            background: var(--card-border);
-            color: var(--text-main);
-        }
+        .btn-prev { background: var(--card-border); color: var(--text-main); }
+        .btn-next { background: var(--accent); color: #fff; box-shadow: 0 4px 15px var(--accent-glow); }
+        .btn-wizard:disabled { opacity: 0.4; cursor: not-allowed; }
 
-        .btn-next {
-            background: var(--accent);
-            color: #fff;
-            box-shadow: 0 4px 15px var(--accent-glow);
-        }
-
-        .btn-wizard:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-
-        /* Modais */
+        /* Modal de Finalização */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -244,63 +277,52 @@
             text-align: center;
         }
 
-        .modal-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-
-        .modal-desc {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            margin-bottom: 24px;
-        }
-
-        .modal-actions {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .btn-modal-save {
-            background: var(--success);
-            color: #fff;
-            padding: 14px;
-            border-radius: 12px;
-            border: none;
-            font-weight: 700;
-            cursor: pointer;
-        }
-
-        .btn-modal-discard {
-            background: rgba(239, 68, 68, 0.15);
-            color: var(--danger);
-            padding: 14px;
-            border-radius: 12px;
-            border: none;
-            font-weight: 700;
-            cursor: pointer;
-        }
+        .modal-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 8px; }
+        .modal-desc { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 24px; }
+        .modal-actions { display: flex; flex-direction: column; gap: 10px; }
+        .btn-modal-save { background: var(--success); color: #fff; padding: 14px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; }
+        .btn-modal-discard { background: rgba(239, 68, 68, 0.15); color: var(--danger); padding: 14px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <header>
         <div>
-            <div class="workout-title" id="workoutName">Leg Day</div>
+            <div class="workout-title" id="headerTitle">Área do Aluno</div>
             <div class="workout-timer" id="timerDisplay">00:00</div>
         </div>
-        <button class="btn-finish-top" onclick="openFinishModal()">Terminar</button>
+        <button class="btn-finish-top" id="btnFinishTop" onclick="openFinishModal()">Terminar</button>
     </header>
 
-    <!-- Container do Exercício Ativo (Wizard) -->
-    <div id="exerciseWizardContainer"></div>
+    <!-- TELA 1: SELECIONAR TREINO -->
+    <div id="selectionScreen">
+        <div class="section-title">Escolha seu Treino de Hoje</div>
+        <div class="workout-select-card" onclick="startWorkout('Leg Day A')">
+            <div>
+                <div style="font-weight: 700; font-size: 1.1rem; margin-bottom: 4px;">Leg Day A</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted);">Quadríceps & Panturrilhas • 4 Exercícios</div>
+            </div>
+            <button class="btn-start-workout">Iniciar</button>
+        </div>
+        <div class="workout-select-card" onclick="startWorkout('Membros Superiores B')">
+            <div>
+                <div style="font-weight: 700; font-size: 1.1rem; margin-bottom: 4px;">Membros Superiores B</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted);">Peito, Ombro & Tríceps • 5 Exercícios</div>
+            </div>
+            <button class="btn-start-workout">Iniciar</button>
+        </div>
+    </div>
+
+    <!-- TELA 2: EXECUÇÃO DO TREINO (WIZARD) -->
+    <div id="activeWorkoutScreen">
+        <div id="exerciseWizardContainer"></div>
+    </div>
 
     <!-- Modal de Finalização -->
     <div class="modal-overlay" id="finishModal">
         <div class="modal-card">
             <div class="modal-title">Finalizar Treino?</div>
-            <div class="modal-desc" id="finishModalDesc">Deseja salvar sua sessão de treino ou descartar os dados?</div>
+            <div class="modal-desc">Deseja salvar sua sessão de treino ou descartar os dados?</div>
             <div class="modal-actions">
                 <button class="btn-modal-save" onclick="saveAndFinishWorkout()">Salvar e Sair</button>
                 <button class="btn-modal-discard" onclick="discardWorkout()">Descartar Treino</button>
@@ -309,58 +331,50 @@
     </div>
 
     <script>
-        // Estado do Treino e Exemplo de Exercícios
         let currentExerciseIndex = 0;
         let secondsElapsed = 0;
         let timerInterval = null;
 
         let workoutData = {
-            name: "Leg Day",
+            name: "Leg Day A",
             exercises: [
                 {
                     name: "Agachamento Completo Com Barra",
                     muscle: "Quadríceps",
                     equipment: "Barra",
-                    best: "12 kg",
-                    progression: "Progressão linear - Todas as repetições da última vez. Mais 5 kg.",
-                    history: "Da última vez (hoje): 12x8 (RPE 8), 12x8 (RPE 8), 12x8 (RPE 8)",
+                    best: "17 kg",
+                    progression: "📈 Mantenha a carga de 17 kg e tente subir para 9 repetições em todas as séries.",
+                    history: "Última vez: 17kg x 8 reps (RPE 8)",
                     sets: [
-                        { weight: 17, reps: 8, rpe: 8, done: true },
-                        { weight: 17, reps: 8, rpe: 8, done: false },
-                        { weight: 17, reps: 8, rpe: 8, done: false },
-                        { weight: 17, reps: 8, rpe: 8, done: false }
-                    ]
-                },
-                {
-                    name: "Levantamento Terra Romano com Barra",
-                    muscle: "Isquiotibiais",
-                    equipment: "Barra",
-                    best: "30 kg",
-                    progression: "Progressão linear - Mais 5 kg.",
-                    history: "Da última vez: 30x10 (RPE 9), 30x10 (RPE 9)",
-                    sets: [
-                        { weight: 35, reps: 10, rpe: 9, done: false },
-                        { weight: 35, reps: 10, rpe: 9, done: false },
-                        { weight: 35, reps: 10, rpe: 9, done: false }
+                        { weight: 17, reps: 8, rpe: "8", done: false },
+                        { weight: 17, reps: 8, rpe: "8", done: false },
+                        { weight: 17, reps: 8, rpe: "8", done: false }
                     ]
                 },
                 {
                     name: "Leg Press 45 Graus No Sled",
                     muscle: "Quadríceps",
                     equipment: "Sled",
-                    best: "25 kg",
-                    progression: "Progressão linear",
-                    history: "Da última vez: 25x12 (RPE 9), 25x12 (RPE 9,5)",
+                    best: "30 kg",
+                    progression: "📈 Suba a carga para 35 kg e busque 10 repetições.",
+                    history: "Última vez: 30kg x 12 reps (RPE 9)",
                     sets: [
-                        { weight: 30, reps: 12, rpe: 9, done: false },
-                        { weight: 30, reps: 12, rpe: 9, done: false },
-                        { weight: 30, reps: 12, rpe: 9, done: false }
+                        { weight: 35, reps: 10, rpe: "9", done: false },
+                        { weight: 35, reps: 10, rpe: "9", done: false },
+                        { weight: 35, reps: 10, rpe: "9", done: false }
                     ]
                 }
             ]
         };
 
-        function initWorkout() {
+        function startWorkout(name) {
+            workoutData.name = name;
+            document.getElementById('headerTitle').innerText = name;
+            document.getElementById('selectionScreen').style.display = 'none';
+            document.getElementById('activeWorkoutScreen').style.display = 'block';
+            document.getElementById('timerDisplay').style.display = 'block';
+            document.getElementById('btnFinishTop').style.display = 'block';
+
             startTimer();
             renderExercise();
         }
@@ -384,15 +398,15 @@
                     <div class="exercise-header">
                         <div>
                             <div class="exercise-name">${ex.name}</div>
-                            <div class="exercise-meta">${ex.muscle} • ${ex.equipment} • Melhor: ${ex.best}</div>
+                            <div class="exercise-meta">${ex.muscle} • ${ex.equipment} • Recorde: ${ex.best}</div>
                         </div>
-                        <div style="font-size: 0.8rem; font-weight: 700; color: var(--accent);">
+                        <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent);">
                             ${currentExerciseIndex + 1}/${total}
                         </div>
                     </div>
 
-                    <div class="progression-badge">📈 ${ex.progression}</div>
-                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 14px;">${ex.history}</div>
+                    <div class="progression-badge">${ex.progression}</div>
+                    <div class="history-text">${ex.history}</div>
 
                     <div class="sets-list">
             `;
@@ -410,8 +424,14 @@
                             <input type="number" value="${set.reps}" onchange="updateSetData(${sIdx}, 'reps', this.value)">
                         </div>
                         <div class="set-input-group">
-                            <label>RPE</label>
-                            <input type="number" step="0.5" value="${set.rpe}" onchange="updateSetData(${sIdx}, 'rpe', this.value)">
+                            <label>RPE (1-10)</label>
+                            <select onchange="updateSetData(${sIdx}, 'rpe', this.value)">
+                                <option value="6" ${set.rpe==='6'?'selected':''}>6 (Fácil)</option>
+                                <option value="7" ${set.rpe==='7'?'selected':''}>7 (Moderado)</option>
+                                <option value="8" ${set.rpe==='8'?'selected':''}>8 (Forte)</option>
+                                <option value="9" ${set.rpe==='9'?'selected':''}>9 (Muito Forte)</option>
+                                <option value="10" ${set.rpe==='10'?'selected':''}>10 (Máximo)</option>
+                            </select>
                         </div>
                         <button class="btn-check-set" onclick="toggleSet(${sIdx})">✓</button>
                     </div>
@@ -441,8 +461,6 @@
             const set = workoutData.exercises[currentExerciseIndex].sets[sIdx];
             set.done = !set.done;
             renderExercise();
-
-            // Verifica se todos os sets de todos os exercícios foram concluídos
             checkAutoFinish();
         }
 
@@ -467,13 +485,9 @@
         function checkAutoFinish() {
             let allDone = true;
             workoutData.exercises.forEach(ex => {
-                ex.sets.forEach(s => {
-                    if (!s.done) allDone = false;
-                });
+                ex.sets.forEach(s => { if (!s.done) allDone = false; });
             });
-            if (allDone) {
-                openFinishModal();
-            }
+            if (allDone) { openFinishModal(); }
         }
 
         function openFinishModal() {
@@ -483,17 +497,15 @@
         function saveAndFinishWorkout() {
             clearInterval(timerInterval);
             alert('Treino salvo com sucesso! Duração total: ' + document.getElementById('timerDisplay').innerText);
-            window.location.href = 'index_2.html'; // Retorna ao painel admin/dashboard
+            location.reload();
         }
 
         function discardWorkout() {
             if (confirm('Tem certeza que deseja descartar este treino?')) {
                 clearInterval(timerInterval);
-                window.location.href = 'index_2.html';
+                location.reload();
             }
         }
-
-        window.onload = initWorkout;
     </script>
 </body>
 </html>
