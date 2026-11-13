@@ -311,6 +311,7 @@
             <div class="grid-paineis">
                 <div id="inicio-agenda"></div>
                 <div id="inicio-atencao"></div>
+                <div id="inicio-renovacoes" class="col-cheio"></div>
                 <div id="inicio-atividade" class="col-cheio"></div>
             </div>
         </div>
@@ -347,6 +348,10 @@
                         <input type="text" id="nome-novo-aluno" placeholder="Nome completo do aluno..." class="flex-1 bg-black border border-slate-800 rounded-xl px-3.5 py-2.5 text-white focus:border-af-orange focus:outline-none">
                         <button onclick="cadastrarAluno()" class="bg-af-orange hover:bg-orange-600 font-black px-4 py-2.5 rounded-xl text-black text-xs transition-all shadow-md shadow-orange-500/20">Cadastrar</button>
                     </div>
+                    <details class="bg-black/40 rounded-xl border border-slate-800">
+                        <summary class="cursor-pointer text-[11px] font-bold text-slate-300 p-3">➕ Mais informações do aluno <span class="text-slate-500 font-normal">(tudo opcional, dá para completar depois)</span></summary>
+                        <div id="form-perfil-novo" class="p-3 pt-1"></div>
+                    </details>
                 </div>
 
                 <div class="space-y-2">
@@ -383,6 +388,14 @@
                         <button id="btn-copiar-link-aluno" class="text-xs bg-af-orange text-black font-black px-3 py-2 rounded-xl shadow-md">Copiar</button>
                     </div>
                 </div>
+
+                <details id="ficha-aluno" class="bg-af-card rounded-2xl">
+                    <summary id="ficha-resumo" class="cursor-pointer text-xs font-bold text-slate-200 p-4">📋 Ficha do aluno</summary>
+                    <div class="px-4 pb-4 space-y-3">
+                        <div id="form-perfil-edit"></div>
+                        <button onclick="salvarFicha()" class="w-full bg-af-orange text-black font-black py-2.5 rounded-xl text-xs shadow-md">Salvar ficha</button>
+                    </div>
+                </details>
 
                 <div class="flex gap-1 bg-af-card p-1.5 rounded-2xl text-[11px] font-bold text-center">
                     <button onclick="mudarAbaAdminAluno('treinos')" id="tab-admin-treinos" class="flex-1 py-2 rounded-xl bg-af-orange text-black shadow-md transition-all">🏋️ Treinos</button>
@@ -431,6 +444,8 @@
                             <button onclick="criarTreinoDivisao()" class="bg-af-orange font-bold px-4 py-2.5 rounded-xl text-black text-xs shadow-md">Criar</button>
                         </div>
                     </div>
+
+                    <div id="painel-volume-semanal"></div>
 
                     <div class="space-y-2">
                         <h2 class="font-bold text-xs uppercase tracking-wider text-slate-400 px-1">Treinos Prescritos</h2>
@@ -506,6 +521,8 @@
                     <button onclick="voltarParaTreinos()" class="bg-black text-slate-400 px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-800">← Voltar</button>
                     <h2 id="titulo-treino-ativo" class="font-bold text-xs text-af-orange uppercase tracking-wider">Treino Ativo</h2>
                 </div>
+
+                <div id="painel-volume-montagem"></div>
 
                 <div class="bg-af-card rounded-2xl p-4 space-y-3 relative">
                     <h3 id="titulo-modo-exercicio" class="font-bold text-xs uppercase text-slate-300">Adicionar Exercício</h3>
@@ -806,6 +823,14 @@
                 : '<p class="text-[11px] text-emerald-400 text-center py-4 font-bold">Todo mundo treinou nos últimos 7 dias. 👏</p>';
             document.getElementById('inicio-atencao').innerHTML = inicioPainel('Atenção: alunos parados', atHtml, `<span class="text-[10px] text-slate-500">${atencao.length} de ${ativos.length}</span>`);
 
+            // renovações próximas (campo opcional da ficha)
+            const hoje0 = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+            const renov = ativos.filter(al => al.perfil && al.perfil.renovacao).map(al => {
+                const [y, m, d] = String(al.perfil.renovacao).split('-').map(Number);
+                return { al, dias: Math.round((new Date(y, m - 1, d) - hoje0) / DIA) };
+            }).filter(x => x.dias <= 15).sort((x, y) => x.dias - y.dias);
+            document.getElementById('inicio-renovacoes').innerHTML = renov.length ? inicioPainel('Renovações próximas', `<div class="grid gap-2 lg:grid-cols-2">${renov.map(x => `<div onclick="mudarAbaPrincipalAdmin('alunos'); abrirPainelPorId('${x.al.id}')" class="bg-black/60 border border-slate-800 hover:border-af-orange/60 rounded-xl p-3 flex justify-between items-center gap-2 cursor-pointer"><span class="font-bold text-sm text-slate-200" style="overflow-wrap:anywhere">${escapeHtml(x.al.nome)}</span><span class="text-[11px] font-bold shrink-0 ${x.dias < 0 ? 'text-rose-400' : x.dias <= 5 ? 'text-amber-300' : 'text-slate-300'}">${x.dias < 0 ? 'venceu há ' + Math.abs(x.dias) + ' d' : x.dias === 0 ? 'renova hoje' : 'renova em ' + x.dias + ' d'}</span></div>`).join('')}</div>`) : '';
+
             // atividade recente
             const rec = sessoes.slice(0, 8);
             const recHtml = rec.length ? `<div class="grid gap-2 lg:grid-cols-2">${rec.map(s => `<div onclick="mudarAbaPrincipalAdmin('alunos'); abrirPainelPorId('${s.aluno.id}')" class="bg-black/60 border border-slate-800 hover:border-af-orange/60 rounded-xl p-3 flex items-start gap-3 cursor-pointer"><div class="w-9 h-9 shrink-0 rounded-xl bg-black text-af-orange font-black flex items-center justify-center text-xs border border-slate-800">${escapeHtml(s.aluno.nome.substring(0, 2).toUpperCase())}</div><div class="flex-1 min-w-0" style="overflow-wrap:anywhere"><div class="text-xs font-bold text-slate-100">${escapeHtml(s.aluno.nome)}</div><div class="text-[11px] text-slate-400 leading-snug">finalizou <span class="text-slate-200 font-semibold">${escapeHtml(s.h.treinoNome || 'um treino')}</span></div><div class="text-[10px] text-slate-500 mt-0.5">${NeonChart.fmt(s.h.volume || 0)} kg • ${s.h.qtdSeriesValidadas || 0} séries • ${inicioHaQuanto(s.t)}</div></div></div>`).join('')}</div>` : '<p class="text-[11px] text-slate-500 text-center py-6">Nenhuma sessão registrada ainda.</p>';
@@ -916,7 +941,7 @@
                                     </div>
                                     <div>
                                         <h3 class="font-bold text-sm text-slate-200">${escapeHtml(aluno.nome)}</h3>
-                                        <p class="text-[10px] text-slate-500">Ativo • Gerenciar</p>
+                                        <p class="text-[10px] text-slate-500">${escapeHtml([aluno.perfil && aluno.perfil.modalidade, aluno.perfil && aluno.perfil.objetivo].filter(Boolean).join(" • ") || "Ativo • Gerenciar")}</p>
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-1.5" onclick="event.stopPropagation()">
@@ -945,6 +970,234 @@
             } catch (err) {}
         }
 
+        // ===== FICHA DO ALUNO (perfil) =====
+        const SQL_PERFIL = "alter table alunos add column if not exists perfil jsonb default '{}'::jsonb;";
+        const CAMPOS_NUM = ['idade', 'pesoInicial', 'altura', 'pesoAlvo', 'sessoesSemana', 'valorPago'];
+        const CAMPOS_PERFIL = ['sexo', 'nivel', 'modalidade', 'telefone', 'objetivo', 'proximoObjetivo', 'nascimento', 'idade', 'pesoInicial', 'altura', 'pesoAlvo', 'sessoesSemana', 'valorPago', 'inicio', 'renovacao'];
+
+        function formPerfilHTML(p) {
+            const inp = 'w-full bg-black border border-slate-800 rounded-xl px-3 py-2.5 text-white text-xs focus:border-af-orange focus:outline-none';
+            const lab = 'block text-[10px] text-slate-400 uppercase font-bold mb-1';
+            const sel = (id, ops) => `<select id="pf-${p}-${id}" class="${inp}">${ops.map(o => `<option value="${o[0]}">${o[1]}</option>`).join('')}</select>`;
+            const inpt = (id, tipo, ph, extra) => `<input type="${tipo}" id="pf-${p}-${id}" placeholder="${ph || ''}" ${extra || ''} class="${inp}">`;
+            const c = (label, html) => `<div><label class="${lab}">${label}</label>${html}</div>`;
+            const titulo = t => `<h4 class="text-[10px] font-black text-af-orange uppercase tracking-wider pt-3 pb-1.5">${t}</h4>`;
+            return `
+                ${titulo('Perfil')}
+                <div class="grid grid-cols-2 gap-2.5">
+                    ${c('Sexo', sel('sexo', [['', 'Não informado'], ['Masculino', 'Masculino'], ['Feminino', 'Feminino']]))}
+                    ${c('Nível', sel('nivel', [['', 'Não informado'], ['iniciante', 'Iniciante'], ['intermediario', 'Intermediário'], ['avancado', 'Avançado']]))}
+                    ${c('Modalidade', sel('modalidade', [['', 'Não informado'], ['Presencial', 'Presencial'], ['Online', 'Online']]))}
+                    ${c('Telefone', inpt('telefone', 'tel', '(19) 9....-....', 'inputmode="tel"'))}
+                </div>
+                ${titulo('Objetivos')}
+                <div class="space-y-2.5">
+                    ${c('Objetivo', inpt('objetivo', 'text', 'Ex: emagrecimento, definição, perder barriga', `list="dl-obj-${p}"`))}
+                    <datalist id="dl-obj-${p}"><option value="Emagrecimento"><option value="Definição"><option value="Hipertrofia"><option value="Perder barriga"><option value="Ganhar abdômen"><option value="Condicionamento"><option value="Saúde e mobilidade"><option value="Correção postural"></datalist>
+                    ${c('Próximo objetivo', inpt('proximoObjetivo', 'text', 'Opcional'))}
+                </div>
+                ${titulo('Corpo')}
+                <div class="grid grid-cols-2 gap-2.5">
+                    ${c('Nascimento', inpt('nascimento', 'date', '', `onchange="calcIdadePerfil('${p}')"`))}
+                    ${c('Idade', inpt('idade', 'number', 'anos', 'inputmode="numeric" min="0"'))}
+                    ${c('Peso inicial (kg)', inpt('pesoInicial', 'number', '', 'inputmode="decimal" step="0.1" min="0"'))}
+                    ${c('Altura (cm)', inpt('altura', 'number', '', 'inputmode="numeric" min="0"'))}
+                    ${c('Peso alvo (kg)', inpt('pesoAlvo', 'number', '', 'inputmode="decimal" step="0.1" min="0"'))}
+                </div>
+                ${titulo('Acompanhamento')}
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div>${c('Sessões por semana', inpt('sessoesSemana', 'number', 'Ex: 3', `inputmode="numeric" min="0" max="14" oninput="hintMesPerfil('${p}')"`))}<p id="pf-${p}-mes" class="text-[10px] text-af-orange mt-1 font-bold"></p></div>
+                    ${c('Valor pago (R$)', inpt('valorPago', 'number', '', 'inputmode="decimal" step="0.01" min="0"'))}
+                    ${c('Início do acompanhamento', inpt('inicio', 'date'))}
+                    ${c('Renovação', inpt('renovacao', 'date'))}
+                </div>`;
+        }
+        function calcIdadePerfil(p) {
+            const v = document.getElementById(`pf-${p}-nascimento`).value;
+            if (!v) return;
+            const [y, m, d] = v.split('-').map(Number), h = new Date();
+            let idade = h.getFullYear() - y;
+            if (h.getMonth() + 1 < m || (h.getMonth() + 1 === m && h.getDate() < d)) idade--;
+            if (idade >= 0 && idade < 120) document.getElementById(`pf-${p}-idade`).value = idade;
+        }
+        function hintMesPerfil(p) {
+            const n = parseFloat(document.getElementById(`pf-${p}-sessoesSemana`).value);
+            document.getElementById(`pf-${p}-mes`).innerText = n > 0 ? `≈ ${Math.round(n * 52 / 12)} sessões por mês` : '';
+        }
+        function lerPerfil(p) {
+            const o = {};
+            CAMPOS_PERFIL.forEach(k => {
+                const el = document.getElementById(`pf-${p}-${k}`);
+                if (!el) return;
+                let v = el.value.trim();
+                if (v === '') return;
+                if (CAMPOS_NUM.includes(k)) { v = parseFloat(String(v).replace(',', '.')); if (!isFinite(v)) return; }
+                o[k] = v;
+            });
+            return o;
+        }
+        function preencherPerfil(p, perfil) {
+            perfil = perfil || {};
+            CAMPOS_PERFIL.forEach(k => { const el = document.getElementById(`pf-${p}-${k}`); if (el) el.value = perfil[k] ?? ''; });
+            hintMesPerfil(p);
+        }
+        function perfilAtual() {
+            if (!alunoSelecionado) return {};
+            const al = alunosGlobais.find(x => String(x.id) === String(alunoSelecionado.id));
+            return (al && al.perfil && typeof al.perfil === 'object') ? al.perfil : {};
+        }
+        function montarFormsPerfil() {
+            document.getElementById('form-perfil-novo').innerHTML = formPerfilHTML('novo');
+            document.getElementById('form-perfil-edit').innerHTML = formPerfilHTML('edit');
+        }
+        function resumoFicha(pf) {
+            const nv = { iniciante: 'Iniciante', intermediario: 'Intermediário', avancado: 'Avançado' }[pf.nivel];
+            const partes = [pf.objetivo, nv, pf.modalidade, pf.sessoesSemana ? `${pf.sessoesSemana}×/sem` : ''].filter(Boolean);
+            return '📋 Ficha do aluno' + (partes.length ? ' — ' + partes.join(' • ') : ' — toque para completar');
+        }
+        function mostrarFichaAluno() {
+            const pf = perfilAtual();
+            preencherPerfil('edit', pf);
+            document.getElementById('ficha-resumo').innerText = resumoFicha(pf);
+        }
+        function avisoPerfilSQL(msg) {
+            if (/perfil/i.test(msg || '')) alert('Falta criar a coluna "perfil" no Supabase.\n\nNo Supabase abra SQL Editor, cole e rode:\n\n' + SQL_PERFIL + '\n\nDepois tente de novo.');
+            else alert('Erro: ' + msg);
+        }
+        async function salvarPerfilAluno(perfil) {
+            if (!alunoSelecionado) return false;
+            const { data, error } = await supabaseClient.from('alunos').update({ perfil }).eq('id', alunoSelecionado.id).select('id');
+            if (error || !data || !data.length) { avisoPerfilSQL(error ? error.message : 'Não foi possível salvar.'); return false; }
+            const al = alunosGlobais.find(x => String(x.id) === String(alunoSelecionado.id));
+            if (al) al.perfil = perfil;
+            return true;
+        }
+        async function salvarFicha() {
+            const novo = lerPerfil('edit');
+            const atual = perfilAtual();
+            if (atual.metasVolume) novo.metasVolume = atual.metasVolume;
+            if (await salvarPerfilAluno(novo)) {
+                document.getElementById('ficha-resumo').innerText = resumoFicha(novo);
+                renderizarPainelVolume();
+                alert('Ficha salva!');
+            }
+        }
+
+        // ===== ASSISTENTE DE VOLUME SEMANAL =====
+        // Metas = ponto de partida (séries/semana por grupamento, diretas + 0,5 por indireta), ajustáveis por aluno.
+        const CLASSE_MUSCULO = { 'Quadríceps': 'grande', 'Peitoral': 'grande', 'Costas': 'grande', 'Glúteos': 'grande', 'Posterior': 'grande', 'Ombros': 'pequeno', 'Tríceps': 'pequeno', 'Bíceps': 'pequeno', 'Panturrilhas': 'core', 'Abdômen': 'core' };
+        const NOME_MUSCULO = { 'Posterior': 'Posterior de coxa' };
+        const METAS_NIVEL = {
+            iniciante: { grande: [8, 12], pequeno: [6, 10], core: [6, 10] },
+            intermediario: { grande: [10, 16], pequeno: [8, 14], core: [8, 12] },
+            avancado: { grande: [12, 20], pequeno: [10, 18], core: [8, 16] }
+        };
+        const INDIRETAS = [['Peitoral', 'Tríceps'], ['Peitoral', 'Ombros'], ['Costas', 'Bíceps']];
+
+        function metaPadrao(g, nivel) { return METAS_NIVEL[nivel || 'intermediario'][CLASSE_MUSCULO[g]]; }
+        function repsMeio(txt) { const n = String(txt || '').match(/\d+/g); if (!n) return null; const v = n.slice(0, 2).map(Number); return v.reduce((s, x) => s + x, 0) / v.length; }
+        function zonaReps(m) { return m <= 6 ? 'força (até 6 reps)' : m <= 10 ? 'moderada-pesada (7–10)' : m <= 15 ? 'moderada (11–15)' : 'leve (16+)'; }
+
+        function analisarVolume() {
+            const pf = perfilAtual();
+            const nivel = ['iniciante', 'intermediario', 'avancado'].includes(pf.nivel) ? pf.nivel : null;
+            const nivelUso = nivel || 'intermediario';
+            const direto = {}, porTreino = {}, zonas = {};
+            let totalEx = 0;
+            (treinosDoAluno || []).forEach(t => (t.exercicios || []).forEach(ex => {
+                const g = ex.musculo; if (!g || !CLASSE_MUSCULO[g]) return;
+                const cfg = ex.seriesConfig || [];
+                const n = parseInt(ex.qtdSeries) || cfg.length; if (!n) return;
+                totalEx++;
+                direto[g] = (direto[g] || 0) + n;
+                (porTreino[g] = porTreino[g] || {})[t.id] = (porTreino[g][t.id] || 0) + n;
+                for (let i = 0; i < n; i++) {
+                    const c = cfg[i] || cfg[0] || {};
+                    if (c.tipoMeta === 'tempo') continue;
+                    const m = repsMeio(c.repsSugeridas); if (m === null) continue;
+                    const z = zonaReps(m);
+                    const zt = ((zonas[g] = zonas[g] || {})[t.id] = zonas[g][t.id] || {});
+                    zt[z] = (zt[z] || 0) + 1;
+                }
+            }));
+            const metasAluno = pf.metasVolume || {};
+            const linhas = Object.keys(CLASSE_MUSCULO).map(g => {
+                const meta = (metasAluno[g] && metasAluno[g].length === 2) ? metasAluno[g] : metaPadrao(g, nivelUso);
+                const dir = direto[g] || 0;
+                const ind = INDIRETAS.filter(x => x[1] === g).reduce((s, x) => s + 0.5 * (direto[x[0]] || 0), 0);
+                const efet = dir + ind;
+                const status = efet === 0 ? 'vazio' : efet < meta[0] ? 'baixo' : efet > meta[1] ? 'alto' : 'ok';
+                return { g, meta, dir, ind, efet, status };
+            });
+            const avisos = [];
+            if (!totalEx) return { linhas, avisos, totalEx, nivel, nivelUso, pf };
+            if (!nivel) avisos.push(['info', 'Nível do aluno não informado: usando metas de intermediário. Preencha na ficha para ajustar.']);
+            const ndiv = (treinosDoAluno || []).length;
+            if (pf.sessoesSemana && pf.sessoesSemana !== ndiv) avisos.push(['info', `Ficha: ${pf.sessoesSemana} sessões/semana, mas existem ${ndiv} divisão(ões). O cálculo considera cada divisão 1× por semana.`]);
+            linhas.forEach(l => {
+                const nome = NOME_MUSCULO[l.g] || l.g;
+                const fmtN = v => NeonChart.fmt(v);
+                if (l.status === 'baixo') avisos.push(['atencao', `${nome}: ${fmtN(l.efet)} séries/semana, abaixo da meta (${l.meta[0]}–${l.meta[1]}). Faltam ~${Math.ceil(l.meta[0] - l.efet)} séries para o mínimo.`]);
+                if (l.status === 'alto') avisos.push(['atencao', `${nome}: ${fmtN(l.efet)} séries/semana, acima da meta (${l.meta[0]}–${l.meta[1]}). Confira se a recuperação do aluno aguenta.`]);
+                if (l.status === 'vazio' && CLASSE_MUSCULO[l.g] === 'grande') avisos.push(['info', `${nome}: nenhum exercício nos treinos (ignore se for intencional).`]);
+                const pt = porTreino[l.g] || {};
+                Object.entries(pt).forEach(([tid, n]) => { if (n > 10) avisos.push(['info', `${nome}: ${n} séries no mesmo treino. Considere dividir esse volume em 2 dias.`]); });
+                const dom = Object.values(zonas[l.g] || {}).map(zt => Object.entries(zt).sort((x, y) => y[1] - x[1])[0][0]);
+                if (dom.length >= 2 && dom.every(z => z === dom[0])) avisos.push(['onda', `${nome}: aparece em ${dom.length} treinos, todos na faixa ${dom[0]}. Para ondulatória, varie a faixa de repetições entre os treinos (ex.: um mais pesado, outro moderado, outro mais leve).`]);
+            });
+            return { linhas, avisos, totalEx, nivel, nivelUso, pf };
+        }
+
+        function htmlPainelVolume(compacto) {
+            const r = analisarVolume();
+            const nivelTxt = { iniciante: 'Iniciante', intermediario: 'Intermediário', avancado: 'Avançado' }[r.nivelUso] + (r.nivel ? '' : ' (padrão)');
+            if (!r.totalEx) return compacto ? '' : `<div class="bg-af-card rounded-2xl p-4"><h3 class="font-bold text-xs text-af-orange uppercase tracking-wider">🎯 Volume semanal planejado</h3><p class="text-[11px] text-slate-500 mt-2">Adicione exercícios aos treinos para ver o volume por grupamento contra a meta do aluno.</p></div>`;
+            const cor = { ok: '#34d399', baixo: '#fbbf24', alto: '#fb7185', vazio: '#475569' };
+            const linhas = r.linhas.filter(l => l.status !== 'vazio' || !compacto).map(l => {
+                const escala = Math.max(l.meta[1] * 1.25, l.efet * 1.05, 1);
+                const nome = NOME_MUSCULO[l.g] || l.g;
+                const txt = l.status === 'vazio' ? '<span class="text-slate-500">sem exercícios</span>' : `<strong style="color:${cor[l.status]}">${NeonChart.fmt(l.efet)} séries</strong>${l.ind ? `<span class="text-slate-500"> (${l.dir} + ${NeonChart.fmt(l.ind)} indireta)</span>` : ''}`;
+                return `<div class="space-y-1"><div class="flex justify-between items-center gap-2 text-[11px]"><span class="font-bold text-slate-200">${nome}</span><span>${txt} <span class="text-slate-500">• meta ${l.meta[0]}–${l.meta[1]}</span></span></div>
+                    <div style="position:relative;height:10px;background:#0b0f19;border:1px solid #1e293b;border-radius:99px;overflow:hidden">
+                        <div style="position:absolute;left:${(l.meta[0] / escala * 100).toFixed(1)}%;width:${((l.meta[1] - l.meta[0]) / escala * 100).toFixed(1)}%;top:0;bottom:0;background:rgba(52,211,153,.16);border-left:1px dashed rgba(52,211,153,.6);border-right:1px dashed rgba(52,211,153,.6)"></div>
+                        <div style="position:absolute;left:0;top:0;bottom:0;width:${Math.min(l.efet / escala * 100, 100).toFixed(1)}%;border-radius:99px;background:${cor[l.status]};box-shadow:0 0 8px ${cor[l.status]}"></div>
+                    </div></div>`;
+            }).join('');
+            const icone = { atencao: '⚠️', info: 'ℹ️', onda: '🌊' };
+            const avisosHtml = r.avisos.length ? `<div class="space-y-1.5">${r.avisos.map(([t, m]) => `<div class="text-[11px] leading-snug rounded-xl px-2.5 py-2 ${t === 'atencao' ? 'bg-amber-950/40 border border-amber-800/60 text-amber-200' : t === 'onda' ? 'bg-indigo-950/40 border border-indigo-800/60 text-indigo-200' : 'bg-black/50 border border-slate-800 text-slate-400'}">${icone[t]} ${escapeHtml(m)}</div>`).join('')}</div>` : '<div class="text-[11px] rounded-xl px-2.5 py-2 bg-emerald-950/30 border border-emerald-800/50 text-emerald-300">✅ Volume dentro da meta nos grupamentos trabalhados.</div>';
+            let ajustes = '';
+            if (!compacto) {
+                const m = r.pf.metasVolume || {};
+                ajustes = `<details class="bg-black/40 rounded-xl border border-slate-800"><summary class="cursor-pointer text-[10px] uppercase font-bold text-slate-400 p-2.5">Ajustar metas deste aluno</summary><div class="p-2.5 pt-0 space-y-2">
+                    <div class="grid gap-1.5">${r.linhas.map((l, i) => `<div class="flex items-center gap-2 text-[11px]"><span class="flex-1 text-slate-300">${NOME_MUSCULO[l.g] || l.g}</span><input id="mv-${i}-min" type="number" inputmode="numeric" min="0" value="${l.meta[0]}" class="w-16 bg-black border border-slate-700 rounded-lg px-2 py-1.5 text-center text-white"><span class="text-slate-500">a</span><input id="mv-${i}-max" type="number" inputmode="numeric" min="0" value="${l.meta[1]}" class="w-16 bg-black border border-slate-700 rounded-lg px-2 py-1.5 text-center text-white"></div>`).join('')}</div>
+                    <div class="flex gap-2"><button onclick="salvarMetasVolume()" class="flex-1 bg-af-orange text-black font-black py-2 rounded-xl text-xs">Salvar metas</button><button onclick="restaurarMetasVolume()" class="bg-black border border-slate-700 text-slate-300 font-bold px-3 py-2 rounded-xl text-xs">Padrão</button></div></div></details>`;
+            }
+            return `<div class="bg-af-card rounded-2xl p-4 space-y-3 shadow-lg"><div class="flex justify-between items-center gap-2"><h3 class="font-bold text-xs text-af-orange uppercase tracking-wider">🎯 Volume semanal planejado</h3><span class="text-[10px] text-slate-400">Nível: ${nivelTxt}</span></div>
+                <div class="space-y-2.5">${linhas}</div>${avisosHtml}${ajustes}
+                ${compacto ? '' : '<p class="text-[10px] text-slate-500 leading-snug">Conta séries de cada grupamento por semana (indiretas valem 0,5, como nos estudos de dose-resposta). Metas são ponto de partida: a literatura mostra ganho crescente com o volume, com retorno cada vez menor, e a necessidade individual varia.</p>'}</div>`;
+        }
+        function renderizarPainelVolume() {
+            const a1 = document.getElementById('painel-volume-semanal'), a2 = document.getElementById('painel-volume-montagem');
+            if (a1) a1.innerHTML = htmlPainelVolume(false);
+            if (a2) a2.innerHTML = htmlPainelVolume(true);
+        }
+        async function salvarMetasVolume() {
+            const pf = Object.assign({}, perfilAtual());
+            const nivel = ['iniciante', 'intermediario', 'avancado'].includes(pf.nivel) ? pf.nivel : 'intermediario';
+            const metas = {};
+            Object.keys(CLASSE_MUSCULO).forEach((g, i) => {
+                const mn = parseInt(document.getElementById(`mv-${i}-min`).value), mx = parseInt(document.getElementById(`mv-${i}-max`).value);
+                const pad = metaPadrao(g, nivel);
+                if (isFinite(mn) && isFinite(mx) && mx >= mn && (mn !== pad[0] || mx !== pad[1])) metas[g] = [mn, mx];
+            });
+            if (Object.keys(metas).length) pf.metasVolume = metas; else delete pf.metasVolume;
+            if (await salvarPerfilAluno(pf)) { renderizarPainelVolume(); alert('Metas salvas!'); }
+        }
+        async function restaurarMetasVolume() {
+            const pf = Object.assign({}, perfilAtual()); delete pf.metasVolume;
+            if (await salvarPerfilAluno(pf)) renderizarPainelVolume();
+        }
+
         async function cadastrarAluno() {
             const input = document.getElementById('nome-novo-aluno');
             const nome = input.value.trim();
@@ -955,9 +1208,14 @@
                 return v.toString(16);
             });
 
-            const { error } = await supabaseClient.from('alunos').insert([{ nome, token, treinos: [], historico: [], arquivado: false }]);
+            const perfil = lerPerfil('novo');
+            let { error } = await supabaseClient.from('alunos').insert([{ nome, token, treinos: [], historico: [], arquivado: false, perfil }]);
+            if (error && /perfil/i.test(error.message)) {
+                avisoPerfilSQL(error.message);
+                ({ error } = await supabaseClient.from('alunos').insert([{ nome, token, treinos: [], historico: [], arquivado: false }]));
+            }
             if (error) alert('Erro: ' + error.message);
-            else { input.value = ''; await carregarAlunos(); }
+            else { input.value = ''; document.getElementById('form-perfil-novo').innerHTML = formPerfilHTML('novo'); await carregarAlunos(); }
         }
 
         async function arquivarAluno(id, arquivar) {
@@ -1022,6 +1280,7 @@
                 treinosDoAluno = [];
                 historicoTreinosAluno = [];
             }
+            mostrarFichaAluno();
             renderizarTreinosAluno();
         }
 
@@ -1246,6 +1505,7 @@
         }
 
         function renderizarTreinosAluno() {
+            renderizarPainelVolume();
             const container = document.getElementById('container-treinos-aluno');
             if (!treinosDoAluno || treinosDoAluno.length === 0) {
                 container.innerHTML = `<p class="text-xs text-slate-600 text-center py-6">Nenhuma divisão criada.</p>`;
@@ -1269,6 +1529,7 @@
         }
 
         function renderizarListaExerciciosDivisao() {
+            renderizarPainelVolume();
             const container = document.getElementById('container-lista-exercicios-divisao');
             const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
             if (!treino || !treino.exercicios || treino.exercicios.length === 0) {
@@ -1758,7 +2019,7 @@
             const sessoes = atual.map(h => `- ${new Date(h.data).toLocaleDateString('pt-BR')} ${h.treinoNome || ''}: ${f(h.volume || 0)} kg, ${h.qtdSeriesValidadas || 0} séries` + (h.energiaInicio ? `, energia: ${h.energiaInicio}` : '') + (h.sensacaoFim ? `, sensação final: ${h.sensacaoFim}` : '') + (h.comentarioAtleta ? `, comentário do aluno: "${String(h.comentarioAtleta).slice(0, 200)}"` : '')).join('\n');
             const rotulo = periodo === 'semanal' ? 'SEMANA (últimos 7 dias)' : 'MÊS (últimos 30 dias)';
 
-            return `Você está me ajudando, como personal trainer (formação em Educação Física, foco em correção postural, mobilidade e execução), a analisar o aluno ${alunoSelecionado.nome}. Período: ${rotulo}, comparado ao período anterior de mesma duração.
+            return `Você está me ajudando, como personal trainer (formação em Educação Física, foco em correção postural, mobilidade e execução), a analisar o aluno ${alunoSelecionado.nome}. Período: ${rotulo}, comparado ao período anterior de mesma duração.${perfilParaPrompt()}
 
 REGRAS: use só os dados abaixo; não invente números. O app NÃO registra amplitude nem cadência: não opine sobre elas como se tivesse dado; quando os padrões sugerirem problema (ex.: reps caindo com a mesma carga, RPE subindo, carga estagnada), diga em quais exercícios eu devo observar amplitude/cadência presencialmente. Seja direto, sem elogio genérico. Se os dados forem insuficientes para decidir algo, diga isso.
 
@@ -1773,6 +2034,13 @@ SESSÕES NO PERÍODO:
 ${sessoes}
 
 DADOS POR GRUPAMENTO E EXERCÍCIO:${txtGrupos}`;
+        }
+
+        function perfilParaPrompt() {
+            const p = perfilAtual();
+            const nv = { iniciante: 'iniciante', intermediario: 'intermediário', avancado: 'avançado' }[p.nivel];
+            const it = [p.objetivo && `objetivo: ${p.objetivo}`, p.proximoObjetivo && `próximo objetivo: ${p.proximoObjetivo}`, nv && `nível: ${nv}`, p.modalidade && `modalidade: ${p.modalidade}`, p.sexo && `sexo: ${p.sexo}`, p.idade && `idade: ${p.idade} anos`, p.pesoInicial && `peso inicial: ${p.pesoInicial} kg`, p.pesoAlvo && `peso alvo: ${p.pesoAlvo} kg`, p.altura && `altura: ${p.altura} cm`, p.sessoesSemana && `sessões por semana combinadas: ${p.sessoesSemana}`].filter(Boolean);
+            return it.length ? `\nPerfil do aluno: ${it.join('; ')}.` : '';
         }
 
         function mdSimples(t) {
@@ -1964,7 +2232,7 @@ DADOS POR GRUPAMENTO E EXERCÍCIO:${txtGrupos}`;
             }
         }
 
-        window.onload = () => { document.querySelectorAll('[data-nav="inicio"]').forEach(b => b.classList.add('ativo')); carregarDadosGerais(); };
+        window.onload = () => { montarFormsPerfil(); document.querySelectorAll('[data-nav="inicio"]').forEach(b => b.classList.add('ativo')); carregarDadosGerais(); };
     </script>
 </body>
 </html>
