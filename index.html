@@ -142,6 +142,26 @@
             return caixa(o.titulo, '', '<div class="space-y-2.5 pt-1">' + linhas + '</div>');
         }
 
+
+        function donut(itens, o) {
+            o = o || {};
+            itens = (itens || []).filter(i => i.value > 0);
+            const total = itens.reduce((s, i) => s + i.value, 0);
+            if (!total) return vazio(o.titulo);
+            const r = 48, c = 2 * Math.PI * r;
+            let acc = 0, arcos = '';
+            itens.forEach(i => {
+                const len = i.value / total * c;
+                arcos += '<circle cx="60" cy="60" r="' + r + '" fill="none" stroke="' + i.cor + '" stroke-width="11" stroke-linecap="butt" stroke-dasharray="' + Math.max(len - 2, 0).toFixed(1) + ' ' + (c - Math.max(len - 2, 0)).toFixed(1) + '" stroke-dashoffset="' + (-acc).toFixed(1) + '" transform="rotate(-90 60 60)" style="filter:drop-shadow(0 0 4px ' + i.cor + ')"/>';
+                acc += len;
+            });
+            const svg = '<svg viewBox="0 0 120 120" style="width:120px;height:120px;flex-shrink:0"><circle cx="60" cy="60" r="' + r + '" fill="none" stroke="#0f172a" stroke-width="11"/>' + arcos +
+                '<text x="60" y="58" text-anchor="middle" font-size="20" font-weight="800" fill="#fff">' + esc(o.centro || fmt(total)) + '</text>' +
+                '<text x="60" y="73" text-anchor="middle" font-size="8" fill="' + TXT + '">' + esc(o.sub || '') + '</text></svg>';
+            const leg = itens.map(i => '<div class="flex justify-between items-center gap-3 text-[11px]"><span class="flex items-center gap-1.5 text-slate-300"><span style="width:8px;height:8px;border-radius:99px;background:' + i.cor + ';box-shadow:0 0 6px ' + i.cor + '"></span>' + esc(i.label) + '</span><strong class="text-white">' + esc(fmt(i.value)) + '</strong></div>').join('');
+            return caixa(o.titulo, '', '<div class="flex items-center gap-4"><div style="flex-shrink:0">' + svg + '</div><div class="flex-1 space-y-1.5 min-w-0">' + leg + '</div></div>');
+        }
+
         function somarDia(mapa, h) {
             const dt = new Date(h.data);
             if (isNaN(dt)) return;
@@ -164,7 +184,7 @@
             return { pts: pts, unit: sem ? (soTempo ? 's' : 'reps') : 'kg', fmtY: soTempo ? tempo : fmt };
         }
 
-        return { line: line, bars: bars, hbars: hbars, somarDia: somarDia, serieDias: serieDias, serieExercicio: serieExercicio, fmt: fmt };
+        return { line: line, bars: bars, hbars: hbars, donut: donut, somarDia: somarDia, serieDias: serieDias, serieExercicio: serieExercicio, fmt: fmt };
     })();
     </script>
 
@@ -175,6 +195,33 @@
         .bg-af-orange { background-color: #FF6A00; }
         .border-af-orange { border-color: #FF6A00; }
         .neon-glow { box-shadow: 0 0 20px rgba(255, 106, 0, 0.15); }
+
+        /* ===== LAYOUT APP: sidebar no desktop, barra inferior no celular ===== */
+        #nav-lateral { display: none; }
+        #nav-inferior { display: flex; }
+        #app-shell { width: 100%; max-width: 28rem; }
+        .nav-btn { color: #94a3b8; transition: all .15s; }
+        .nav-btn.ativo { color: #FF6A00; }
+        #nav-inferior .nav-btn.ativo { text-shadow: 0 0 10px rgba(255,106,0,.7); }
+        #nav-lateral .nav-btn.ativo { background: rgba(255,106,0,.14); border-color: rgba(255,106,0,.45); box-shadow: 0 0 18px rgba(255,106,0,.18); }
+        .kpi-card { background: rgba(21,21,21,.75); border: 1px solid rgba(255,106,0,.2); border-radius: 1rem; padding: .85rem; }
+        .kpi-ico { width: 2.4rem; height: 2.4rem; border-radius: 999px; display:flex; align-items:center; justify-content:center; font-size:1.05rem; }
+        #sec-adm-inicio .grid-kpi { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:.6rem; }
+        #sec-adm-inicio .grid-paineis { display:grid; grid-template-columns: minmax(0,1fr); gap:.75rem; }
+        body { padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)); }
+        #nav-inferior { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; padding-bottom: env(safe-area-inset-bottom, 0px); background: rgba(8,8,8,.92); backdrop-filter: blur(14px); border-top: 1px solid rgba(255,106,0,.25); }
+        @media (min-width: 1024px) {
+            body { padding: 1.5rem 1.5rem 1.5rem 17.5rem !important; align-items: stretch !important; }
+            #nav-lateral { display: flex; position: fixed; left: 0; top: 0; bottom: 0; width: 16rem; z-index: 40; flex-direction: column; padding: 1.25rem 1rem; background: rgba(10,10,10,.95); border-right: 1px solid rgba(255,106,0,.22); }
+            #nav-inferior { display: none; }
+            #app-shell { max-width: 72rem; margin: 0 auto; }
+            #topo-mobile { display: none !important; }
+            #sec-adm-alunos, #sec-adm-financeiro, #sec-adm-agenda { max-width: 48rem; margin: 0 auto; width: 100%; }
+            #container-alunos, #container-alunos-arquivados { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: .6rem; }
+            #sec-adm-inicio .grid-kpi { grid-template-columns: repeat(4, minmax(0,1fr)); }
+            #sec-adm-inicio .grid-paineis { grid-template-columns: repeat(2, minmax(0,1fr)); gap:1rem; }
+            #sec-adm-inicio .col-cheio { grid-column: 1 / -1; }
+        }
         input, select, textarea { font-size: 16px !important; }
         html { touch-action: manipulation; }
         @media print {
@@ -186,9 +233,35 @@
 </head>
 <body class="text-slate-100 min-h-screen p-3 md:p-6 flex flex-col items-center antialiased">
 
-    <div class="max-w-md w-full space-y-5 pb-20">
+    <!-- NAV LATERAL (desktop) -->
+    <aside id="nav-lateral" class="no-print">
+        <div class="mb-6 px-1">
+            <div class="font-black text-xl text-white tracking-tighter">ANDREY FRANCO</div>
+            <span class="font-black text-[10px] text-af-orange tracking-widest bg-orange-950/60 px-1.5 py-0.5 rounded border border-orange-600/40">PERSONAL ADMIN</span>
+        </div>
+        <nav class="space-y-1.5 text-sm font-bold">
+            <button data-nav="inicio" onclick="mudarAbaPrincipalAdmin('inicio')" class="nav-btn w-full text-left px-3.5 py-3 rounded-xl border border-transparent hover:text-white">📊&nbsp; Dashboard</button>
+            <button data-nav="alunos" onclick="mudarAbaPrincipalAdmin('alunos')" class="nav-btn w-full text-left px-3.5 py-3 rounded-xl border border-transparent hover:text-white">👥&nbsp; Alunos</button>
+            <button data-nav="agenda" onclick="mudarAbaPrincipalAdmin('agenda')" class="nav-btn w-full text-left px-3.5 py-3 rounded-xl border border-transparent hover:text-white">📅&nbsp; Agenda</button>
+            <button data-nav="financeiro" onclick="mudarAbaPrincipalAdmin('financeiro')" class="nav-btn w-full text-left px-3.5 py-3 rounded-xl border border-transparent hover:text-white">💰&nbsp; Financeiro</button>
+        </nav>
+        <div class="mt-auto pt-4 border-t border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-2"><span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span><span id="status-sincronizacao-lateral" class="text-[10px] text-slate-400">Sincronizado</span></div>
+            <button onclick="carregarDadosGerais()" class="bg-black/80 text-slate-300 p-2 rounded-xl border border-slate-800 text-xs" title="Atualizar">🔄</button>
+        </div>
+    </aside>
+
+    <!-- NAV INFERIOR (celular) -->
+    <nav id="nav-inferior" class="no-print justify-around text-[10px] font-bold">
+        <button data-nav="inicio" onclick="mudarAbaPrincipalAdmin('inicio')" class="nav-btn flex-1 flex flex-col items-center gap-0.5 pt-2 pb-2"><span class="text-lg leading-none">📊</span>Início</button>
+        <button data-nav="alunos" onclick="mudarAbaPrincipalAdmin('alunos')" class="nav-btn flex-1 flex flex-col items-center gap-0.5 pt-2 pb-2"><span class="text-lg leading-none">👥</span>Alunos</button>
+        <button data-nav="agenda" onclick="mudarAbaPrincipalAdmin('agenda')" class="nav-btn flex-1 flex flex-col items-center gap-0.5 pt-2 pb-2"><span class="text-lg leading-none">📅</span>Agenda</button>
+        <button data-nav="financeiro" onclick="mudarAbaPrincipalAdmin('financeiro')" class="nav-btn flex-1 flex flex-col items-center gap-0.5 pt-2 pb-2"><span class="text-lg leading-none">💰</span>Financeiro</button>
+    </nav>
+
+    <div id="app-shell" class="space-y-5 pb-6">
         <!-- Topo -->
-        <div class="flex justify-between items-center bg-af-card rounded-2xl p-4 shadow-xl no-print">
+        <div id="topo-mobile" class="flex justify-between items-center bg-af-card rounded-2xl p-4 shadow-xl no-print">
             <div>
                 <div class="flex items-center gap-1.5">
                     <span class="font-black text-xl text-white tracking-tighter">ANDREY FRANCO</span>
@@ -202,15 +275,28 @@
             <button onclick="carregarDadosGerais()" class="bg-black/80 hover:bg-slate-900 text-slate-300 p-2.5 rounded-xl border border-slate-800 text-xs transition-all">🔄</button>
         </div>
 
-        <!-- ABA NAVEGAÇÃO SUPERIOR ADMIN -->
-        <div class="flex gap-1 bg-af-card p-1 rounded-2xl text-xs font-bold text-center no-print">
-            <button onclick="mudarAbaPrincipalAdmin('alunos')" id="tab-adm-alunos" class="flex-1 py-2.5 rounded-xl bg-af-orange text-black shadow-lg shadow-orange-500/20 transition-all">👥 Alunos</button>
-            <button onclick="mudarAbaPrincipalAdmin('financeiro')" id="tab-adm-financeiro" class="flex-1 py-2.5 rounded-xl text-slate-400 hover:text-white transition-all">💰 Financeiro</button>
-            <button onclick="mudarAbaPrincipalAdmin('agenda')" id="tab-adm-agenda" class="flex-1 py-2.5 rounded-xl text-slate-400 hover:text-white transition-all">📅 Agenda</button>
+        <!-- SEÇÃO INÍCIO (DASHBOARD GERAL) -->
+        <div id="sec-adm-inicio" class="space-y-4 no-print">
+            <div class="flex flex-wrap items-end justify-between gap-2">
+                <div>
+                    <h1 id="inicio-saudacao" class="text-2xl font-black text-white">Olá, Andrey 👋</h1>
+                    <p class="text-xs text-slate-400">Resumo do seu estúdio com os dados de todos os alunos.</p>
+                </div>
+                <span id="inicio-data" class="text-[11px] text-slate-400"></span>
+            </div>
+            <div id="inicio-kpis" class="grid-kpi"></div>
+            <div class="grid-paineis">
+                <div id="inicio-volume-semanal"></div>
+                <div id="inicio-sessoes-semanal"></div>
+                <div id="inicio-grupos"></div>
+                <div id="inicio-agenda"></div>
+                <div id="inicio-atencao" class="col-cheio"></div>
+                <div id="inicio-atividade" class="col-cheio"></div>
+            </div>
         </div>
 
         <!-- SEÇÃO ALUNOS -->
-        <div id="sec-adm-alunos" class="space-y-4 no-print">
+        <div id="sec-adm-alunos" class="hidden space-y-4 no-print">
             
             <!-- RESUMO DA AGENDA DO DIA NA TELA DE ALUNOS -->
             <div id="bloco-agenda-hoje-admin" onclick="mudarAbaPrincipalAdmin('agenda')" class="bg-af-card border border-af-orange/40 hover:border-af-orange rounded-2xl p-4 cursor-pointer transition-all space-y-3 shadow-lg neon-glow">
@@ -589,24 +675,134 @@
 
         function atualizarHoraSincronizacao() {
             const agora = new Date();
-            document.getElementById('status-sincronizacao').innerText = `Sincronizado ${agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+            const txtSync = `Sincronizado ${agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+            document.getElementById('status-sincronizacao').innerText = txtSync;
+            const lat = document.getElementById('status-sincronizacao-lateral'); if (lat) lat.innerText = txtSync;
         }
 
         function validarApenasNumeros(input) { input.value = input.value.replace(/[^0-9.]/g, ''); }
 
         function mudarAbaPrincipalAdmin(aba) {
-            ['alunos', 'financeiro', 'agenda'].forEach(a => {
-                document.getElementById(`sec-adm-${a}`).classList.add('hidden');
-                document.getElementById(`tab-adm-${a}`).className = 'flex-1 py-2.5 rounded-xl text-slate-400 hover:text-white font-bold transition-all';
+            ['inicio', 'alunos', 'financeiro', 'agenda'].forEach(x => {
+                document.getElementById(`sec-adm-${x}`).classList.toggle('hidden', x !== aba);
             });
-            document.getElementById(`sec-adm-${aba}`).classList.remove('hidden');
-            document.getElementById(`tab-adm-${aba}`).className = 'flex-1 py-2.5 rounded-xl bg-af-orange text-black font-bold shadow-lg shadow-orange-500/20 transition-all';
-
+            document.querySelectorAll('[data-nav]').forEach(b => b.classList.toggle('ativo', b.dataset.nav === aba));
             document.getElementById('bloco-agenda-hoje-admin').style.display = (aba === 'alunos') ? 'block' : 'none';
+            window.scrollTo({ top: 0 });
 
+            if (aba === 'inicio') { Promise.all([carregarAlunos(), carregarAgenda()]).then(renderizarInicio); }
             if (aba === 'alunos') { carregarAlunos().then(atualizarResumoAgendaTelaAlunos); }
             if (aba === 'financeiro') carregarFinanceiro();
             if (aba === 'agenda') { carregarAgenda().then(renderizarGradeAgenda); }
+        }
+
+        // ===== DASHBOARD INÍCIO (usa alunosGlobais, que já traz historico de todos) =====
+        function inicioSessoes() {
+            const out = [];
+            alunosGlobais.filter(al => !al.arquivado).forEach(al => {
+                const ids = new Set((al.treinos || []).map(t => t.id));
+                (Array.isArray(al.historico) ? al.historico : []).forEach(h => {
+                    if (!h || !h.data || isNaN(new Date(h.data))) return;
+                    if (h.treinoId && !ids.has(h.treinoId)) return;
+                    out.push({ aluno: al, h, t: new Date(h.data) });
+                });
+            });
+            return out.sort((x, y) => y.t - x.t);
+        }
+        function inicioDelta(atual, ant) {
+            if (!ant) return atual ? '<span class="text-slate-400">novo</span>' : '<span class="text-slate-500">—</span>';
+            const p = Math.round((atual - ant) / ant * 100);
+            return p === 0 ? '<span class="text-slate-400">= igual</span>' : `<span class="${p > 0 ? 'text-emerald-400' : 'text-rose-400'}">${p > 0 ? '↑' : '↓'} ${Math.abs(p)}%</span>`;
+        }
+        function inicioHaQuanto(t) {
+            const min = Math.round((Date.now() - t) / 60000);
+            if (min < 60) return `${Math.max(min, 1)} min atrás`;
+            const hr = Math.round(min / 60);
+            if (hr < 24) return `${hr} h atrás`;
+            const d = Math.round(hr / 24);
+            return d === 1 ? 'ontem' : `${d} dias atrás`;
+        }
+        function inicioPainel(titulo, corpo, direita) {
+            return `<div class="bg-af-card rounded-2xl p-4 space-y-3 shadow-lg h-full"><div class="flex justify-between items-center"><h3 class="font-bold text-xs text-af-orange uppercase tracking-wider">${titulo}</h3>${direita || ''}</div>${corpo}</div>`;
+        }
+
+        function renderizarInicio() {
+            const agora = new Date(), DIA = 86400000;
+            const hora = agora.getHours();
+            document.getElementById('inicio-saudacao').innerText = `${hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite'}, Andrey 👋`;
+            document.getElementById('inicio-data').innerText = agora.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+
+            const sessoes = inicioSessoes();
+            const ativos = alunosGlobais.filter(a => !a.arquivado);
+            const sem7 = sessoes.filter(s => agora - s.t < 7 * DIA && s.t <= agora);
+            const semAnt = sessoes.filter(s => agora - s.t >= 7 * DIA && agora - s.t < 14 * DIA);
+            const vol = l => l.reduce((s, x) => s + (x.h.volume || 0), 0);
+
+            const dias = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
+            const hojeStr = dias[agora.getDay()];
+            const aulasHoje = [];
+            for (let h = 5; h <= 21; h++) {
+                const v = agendaDados[`${hojeStr}_${String(h).padStart(2, '0')}:00`];
+                if (v) aulasHoje.push({ hora: h, nome: v.nome });
+            }
+
+            const kpi = (ico, cor, rot, val, sub) => `<div class="kpi-card flex items-center gap-3"><div class="kpi-ico" style="background:${cor}22;border:1px solid ${cor}66;box-shadow:0 0 14px ${cor}33">${ico}</div><div class="min-w-0"><div class="text-[10px] text-slate-400 font-bold uppercase">${rot}</div><div class="text-xl font-black text-white leading-tight">${val}</div><div class="text-[10px]">${sub}</div></div></div>`;
+            document.getElementById('inicio-kpis').innerHTML =
+                kpi('👥', '#FF6A00', 'Alunos ativos', ativos.length, `<span class="text-slate-500">${alunosGlobais.length - ativos.length} arquivados</span>`) +
+                kpi('✅', '#34d399', 'Sessões (7 dias)', sem7.length, inicioDelta(sem7.length, semAnt.length) + ' <span class="text-slate-500">vs semana ant.</span>') +
+                kpi('🏋️', '#818cf8', 'Volume (7 dias)', NeonChart.fmt(vol(sem7)) + ' kg', inicioDelta(vol(sem7), vol(semAnt)) + ' <span class="text-slate-500">vs semana ant.</span>') +
+                kpi('📅', '#fbbf24', 'Aulas hoje', aulasHoje.length, `<span class="text-slate-500">${hojeStr} • ${Math.max(0, 17 - aulasHoje.length)} livres</span>`);
+
+            // volume e sessões por semana (8 semanas, semanas terminando hoje)
+            const semanas = [];
+            for (let k = 7; k >= 0; k--) {
+                const fim = agora.getTime() - k * 7 * DIA, ini = fim - 7 * DIA;
+                const l = sessoes.filter(s => s.t.getTime() > ini && s.t.getTime() <= fim);
+                const d = new Date(ini + DIA);
+                semanas.push({ label: `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`, vol: vol(l), n: l.length });
+            }
+            document.getElementById('inicio-volume-semanal').innerHTML = NeonChart.line(semanas.map(s => ({ label: s.label, value: s.vol })), { titulo: 'Volume por semana (todos os alunos)', unit: 'kg', h: 185 });
+            document.getElementById('inicio-sessoes-semanal').innerHTML = NeonChart.bars(semanas.map(s => ({ label: s.label, value: s.n })), { titulo: 'Sessões por semana', unit: 'sessões', h: 185, fmtY: v => String(Math.round(v)) });
+
+            // séries por grupamento nos últimos 30 dias
+            const g = {};
+            sessoes.filter(s => agora - s.t < 30 * DIA).forEach(s => {
+                const mapa = {};
+                (s.aluno.treinos || []).forEach(t => (t.exercicios || []).forEach(e => { if (e.musculo) mapa[(e.nome || '').toLowerCase()] = e.musculo; }));
+                (s.h.exerciciosRealizados || []).forEach(e => {
+                    const m = e.musculo || mapa[(e.nome || '').toLowerCase()] || 'Outros';
+                    g[m] = (g[m] || 0) + (e.series || []).length;
+                });
+            });
+            const cores = ['#FF6A00', '#34d399', '#818cf8', '#fbbf24', '#fb7185', '#38bdf8'];
+            const ord = Object.entries(g).sort((x, y) => y[1] - x[1]);
+            const top = ord.slice(0, 5).map(([label, value], i) => ({ label, value, cor: cores[i] }));
+            const resto = ord.slice(5).reduce((s, x) => s + x[1], 0);
+            if (resto) top.push({ label: 'Outros grupos', value: resto, cor: cores[5] });
+            const totalSeries = ord.reduce((s, x) => s + x[1], 0);
+            document.getElementById('inicio-grupos').innerHTML = NeonChart.donut(top, { titulo: 'Séries por grupamento (30 dias)', centro: String(totalSeries), sub: 'séries' });
+
+            // agenda de hoje
+            const agendaHtml = aulasHoje.length
+                ? aulasHoje.map(x => `<div class="flex items-center gap-3 text-xs ${x.hora < hora ? 'opacity-40' : ''}"><span class="font-black text-af-orange w-12">${String(x.hora).padStart(2, '0')}:00</span><span class="flex-1 bg-black/60 border border-slate-800 rounded-xl px-3 py-2 font-bold text-slate-200">${escapeHtml(x.nome)}</span></div>`).join('')
+                : '<p class="text-[11px] text-slate-500 text-center py-6">Nenhuma aula marcada para hoje.</p>';
+            document.getElementById('inicio-agenda').innerHTML = inicioPainel(`Agenda de hoje (${hojeStr})`, `<div class="space-y-1.5 max-h-60 overflow-y-auto">${agendaHtml}</div>`, `<button onclick="mudarAbaPrincipalAdmin('agenda')" class="text-[10px] text-af-orange font-bold">Ver agenda →</button>`);
+
+            // alunos que precisam de atenção (sem treinar há 7+ dias)
+            const ultima = {};
+            sessoes.forEach(s => { if (!ultima[s.aluno.id]) ultima[s.aluno.id] = s.t; });
+            const atencao = ativos.map(al => ({ al, dias: ultima[al.id] ? Math.floor((agora - ultima[al.id]) / DIA) : null }))
+                .filter(x => x.dias === null || x.dias >= 7)
+                .sort((x, y) => (y.dias ?? 9999) - (x.dias ?? 9999));
+            const atHtml = atencao.length
+                ? `<div class="grid gap-2 lg:grid-cols-2">${atencao.map(x => `<div onclick="mudarAbaPrincipalAdmin('alunos'); abrirPainelPorId('${x.al.id}')" class="bg-black/60 border border-slate-800 hover:border-af-orange/60 rounded-xl p-3 flex justify-between items-center cursor-pointer"><span class="font-bold text-sm text-slate-200">${escapeHtml(x.al.nome)}</span><span class="text-[11px] font-bold ${x.dias === null ? 'text-slate-400' : 'text-rose-400'}">${x.dias === null ? 'nunca treinou' : x.dias + ' dias sem treinar'}</span></div>`).join('')}</div>`
+                : '<p class="text-[11px] text-emerald-400 text-center py-4 font-bold">Todo mundo treinou nos últimos 7 dias. 👏</p>';
+            document.getElementById('inicio-atencao').innerHTML = inicioPainel('Atenção: alunos parados', atHtml, `<span class="text-[10px] text-slate-500">${atencao.length} de ${ativos.length}</span>`);
+
+            // atividade recente
+            const rec = sessoes.slice(0, 8);
+            const recHtml = rec.length ? `<div class="grid gap-2 lg:grid-cols-2">${rec.map(s => `<div onclick="mudarAbaPrincipalAdmin('alunos'); abrirPainelPorId('${s.aluno.id}')" class="bg-black/60 border border-slate-800 hover:border-af-orange/60 rounded-xl p-3 flex items-center gap-3 cursor-pointer"><div class="w-9 h-9 shrink-0 rounded-xl bg-black text-af-orange font-black flex items-center justify-center text-xs border border-slate-800">${escapeHtml(s.aluno.nome.substring(0, 2).toUpperCase())}</div><div class="flex-1 min-w-0"><div class="text-xs font-bold text-slate-200 truncate">${escapeHtml(s.aluno.nome)} <span class="text-slate-500 font-normal">finalizou</span> ${escapeHtml(s.h.treinoNome || 'um treino')}</div><div class="text-[10px] text-slate-500">${NeonChart.fmt(s.h.volume || 0)} kg • ${s.h.qtdSeriesValidadas || 0} séries</div></div><span class="text-[10px] text-slate-400 shrink-0">${inicioHaQuanto(s.t)}</span></div>`).join('')}</div>` : '<p class="text-[11px] text-slate-500 text-center py-6">Nenhuma sessão registrada ainda.</p>';
+            document.getElementById('inicio-atividade').innerHTML = inicioPainel('Atividade recente', recHtml);
         }
 
         async function carregarDadosGerais() {
@@ -615,6 +811,7 @@
             carregarFinanceiro();
             renderizarGradeAgenda();
             atualizarResumoAgendaTelaAlunos();
+            renderizarInicio();
         }
 
         function atualizarResumoAgendaTelaAlunos() {
@@ -1638,7 +1835,7 @@
             }
         }
 
-        window.onload = carregarDadosGerais;
+        window.onload = () => { document.querySelectorAll('[data-nav="inicio"]').forEach(b => b.classList.add('ativo')); carregarDadosGerais(); };
     </script>
 </body>
 </html>
