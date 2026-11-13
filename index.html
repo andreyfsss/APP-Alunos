@@ -16,10 +16,11 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { background-color: #050505; -webkit-text-size-adjust: 100%; }
-        .bg-af-card { background-color: #151515; }
+        .bg-af-card { background: rgba(21, 21, 21, 0.75); backdrop-filter: blur(12px); border: 1px solid rgba(255, 106, 0, 0.2); }
         .text-af-orange { color: #FF6A00; }
         .bg-af-orange { background-color: #FF6A00; }
         .border-af-orange { border-color: #FF6A00; }
+        .neon-glow { box-shadow: 0 0 20px rgba(255, 106, 0, 0.15); }
         input, select, textarea { font-size: 16px !important; }
         html { touch-action: manipulation; }
         @media print {
@@ -33,7 +34,7 @@
 
     <div class="max-w-md w-full space-y-5 pb-20">
         <!-- Topo -->
-        <div class="flex justify-between items-center bg-af-card border border-slate-800 rounded-2xl p-4 shadow-xl no-print">
+        <div class="flex justify-between items-center bg-af-card rounded-2xl p-4 shadow-xl no-print">
             <div>
                 <div class="flex items-center gap-1.5">
                     <span class="font-black text-xl text-white tracking-tighter">ANDREY FRANCO</span>
@@ -44,12 +45,12 @@
                     <p id="status-sincronizacao" class="text-[10px] text-slate-400 font-medium">Sincronizado agora</p>
                 </div>
             </div>
-            <button onclick="carregarDadosGerais()" class="bg-black hover:bg-slate-900 text-slate-300 p-2.5 rounded-xl border border-slate-800 text-xs transition-all">🔄</button>
+            <button onclick="carregarDadosGerais()" class="bg-black/80 hover:bg-slate-900 text-slate-300 p-2.5 rounded-xl border border-slate-800 text-xs transition-all">🔄</button>
         </div>
 
         <!-- ABA NAVEGAÇÃO SUPERIOR ADMIN -->
-        <div class="flex gap-1 bg-af-card p-1 rounded-2xl border border-slate-800 text-xs font-bold text-center no-print">
-            <button onclick="mudarAbaPrincipalAdmin('alunos')" id="tab-adm-alunos" class="flex-1 py-2.5 rounded-xl bg-af-orange text-black transition-all">👥 Alunos</button>
+        <div class="flex gap-1 bg-af-card p-1 rounded-2xl text-xs font-bold text-center no-print">
+            <button onclick="mudarAbaPrincipalAdmin('alunos')" id="tab-adm-alunos" class="flex-1 py-2.5 rounded-xl bg-af-orange text-black shadow-lg shadow-orange-500/20 transition-all">👥 Alunos</button>
             <button onclick="mudarAbaPrincipalAdmin('financeiro')" id="tab-adm-financeiro" class="flex-1 py-2.5 rounded-xl text-slate-400 hover:text-white transition-all">💰 Financeiro</button>
             <button onclick="mudarAbaPrincipalAdmin('agenda')" id="tab-adm-agenda" class="flex-1 py-2.5 rounded-xl text-slate-400 hover:text-white transition-all">📅 Agenda</button>
         </div>
@@ -57,22 +58,22 @@
         <!-- SEÇÃO ALUNOS -->
         <div id="sec-adm-alunos" class="space-y-4 no-print">
             
-            <!-- RESUMO DA AGENDA DO DIA NA TELA DE ALUNOS (EXCLUSIVO DA TELA INICIAL) -->
-            <div id="bloco-agenda-hoje-admin" onclick="mudarAbaPrincipalAdmin('agenda')" class="bg-af-card border border-af-orange/40 hover:border-af-orange rounded-2xl p-4 cursor-pointer transition-all space-y-3 shadow-lg">
+            <!-- RESUMO DA AGENDA DO DIA NA TELA DE ALUNOS -->
+            <div id="bloco-agenda-hoje-admin" onclick="mudarAbaPrincipalAdmin('agenda')" class="bg-af-card border border-af-orange/40 hover:border-af-orange rounded-2xl p-4 cursor-pointer transition-all space-y-3 shadow-lg neon-glow">
                 <div class="flex justify-between items-center border-b border-slate-800 pb-2">
                     <span class="font-bold text-xs text-af-orange uppercase tracking-wider" id="resumo-agenda-titulo">Agenda de Hoje</span>
                     <span class="text-[10px] text-slate-400">Ver Agenda Completa →</span>
                 </div>
                 <div class="grid grid-cols-3 gap-2 text-center">
-                    <div class="bg-black border border-slate-800 p-2.5 rounded-xl">
+                    <div class="bg-black/60 border border-slate-800 p-2.5 rounded-xl">
                         <span id="resumo-ocupados-hoje" class="text-base font-black text-af-orange">0</span>
                         <span class="text-[9px] uppercase font-bold text-slate-400 block mt-0.5">Ocupados Hoje</span>
                     </div>
-                    <div class="bg-black border border-slate-800 p-2.5 rounded-xl">
+                    <div class="bg-black/60 border border-slate-800 p-2.5 rounded-xl">
                         <span id="resumo-livres-hoje" class="text-base font-black text-emerald-400">17</span>
                         <span class="text-[9px] uppercase font-bold text-slate-400 block mt-0.5">Livres Hoje</span>
                     </div>
-                    <div class="bg-black border border-slate-800 p-2.5 rounded-xl">
+                    <div class="bg-black/60 border border-slate-800 p-2.5 rounded-xl">
                         <span id="resumo-total-semana" class="text-base font-black text-white">0</span>
                         <span class="text-[9px] uppercase font-bold text-slate-400 block mt-0.5">Da Semana</span>
                     </div>
@@ -80,11 +81,11 @@
             </div>
 
             <div id="view-lista-alunos" class="space-y-4">
-                <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3 shadow-lg">
+                <div class="bg-af-card rounded-2xl p-4 space-y-3 shadow-lg">
                     <h2 class="font-bold text-xs uppercase tracking-wider text-af-orange">Cadastrar Novo Aluno</h2>
                     <div class="flex gap-2">
                         <input type="text" id="nome-novo-aluno" placeholder="Nome completo do aluno..." class="flex-1 bg-black border border-slate-800 rounded-xl px-3.5 py-2.5 text-white focus:border-af-orange focus:outline-none">
-                        <button onclick="cadastrarAluno()" class="bg-af-orange hover:bg-orange-600 font-black px-4 py-2.5 rounded-xl text-black text-xs transition-all shadow-md">Cadastrar</button>
+                        <button onclick="cadastrarAluno()" class="bg-af-orange hover:bg-orange-600 font-black px-4 py-2.5 rounded-xl text-black text-xs transition-all shadow-md shadow-orange-500/20">Cadastrar</button>
                     </div>
                 </div>
 
@@ -109,7 +110,7 @@
 
             <!-- TELA 2: VISÃO DO ALUNO (ADMIN) -->
             <div id="view-detalhe-aluno" class="hidden space-y-4 w-full">
-                <div class="flex items-center justify-between bg-af-card border border-slate-800 rounded-2xl p-4">
+                <div class="flex items-center justify-between bg-af-card rounded-2xl p-4">
                     <div class="flex items-center gap-3">
                         <button onclick="voltarParaLista()" class="bg-black text-slate-400 px-3 py-2 rounded-xl text-xs font-bold border border-slate-800">← Voltar</button>
                         <div>
@@ -119,17 +120,17 @@
                     </div>
                     <div class="flex gap-1.5">
                         <button id="btn-testar-link-aluno" class="text-xs bg-black text-af-orange border border-slate-800 px-3 py-2 rounded-xl font-bold">👁️ Testar</button>
-                        <button id="btn-copiar-link-aluno" class="text-xs bg-af-orange text-black font-black px-3 py-2 rounded-xl">Copiar</button>
+                        <button id="btn-copiar-link-aluno" class="text-xs bg-af-orange text-black font-black px-3 py-2 rounded-xl shadow-md">Copiar</button>
                     </div>
                 </div>
 
-                <div class="flex gap-1 bg-af-card p-1.5 rounded-2xl border border-slate-800 text-[11px] font-bold text-center">
-                    <button onclick="mudarAbaAdminAluno('treinos')" id="tab-admin-treinos" class="flex-1 py-2 rounded-xl bg-af-orange text-black transition-all">🏋️ Treinos</button>
+                <div class="flex gap-1 bg-af-card p-1.5 rounded-2xl text-[11px] font-bold text-center">
+                    <button onclick="mudarAbaAdminAluno('treinos')" id="tab-admin-treinos" class="flex-1 py-2 rounded-xl bg-af-orange text-black shadow-md transition-all">🏋️ Treinos</button>
                     <button onclick="mudarAbaAdminAluno('relatorios')" id="tab-admin-relatorios" class="flex-1 py-2 rounded-xl text-slate-400 hover:text-white transition-all">📊 BI / Dashboard</button>
                 </div>
 
                 <!-- CAIXA DE RESUMO DA EVOLUÇÃO MINIMIZÁVEL -->
-                <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3 shadow-xl">
+                <div class="bg-af-card rounded-2xl p-4 space-y-3 shadow-xl">
                     <div class="flex justify-between items-center cursor-pointer select-none" onclick="toggleMinimizarResumoAdmin()">
                         <div class="flex items-center gap-2">
                             <span class="text-sm">📈</span>
@@ -139,15 +140,15 @@
                     </div>
                     <div id="conteudo-resumo-evolucao-admin" class="space-y-3 pt-2 border-t border-slate-800">
                         <div class="grid grid-cols-3 gap-2 text-center">
-                            <div class="bg-black border border-slate-800 p-2.5 rounded-xl">
+                            <div class="bg-black/60 border border-slate-800 p-2.5 rounded-xl">
                                 <div class="text-base font-black text-emerald-400" id="val-mais-peso">0</div>
                                 <div class="text-[9px] font-bold text-slate-400 uppercase">MAIS PESO</div>
                             </div>
-                            <div class="bg-black border border-slate-800 p-2.5 rounded-xl">
+                            <div class="bg-black/60 border border-slate-800 p-2.5 rounded-xl">
                                 <div class="text-base font-black text-af-orange" id="val-mesmo-peso">0</div>
                                 <div class="text-[9px] font-bold text-slate-400 uppercase">MESMO PESO</div>
                             </div>
-                            <div class="bg-black border border-slate-800 p-2.5 rounded-xl">
+                            <div class="bg-black/60 border border-slate-800 p-2.5 rounded-xl">
                                 <div class="text-base font-black text-rose-400" id="val-menos-peso">0</div>
                                 <div class="text-[9px] font-bold text-slate-400 uppercase">MENOS PESO</div>
                             </div>
@@ -160,14 +161,14 @@
 
                 <!-- ABA 1: TREINOS -->
                 <div id="sec-admin-treinos" class="space-y-4">
-                    <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3">
+                    <div class="bg-af-card rounded-2xl p-4 space-y-3">
                         <div class="flex justify-between items-center">
                             <h3 class="font-bold text-xs uppercase text-slate-300">Nova Divisão de Treino</h3>
                             <button onclick="zerarHistoricoAlunoComConfirmacao()" class="text-[9px] bg-rose-950/60 text-rose-400 border border-rose-800 px-2 py-1 rounded font-bold hover:bg-rose-900/60">🗑️ Limpar Histórico</button>
                         </div>
                         <div class="flex gap-2">
                             <input type="text" id="input-nome-treino" placeholder="Ex: Treino A - Quadríceps" class="flex-1 bg-black border border-slate-800 rounded-xl px-3.5 py-2.5 text-white focus:border-af-orange focus:outline-none">
-                            <button onclick="criarTreinoDivisao()" class="bg-af-orange font-bold px-4 py-2.5 rounded-xl text-black text-xs">Criar</button>
+                            <button onclick="criarTreinoDivisao()" class="bg-af-orange font-bold px-4 py-2.5 rounded-xl text-black text-xs shadow-md">Criar</button>
                         </div>
                     </div>
 
@@ -179,15 +180,15 @@
 
                 <!-- ABA 2: DASHBOARD BI & ANÁLISE PROFUNDA -->
                 <div id="sec-admin-relatorios" class="hidden space-y-4">
-                    <div class="flex justify-between items-center bg-af-card border border-slate-800 rounded-2xl p-4">
+                    <div class="flex justify-between items-center bg-af-card rounded-2xl p-4">
                         <div>
                             <h3 class="font-bold text-xs text-af-orange uppercase">BI & Análise Executiva</h3>
                             <p class="text-[10px] text-slate-400">Métricas analíticas e evolução completa</p>
                         </div>
-                        <button onclick="gerarRelatorioPDF()" class="bg-af-orange text-black font-black px-3.5 py-2 rounded-xl text-xs shadow-md">📄 Imprimir PDF</button>
+                        <button onclick="gerarRelatorioPDF()" class="bg-af-orange text-black font-black px-3.5 py-2 rounded-xl text-xs shadow-lg shadow-orange-500/20">📄 Imprimir PDF</button>
                     </div>
 
-                    <div class="bg-af-card border border-af-orange/40 rounded-2xl p-4 space-y-3 shadow-xl">
+                    <div class="bg-af-card border border-af-orange/40 rounded-2xl p-4 space-y-3 shadow-xl neon-glow">
                         <div class="flex items-center gap-2">
                             <span class="text-base">📈</span>
                             <div>
@@ -203,18 +204,18 @@
                         </div>
                     </div>
 
-                    <div class="flex gap-1.5 bg-black p-1.5 rounded-xl border border-slate-800 text-xs font-bold text-center">
-                        <button onclick="mudarPeriodoRelatorio('semanal')" id="btn-periodo-semanal" class="flex-1 py-1.5 rounded-lg bg-af-orange text-black transition-all">📅 Semanal</button>
+                    <div class="flex gap-1.5 bg-black/60 p-1.5 rounded-xl border border-slate-800 text-xs font-bold text-center">
+                        <button onclick="mudarPeriodoRelatorio('semanal')" id="btn-periodo-semanal" class="flex-1 py-1.5 rounded-lg bg-af-orange text-black transition-all shadow-md">📅 Semanal</button>
                         <button onclick="mudarPeriodoRelatorio('mensal')" id="btn-periodo-mensal" class="flex-1 py-1.5 rounded-lg text-slate-400 transition-all">📆 Mensal</button>
                     </div>
 
                     <div class="flex gap-1 bg-af-card p-1 rounded-xl border border-slate-800 text-[10px] font-bold text-center">
-                        <button onclick="mudarSubAbaRelatorio('peso')" id="subtab-peso" class="flex-1 py-1.5 rounded-lg bg-af-orange text-black">🏋️ Volume</button>
+                        <button onclick="mudarSubAbaRelatorio('peso')" id="subtab-peso" class="flex-1 py-1.5 rounded-lg bg-af-orange text-black shadow-md">🏋️ Volume</button>
                         <button onclick="mudarSubAbaRelatorio('series')" id="subtab-series" class="flex-1 py-1.5 rounded-lg text-slate-400">🔢 Séries</button>
                         <button onclick="mudarSubAbaRelatorio('grupos')" id="subtab-grupos" class="flex-1 py-1.5 rounded-lg text-slate-400">🎯 Grupamentos</button>
                     </div>
 
-                    <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-4 print-container">
+                    <div class="bg-af-card rounded-2xl p-4 space-y-4 print-container shadow-xl">
                         <div class="text-center border-b border-slate-800 pb-3">
                             <span id="label-periodo-ativo" class="text-[10px] font-bold text-af-orange uppercase tracking-wider block">Relatório Semanal</span>
                             <h4 id="nome-aluno-relatorio-titulo" class="font-bold text-base text-white">Atleta</h4>
@@ -226,12 +227,12 @@
 
             <!-- TELA 3: MONTAGEM DE EXERCÍCIOS -->
             <div id="view-montar-exercicios" class="hidden space-y-4">
-                <div class="flex items-center justify-between bg-af-card border border-slate-800 rounded-2xl p-4">
+                <div class="flex items-center justify-between bg-af-card rounded-2xl p-4">
                     <button onclick="voltarParaTreinos()" class="bg-black text-slate-400 px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-800">← Voltar</button>
                     <h2 id="titulo-treino-ativo" class="font-bold text-xs text-af-orange uppercase tracking-wider">Treino Ativo</h2>
                 </div>
 
-                <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3 relative">
+                <div class="bg-af-card rounded-2xl p-4 space-y-3 relative">
                     <h3 id="titulo-modo-exercicio" class="font-bold text-xs uppercase text-slate-300">Adicionar Exercício</h3>
                     
                     <div class="space-y-2.5">
@@ -316,7 +317,7 @@
 
                         <div class="flex gap-2 pt-2">
                             <button id="btn-cancelar-edicao" onclick="cancelarEdicaoExercicio()" class="hidden flex-1 bg-black border border-slate-800 text-slate-400 font-bold py-3 rounded-xl text-xs">Cancelar</button>
-                            <button id="btn-salvar-exercicio" onclick="salvarExercicioDefinitivo()" class="flex-1 bg-af-orange font-black py-3 rounded-xl text-black text-xs transition-all shadow-md">
+                            <button id="btn-salvar-exercicio" onclick="salvarExercicioDefinitivo()" class="flex-1 bg-af-orange font-black py-3 rounded-xl text-black text-xs transition-all shadow-md shadow-orange-500/20">
                                 Salvar Exercício na Divisão
                             </button>
                         </div>
@@ -334,33 +335,33 @@
 
         <!-- SEÇÃO FINANCEIRO ZERADO -->
         <div id="sec-adm-financeiro" class="hidden space-y-4 no-print">
-            <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3">
+            <div class="bg-af-card rounded-2xl p-4 space-y-3">
                 <div class="flex justify-between items-center">
                     <div>
                         <h2 class="font-bold text-xs text-af-orange uppercase">Painel Financeiro</h2>
                         <p class="text-[10px] text-slate-400">Controle financeiro limpo</p>
                     </div>
-                    <button onclick="carregarFinanceiro()" class="bg-black border border-slate-800 text-slate-300 text-xs px-3 py-1.5 rounded-xl font-bold">🔄 Atualizar</button>
+                    <button onclick="carregarFinanceiro()" class="bg-black/80 border border-slate-800 text-slate-300 text-xs px-3 py-1.5 rounded-xl font-bold">🔄 Atualizar</button>
                 </div>
             </div>
 
             <div class="grid grid-cols-2 gap-3">
-                <div class="bg-af-card border border-slate-800 p-4 rounded-2xl space-y-1">
+                <div class="bg-af-card p-4 rounded-2xl space-y-1">
                     <span class="text-[9px] uppercase font-bold text-slate-400 block">Receita Total</span>
                     <strong class="text-lg font-black text-af-orange">R$ 0,00</strong>
                     <p class="text-[10px] text-slate-500">Nenhum lançamento</p>
                 </div>
-                <div class="bg-af-card border border-slate-800 p-4 rounded-2xl space-y-1">
+                <div class="bg-af-card p-4 rounded-2xl space-y-1">
                     <span class="text-[9px] uppercase font-bold text-slate-400 block">Alunos Ativos</span>
                     <strong class="text-lg font-black text-white">0</strong>
                     <p class="text-[10px] text-slate-500">Sem cobranças ativas</p>
                 </div>
-                <div class="bg-af-card border border-slate-800 p-4 rounded-2xl space-y-1">
+                <div class="bg-af-card p-4 rounded-2xl space-y-1">
                     <span class="text-[9px] uppercase font-bold text-slate-400 block">Média Hora / Aula</span>
                     <strong class="text-lg font-black text-white">R$ 0,00</strong>
                     <p class="text-[10px] text-slate-500">Não definido</p>
                 </div>
-                <div class="bg-af-card border border-slate-800 p-4 rounded-2xl space-y-1">
+                <div class="bg-af-card p-4 rounded-2xl space-y-1">
                     <span class="text-[9px] uppercase font-bold text-slate-400 block">Renovações Próximas</span>
                     <strong class="text-lg font-black text-amber-400">0</strong>
                     <p class="text-[10px] text-slate-500">Nenhum vencimento</p>
@@ -368,17 +369,17 @@
             </div>
         </div>
 
-        <!-- SEÇÃO AGENDA (EXCLUSIVA DA ABA AGENDA) -->
+        <!-- SEÇÃO AGENDA -->
         <div id="sec-adm-agenda" class="hidden space-y-4 no-print">
-            <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3">
+            <div class="bg-af-card rounded-2xl p-4 space-y-3">
                 <div class="flex justify-between items-center">
                     <div>
                         <h2 class="font-bold text-xs text-af-orange uppercase">Agenda do Personal</h2>
                         <p class="text-[10px] text-slate-400">Segunda a Sexta • 05:00 às 21:00</p>
                     </div>
                 </div>
-                <div class="flex gap-1 bg-black p-1 rounded-xl border border-slate-800 text-[11px] font-bold text-center overflow-x-auto">
-                    <button onclick="mudarDiaAgenda('SEG')" id="btn-agenda-SEG" class="flex-1 py-1.5 px-2.5 rounded-lg bg-af-orange text-black">SEG</button>
+                <div class="flex gap-1 bg-black/60 p-1 rounded-xl border border-slate-800 text-[11px] font-bold text-center overflow-x-auto">
+                    <button onclick="mudarDiaAgenda('SEG')" id="btn-agenda-SEG" class="flex-1 py-1.5 px-2.5 rounded-lg bg-af-orange text-black shadow-md">SEG</button>
                     <button onclick="mudarDiaAgenda('TER')" id="btn-agenda-TER" class="flex-1 py-1.5 px-2.5 rounded-lg text-slate-400">TER</button>
                     <button onclick="mudarDiaAgenda('QUA')" id="btn-agenda-QUA" class="flex-1 py-1.5 px-2.5 rounded-lg text-slate-400">QUA</button>
                     <button onclick="mudarDiaAgenda('QUI')" id="btn-agenda-QUI" class="flex-1 py-1.5 px-2.5 rounded-lg text-slate-400">QUI</button>
@@ -392,7 +393,7 @@
 
     <!-- MODAL VINCULAR ALUNO NA AGENDA -->
     <div id="modal-agenda" class="fixed inset-0 bg-black/90 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-af-card border border-slate-800 rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-2xl">
+        <div class="bg-af-card rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-2xl">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
                 <h3 id="modal-agenda-titulo" class="font-bold text-xs text-af-orange uppercase">Alocar Horário</h3>
                 <button onclick="fecharModalAgenda()" class="text-slate-400 text-xs font-bold bg-black border border-slate-800 px-2.5 py-1 rounded-lg">✕</button>
@@ -403,7 +404,7 @@
                     <select id="select-aluno-agenda" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-slate-200 text-xs"></select>
                 </div>
                 <div class="flex gap-2 pt-2">
-                    <button onclick="salvarHorarioAgenda()" class="flex-1 bg-af-orange text-black font-black py-2.5 rounded-xl text-xs">Vincular Aluno</button>
+                    <button onclick="salvarHorarioAgenda()" class="flex-1 bg-af-orange text-black font-black py-2.5 rounded-xl text-xs shadow-md">Vincular Aluno</button>
                     <button onclick="liberarHorarioAgenda()" class="bg-rose-950/60 text-rose-400 border border-rose-800 font-bold px-4 py-2.5 rounded-xl text-xs">Liberar Horário</button>
                 </div>
             </div>
@@ -445,9 +446,8 @@
                 document.getElementById(`tab-adm-${a}`).className = 'flex-1 py-2.5 rounded-xl text-slate-400 hover:text-white font-bold transition-all';
             });
             document.getElementById(`sec-adm-${aba}`).classList.remove('hidden');
-            document.getElementById(`tab-adm-${aba}`).className = 'flex-1 py-2.5 rounded-xl bg-af-orange text-black font-bold transition-all';
+            document.getElementById(`tab-adm-${aba}`).className = 'flex-1 py-2.5 rounded-xl bg-af-orange text-black font-bold shadow-lg shadow-orange-500/20 transition-all';
 
-            // Agenda só aparece na aba Alunos (tela inicial) e na aba Agenda
             document.getElementById('bloco-agenda-hoje-admin').style.display = (aba === 'alunos') ? 'block' : 'none';
 
             if (aba === 'alunos') { carregarAlunos().then(atualizarResumoAgendaTelaAlunos); }
@@ -551,7 +551,7 @@
                     containerAtivos.innerHTML = ativos.map(aluno => {
                         const linkAluno = `${baseURL}aluno.html?token=${aluno.token}`;
                         return `
-                            <div onclick="abrirPainelPorId('${aluno.id}')" class="bg-af-card border border-slate-800 p-3.5 rounded-2xl flex items-center justify-between cursor-pointer transition-all">
+                            <div onclick="abrirPainelPorId('${aluno.id}')" class="bg-af-card hover:border-af-orange/50 p-3.5 rounded-2xl flex items-center justify-between cursor-pointer transition-all shadow-md">
                                 <div class="flex items-center gap-3">
                                     <div class="w-10 h-10 rounded-xl bg-black text-af-orange font-black flex items-center justify-center text-xs border border-slate-800">
                                         ${escapeHtml(aluno.nome.substring(0, 2).toUpperCase())}
@@ -564,7 +564,7 @@
                                 <div class="flex items-center gap-1.5" onclick="event.stopPropagation()">
                                     <button onclick="arquivarAluno('${aluno.id}', true)" class="text-xs bg-black text-amber-400 border border-slate-800 px-2 py-1.5 rounded-xl font-bold" title="Arquivar">📁</button>
                                     <button onclick="apagarAlunoDefinitivo('${aluno.id}')" class="text-xs bg-black text-rose-400 border border-slate-800 px-2 py-1.5 rounded-xl font-bold" title="Excluir">🗑️</button>
-                                    <button onclick="copiarLinkDirect('${linkAluno}')" class="text-xs bg-af-orange text-black px-3 py-1.5 rounded-xl font-black">Copiar</button>
+                                    <button onclick="copiarLinkDirect('${linkAluno}')" class="text-xs bg-af-orange text-black px-3 py-1.5 rounded-xl font-black shadow-md">Copiar</button>
                                 </div>
                             </div>
                         `;
@@ -575,7 +575,7 @@
                     containerArquivados.innerHTML = `<p class="text-[11px] text-slate-600 text-center py-2">Nenhum aluno arquivado.</p>`;
                 } else {
                     containerArquivados.innerHTML = arquivados.map(aluno => `
-                        <div class="bg-black border border-slate-900 p-3 rounded-xl flex justify-between items-center text-xs">
+                        <div class="bg-black/60 border border-slate-900 p-3 rounded-xl flex justify-between items-center text-xs">
                             <span class="text-slate-400 font-bold">${escapeHtml(aluno.nome)} (Arquivado)</span>
                             <div class="flex gap-1">
                                 <button onclick="arquivarAluno('${aluno.id}', false)" class="bg-slate-900 border border-slate-800 text-af-orange px-2.5 py-1 rounded-lg font-bold">Desarquivar</button>
@@ -651,7 +651,6 @@
             document.getElementById('view-lista-alunos').classList.add('hidden');
             document.getElementById('view-detalhe-aluno').classList.remove('hidden');
 
-            // Garante que a agenda de hoje some ao entrar no painel do aluno
             document.getElementById('bloco-agenda-hoje-admin').style.display = 'none';
 
             try {
@@ -721,7 +720,7 @@
                     const diff = obj.atual - obj.inicial;
                     const cor = diff > 0 ? 'text-emerald-400' : (diff < 0 ? 'text-rose-400' : 'text-slate-300');
                     return `
-                        <div class="bg-black border border-slate-800 p-2 rounded-xl flex justify-between items-center text-[11px]">
+                        <div class="bg-black/60 border border-slate-800 p-2 rounded-xl flex justify-between items-center text-[11px]">
                             <span class="font-bold text-slate-200">${escapeHtml(nome)}</span>
                             <span class="${cor} font-bold">${obj.inicial}kg → ${obj.atual}kg (${diff >= 0 ? '+' : ''}${diff}kg)</span>
                         </div>
@@ -746,10 +745,10 @@
 
             if (aba === 'treinos') {
                 document.getElementById('sec-admin-treinos').classList.remove('hidden');
-                document.getElementById('tab-admin-treinos').className = 'flex-1 py-2 rounded-xl bg-af-orange text-black font-bold transition-all';
+                document.getElementById('tab-admin-treinos').className = 'flex-1 py-2 rounded-xl bg-af-orange text-black font-bold shadow-md transition-all';
             } else {
                 document.getElementById('sec-admin-relatorios').classList.remove('hidden');
-                document.getElementById('tab-admin-relatorios').className = 'flex-1 py-2 rounded-xl bg-af-orange text-black font-bold transition-all';
+                document.getElementById('tab-admin-relatorios').className = 'flex-1 py-2 rounded-xl bg-af-orange text-black font-bold shadow-md transition-all';
                 await recarregarHistoricoAdmin();
                 calcularEvolucaoRecenteAdmin();
                 popularSelectRaioXAdmin();
@@ -798,7 +797,7 @@
             container.innerHTML = `
                 <div class="space-y-1.5 max-h-48 overflow-y-auto pr-1 pt-1">
                     ${registros.map(r => `
-                        <div class="bg-black border border-slate-800 p-2.5 rounded-xl flex justify-between items-center text-xs">
+                        <div class="bg-black/60 border border-slate-800 p-2.5 rounded-xl flex justify-between items-center text-xs">
                             <div>
                                 <span class="text-[10px] text-slate-500 font-bold block">📅 ${r.data}</span>
                                 <span class="text-slate-300 font-bold">${r.series} séries realizadas</span>
@@ -874,7 +873,7 @@
                 return;
             }
             container.innerHTML = treinosDoAluno.map((t, idx) => `
-                <div class="bg-af-card border border-slate-800 rounded-2xl p-4 flex justify-between items-center shadow-sm">
+                <div class="bg-af-card rounded-2xl p-4 flex justify-between items-center shadow-sm">
                     <div onclick="abrirMontagemTreino('${t.id}')" class="flex-1 cursor-pointer">
                         <h3 class="font-bold text-xs text-af-orange uppercase tracking-wider">${escapeHtml(t.nome)}</h3>
                         <p class="text-[10px] text-slate-500">${t.exercicios ? t.exercicios.length : 0} exercício(s)</p>
@@ -884,7 +883,7 @@
                         <button onclick="moverTreinoOrdem(${idx}, 1)" ${idx === treinosDoAluno.length - 1 ? 'disabled class="opacity-30 text-xs bg-black p-1.5 rounded-lg"' : 'class="text-xs bg-black text-slate-300 border border-slate-800 p-1.5 rounded-lg"'}>⬇️</button>
                         <button onclick="renomearTreino('${t.id}')" class="text-xs bg-black text-slate-300 border border-slate-800 px-2 py-1.5 rounded-lg">✏️</button>
                         <button onclick="excluirTreino('${t.id}')" class="text-xs bg-black text-rose-400 border border-slate-800 px-2 py-1.5 rounded-lg">🗑️</button>
-                        <button onclick="abrirMontagemTreino('${t.id}')" class="text-xs bg-af-orange text-black px-2.5 py-1.5 rounded-lg font-black">Abrir</button>
+                        <button onclick="abrirMontagemTreino('${t.id}')" class="text-xs bg-af-orange text-black px-2.5 py-1.5 rounded-lg font-black shadow-md">Abrir</button>
                     </div>
                 </div>
             `).join('');
@@ -900,7 +899,7 @@
             container.innerHTML = treino.exercicios.map((ex, idx) => {
                 const conj = ex.conjugado && ex.conjugado !== 'Nenhum' ? ex.conjugado : null;
                 return `
-                    <div class="bg-black border ${conj ? 'border-amber-500/60' : 'border-slate-900'} p-3 rounded-xl flex justify-between items-center text-xs">
+                    <div class="bg-black/60 border ${conj ? 'border-amber-500/60' : 'border-slate-900'} p-3 rounded-xl flex justify-between items-center text-xs shadow-sm">
                         <div>
                             <div class="flex items-center gap-1.5">
                                 <span class="text-[10px] text-af-orange font-bold uppercase">${escapeHtml(ex.musculo)} • ${escapeHtml(ex.equipamento)}</span>
@@ -1021,8 +1020,8 @@
         function mudarPeriodoRelatorio(periodo) {
             periodoRelatorioAtual = periodo;
             grupoMuscularFiltroAtivo = null;
-            document.getElementById('btn-periodo-semanal').className = periodo === 'semanal' ? 'flex-1 py-1.5 rounded-lg bg-af-orange text-black font-bold transition-all' : 'flex-1 py-1.5 rounded-lg text-slate-400 font-bold transition-all';
-            document.getElementById('btn-periodo-mensal').className = periodo === 'mensal' ? 'flex-1 py-1.5 rounded-lg bg-af-orange text-black font-bold transition-all' : 'flex-1 py-1.5 rounded-lg text-slate-400 font-bold transition-all';
+            document.getElementById('btn-periodo-semanal').className = periodo === 'semanal' ? 'flex-1 py-1.5 rounded-lg bg-af-orange text-black font-bold shadow-md transition-all' : 'flex-1 py-1.5 rounded-lg text-slate-400 font-bold transition-all';
+            document.getElementById('btn-periodo-mensal').className = periodo === 'mensal' ? 'flex-1 py-1.5 rounded-lg bg-af-orange text-black font-bold shadow-md transition-all' : 'flex-1 py-1.5 rounded-lg text-slate-400 font-bold transition-all';
             document.getElementById('label-periodo-ativo').innerText = periodo === 'semanal' ? 'Relatório Semanal (Últimos 7 dias)' : 'Relatório Mensal (Mês Atual)';
             atualizarRelatoriosAdmin();
         }
@@ -1031,17 +1030,9 @@
             subAbaRelatorioAtual = sub;
             grupoMuscularFiltroAtivo = null;
             ['peso', 'series', 'grupos'].forEach(s => {
-                document.getElementById(`subtab-${s}`).className = s === sub ? 'flex-1 py-1.5 rounded-lg bg-af-orange text-black font-bold' : 'flex-1 py-1.5 rounded-lg text-slate-400 font-bold';
+                document.getElementById(`subtab-${s}`).className = s === sub ? 'flex-1 py-1.5 rounded-lg bg-af-orange text-black font-bold shadow-md' : 'flex-1 py-1.5 rounded-lg text-slate-400 font-bold';
             });
             atualizarRelatoriosAdmin();
-        }
-
-        function formatarTempo(seg) {
-            seg = Math.max(0, Math.round(seg || 0));
-            const m = Math.floor(seg / 60), s = seg % 60;
-            if (m && s) return `${m}min ${s}s`;
-            if (m) return `${m}min`;
-            return `${s}s`;
         }
 
         function atualizarRelatoriosAdmin() {
@@ -1095,7 +1086,7 @@
 
             if (subAbaRelatorioAtual === 'peso') {
                 container.innerHTML = `
-                    <div class="bg-black p-4 rounded-xl border border-slate-800 text-center space-y-1">
+                    <div class="bg-black/60 p-4 rounded-xl border border-slate-800 text-center space-y-1 shadow-inner">
                         <span class="text-[10px] uppercase text-slate-500 font-bold block">Volume Total (Carga × Reps)</span>
                         <strong class="text-xl font-black text-af-orange">${volTotal.toLocaleString('pt-BR')} kg</strong>
                         <p class="text-[10px] text-slate-400">Sessões computadas: ${historicoFiltrado.length}</p>
@@ -1103,7 +1094,7 @@
                 `;
             } else if (subAbaRelatorioAtual === 'series') {
                 container.innerHTML = `
-                    <div class="bg-black p-4 rounded-xl border border-slate-800 text-center space-y-1">
+                    <div class="bg-black/60 p-4 rounded-xl border border-slate-800 text-center space-y-1 shadow-inner">
                         <span class="text-[10px] uppercase text-slate-500 font-bold block">Total de Séries Validadas</span>
                         <strong class="text-xl font-black text-white">${totalSeries} séries</strong>
                     </div>
@@ -1116,12 +1107,12 @@
                     const gData = grupos[grupoMuscularFiltroAtivo];
                     const exerciciosDoGrupo = Object.keys(gData.exercicios);
                     container.innerHTML = `
-                        <div class="flex items-center justify-between bg-black p-2.5 rounded-xl border border-slate-800">
+                        <div class="flex items-center justify-between bg-black/60 p-2.5 rounded-xl border border-slate-800">
                             <button onclick="grupoMuscularFiltroAtivo=null; atualizarRelatoriosAdmin();" class="text-xs text-af-orange font-bold">← Voltar para Grupos</button>
                             <span class="text-xs text-white font-bold uppercase">${escapeHtml(grupoMuscularFiltroAtivo)}</span>
                         </div>
                         <div class="space-y-3 pt-1">
-                            <div class="bg-black p-3 rounded-xl border border-slate-800 space-y-1 text-xs">
+                            <div class="bg-black/60 p-3 rounded-xl border border-slate-800 space-y-1 text-xs">
                                 ${MUSCULOS_SEM_CARGA.includes(grupoMuscularFiltroAtivo) ? '' : `<div class="flex justify-between text-slate-300"><span>Volume do Grupo:</span><strong class="text-af-orange">${gData.volume.toLocaleString('pt-BR')} kg</strong></div>`}
                                 <div class="flex justify-between text-slate-300"><span>Séries Totais:</span><strong class="text-white">${gData.series} séries</strong></div>
                             </div>
@@ -1129,7 +1120,7 @@
                             ${exerciciosDoGrupo.map(exNome => {
                                 const registros = gData.exercicios[exNome];
                                 return `
-                                    <div class="bg-black border border-slate-800 p-3 rounded-xl space-y-2">
+                                    <div class="bg-black/60 border border-slate-800 p-3 rounded-xl space-y-2">
                                         <span class="font-bold text-xs text-white block">${escapeHtml(exNome)}</span>
                                         <div class="space-y-1.5">
                                             ${registros.map(r => `
@@ -1149,7 +1140,7 @@
                         <p class="text-[10px] text-slate-400">Toque em um grupamento para ver o progresso detalhado dos exercícios:</p>
                         <div class="space-y-2">
                             ${nomesGrupos.map(n => `
-                                <div onclick="grupoMuscularFiltroAtivo='${n}'; atualizarRelatoriosAdmin();" class="bg-black border border-slate-800 p-3 rounded-xl flex justify-between items-center cursor-pointer hover:border-af-orange">
+                                <div onclick="grupoMuscularFiltroAtivo='${n}'; atualizarRelatoriosAdmin();" class="bg-black/60 border border-slate-800 p-3 rounded-xl flex justify-between items-center cursor-pointer hover:border-af-orange transition-all">
                                     <span class="font-bold text-sm text-af-orange">${escapeHtml(n)}</span>
                                     <span class="text-xs text-slate-200">${MUSCULOS_SEM_CARGA.includes(n) ? '' : grupos[n].volume.toLocaleString('pt-BR') + ' kg • '}${grupos[n].series} séries</span>
                                 </div>
@@ -1400,7 +1391,7 @@
         function mudarDiaAgenda(dia) {
             diaAgendaAtual = dia;
             ['SEG', 'TER', 'QUA', 'QUI', 'SEX'].forEach(d => {
-                document.getElementById(`btn-agenda-${d}`).className = d === dia ? 'flex-1 py-1.5 px-2.5 rounded-lg bg-af-orange text-black font-bold' : 'flex-1 py-1.5 px-2.5 rounded-lg text-slate-400 font-bold';
+                document.getElementById(`btn-agenda-${d}`).className = d === dia ? 'flex-1 py-1.5 px-2.5 rounded-lg bg-af-orange text-black font-bold shadow-md' : 'flex-1 py-1.5 px-2.5 rounded-lg text-slate-400 font-bold';
             });
             renderizarGradeAgenda();
         }
@@ -1416,7 +1407,7 @@
                 const key = `${diaAgendaAtual}_${hora}`;
                 const alunoVinculado = agendaDados[key] ? agendaDados[key].nome : '';
                 return `
-                    <div onclick="abrirModalAgenda('${hora}')" class="bg-black border border-slate-800 p-3 rounded-xl flex justify-between items-center cursor-pointer hover:border-af-orange transition-all">
+                    <div onclick="abrirModalAgenda('${hora}')" class="bg-black/60 border border-slate-800 p-3 rounded-xl flex justify-between items-center cursor-pointer hover:border-af-orange transition-all shadow-sm">
                         <span class="font-bold text-xs text-slate-300">⏰ ${hora}</span>
                         <span class="text-xs font-bold ${alunoVinculado ? 'text-af-orange' : 'text-slate-500'}">${alunoVinculado ? escapeHtml(alunoVinculado) : 'Livre'}</span>
                     </div>

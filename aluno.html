@@ -37,10 +37,11 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { background-color: #050505; -webkit-text-size-adjust: 100%; }
-        .bg-af-card { background-color: #151515; }
+        .bg-af-card { background: rgba(21, 21, 21, 0.75); backdrop-filter: blur(12px); border: 1px solid rgba(255, 106, 0, 0.2); }
         .text-af-orange { color: #FF6A00; }
         .bg-af-orange { background-color: #FF6A00; }
         .border-af-orange { border-color: #FF6A00; }
+        .neon-glow { box-shadow: 0 0 20px rgba(255, 106, 0, 0.15); }
         input, select, textarea { font-size: 16px !important; }
         html { touch-action: manipulation; }
     </style>
@@ -49,7 +50,7 @@
 
     <!-- MODAL 1: PESQUISA DE SATISFAÇÃO & SENSAÇÃO PÓS-TREINO -->
     <div id="modal-pos-satisfacao" class="fixed inset-0 bg-black/95 backdrop-blur-md hidden z-50 flex flex-col justify-center p-4">
-        <div class="max-w-md w-full mx-auto bg-af-card border border-slate-800 rounded-3xl p-5 space-y-4 shadow-2xl">
+        <div class="max-w-md w-full mx-auto bg-af-card rounded-3xl p-5 space-y-4 shadow-2xl">
             <div class="text-center">
                 <span class="text-3xl">🎯</span>
                 <h2 class="text-base font-black text-white uppercase mt-1">Como você terminou o treino?</h2>
@@ -82,7 +83,7 @@
     <!-- MODAL 2: RESUMO DO TREINO CONCLUÍDO -->
     <div id="modal-relatorio-pos-treino" class="fixed inset-0 bg-black/95 backdrop-blur-md hidden z-50 flex flex-col p-4 overflow-y-auto">
         <div class="max-w-md w-full mx-auto space-y-4 my-auto">
-            <div class="bg-af-card border border-slate-800 rounded-3xl p-5 space-y-4 shadow-2xl">
+            <div class="bg-af-card rounded-3xl p-5 space-y-4 shadow-2xl">
                 <div class="w-12 h-12 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-2xl flex items-center justify-center text-2xl mx-auto">
                     🏆
                 </div>
@@ -93,11 +94,11 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-2 pt-2">
-                    <div class="bg-black border border-slate-800 p-3.5 rounded-2xl text-center">
+                    <div class="bg-black/60 border border-slate-800 p-3.5 rounded-2xl text-center">
                         <span class="text-[9px] uppercase font-bold text-slate-500 block mb-1">Volume da Sessão</span>
                         <strong id="relatorio-volume-total" class="text-lg font-black text-af-orange">0 kg</strong>
                     </div>
-                    <div class="bg-black border border-slate-800 p-3.5 rounded-2xl text-center">
+                    <div class="bg-black/60 border border-slate-800 p-3.5 rounded-2xl text-center">
                         <span class="text-[9px] uppercase font-bold text-slate-500 block mb-1">Séries Validadas</span>
                         <strong id="relatorio-qtd-series" class="text-lg font-black text-white">0</strong>
                     </div>
@@ -115,7 +116,7 @@
         </div>
     </div>
 
-    <header class="bg-af-card border-b border-slate-800 sticky top-0 z-20">
+    <header class="bg-af-card border-b border-slate-800/80 sticky top-0 z-20 backdrop-blur-md">
         <div class="max-w-md mx-auto p-3 flex justify-between items-center">
             <div>
                 <div class="flex items-center gap-1.5">
@@ -124,11 +125,11 @@
                 </div>
                 <h1 id="nome-aluno" class="font-bold text-xs text-slate-300">Carregando atleta...</h1>
             </div>
-            <button onclick="carregarDadosAluno()" class="bg-black hover:bg-slate-900 text-slate-300 p-2 rounded-xl border border-slate-800 text-xs">🔄</button>
+            <button onclick="carregarDadosAluno()" class="bg-black/80 hover:bg-slate-900 text-slate-300 p-2 rounded-xl border border-slate-800 text-xs transition-all">🔄</button>
         </div>
         <div class="max-w-md mx-auto px-3 pb-2 flex gap-2 text-xs">
-            <button onclick="mudarAbaAtiva('treinos')" id="tab-atleta-treinos" class="flex-1 py-1.5 px-3 rounded-xl font-bold bg-af-orange text-black">🏋️ Treinos</button>
-            <button onclick="mudarAbaAtiva('relatorios')" id="tab-atleta-relatorios" class="flex-1 py-1.5 px-3 rounded-xl font-bold bg-black text-slate-400 border border-slate-800">📊 Dashboard</button>
+            <button onclick="mudarAbaAtiva('treinos')" id="tab-atleta-treinos" class="flex-1 py-1.5 px-3 rounded-xl font-bold bg-af-orange text-black shadow-lg shadow-orange-500/20">🏋️ Treinos</button>
+            <button onclick="mudarAbaAtiva('relatorios')" id="tab-atleta-relatorios" class="flex-1 py-1.5 px-3 rounded-xl font-bold bg-black/60 text-slate-400 border border-slate-800">📊 Dashboard</button>
         </div>
     </header>
 
@@ -144,7 +145,7 @@
 
     <!-- MODAL EXPLICATIVO DE MÉTODOS -->
     <div id="modal-explicacao-metodo" class="fixed inset-0 bg-black/90 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-af-card border border-slate-800 rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-2xl">
+        <div class="bg-af-card rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-2xl">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
                 <h3 id="modal-titulo-metodo" class="font-bold text-sm text-af-orange uppercase">Entenda o Método</h3>
                 <button onclick="fecharModalMetodo()" class="text-slate-400 text-xs font-bold bg-black border border-slate-800 px-2.5 py-1 rounded-lg">✕</button>
@@ -188,13 +189,13 @@
             </div>
 
             <div id="view-execucao-treino" class="hidden space-y-4">
-                <div class="flex items-center justify-between bg-af-card border border-slate-800 rounded-2xl p-3">
+                <div class="flex items-center justify-between bg-af-card rounded-2xl p-3">
                     <button onclick="voltarParaDivisoes()" class="bg-black text-slate-400 px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-800">← Trocar Treino</button>
                     <h2 id="titulo-divisao-ativa" class="font-bold text-xs text-af-orange uppercase tracking-wider">Treino</h2>
                 </div>
 
-                <!-- BLOCO INTEGRADO DE ENERGIA (SELEÇÃO DENTRO DO TREINO) -->
-                <div class="bg-af-card border border-slate-800 rounded-2xl p-3.5 space-y-2 shadow-md">
+                <!-- BLOCO INTEGRADO DE ENERGIA -->
+                <div class="bg-af-card rounded-2xl p-3.5 space-y-2 shadow-md">
                     <div class="flex justify-between items-center">
                         <span class="text-[10px] uppercase font-bold text-af-orange tracking-wider">⚡ Nível de Energia de Hoje</span>
                         <span id="badge-energia-selecionada" class="text-[10px] font-bold text-slate-400">Selecione abaixo</span>
@@ -208,8 +209,8 @@
                     </div>
                 </div>
 
-                <!-- CAIXA DE RESUMO DA EVOLUÇÃO NO INÍCIO DO TREINO (MINIMIZÁVEL) -->
-                <div class="bg-af-card border border-slate-800 rounded-2xl p-3.5 space-y-2 shadow-md">
+                <!-- CAIXA DE RESUMO DA EVOLUÇÃO NO INÍCIO DO TREINO -->
+                <div class="bg-af-card rounded-2xl p-3.5 space-y-2 shadow-md">
                     <div class="flex justify-between items-center cursor-pointer select-none" onclick="toggleMinimizarResumoAluno()">
                         <span class="text-[10px] uppercase font-bold text-slate-400">Resumo da Evolução da Sessão</span>
                         <span id="icone-seta-resumo-aluno" class="text-xs font-bold text-slate-400">▼</span>
@@ -225,15 +226,15 @@
 
                 <div id="lista-exercicios-aluno" class="space-y-4"></div>
 
-                <button onclick="abrirPesquisaSatisfacaoPosTreino()" class="w-full bg-af-orange hover:bg-orange-600 font-black py-3.5 rounded-2xl transition-all shadow-lg text-black text-xs">
+                <button onclick="abrirPesquisaSatisfacaoPosTreino()" class="w-full bg-af-orange hover:bg-orange-600 font-black py-3.5 rounded-2xl transition-all shadow-lg shadow-orange-500/20 text-black text-xs">
                     Finalizar e Registrar Treino 🚀
                 </button>
             </div>
         </div>
 
-        <!-- ABA DASHBOARD DO ATLETA -->
+        <!-- ABA DASHBOARD DO ATLETA (ESTILO EXECUTIVO NEON) -->
         <div id="aba-atleta-relatorios" class="hidden space-y-4">
-            <div class="flex gap-1.5 bg-black p-1 rounded-xl border border-slate-800 text-xs font-bold text-center">
+            <div class="flex gap-1.5 bg-black/60 p-1 rounded-xl border border-slate-800 text-xs font-bold text-center">
                 <button onclick="mudarPeriodoAtletaRelatorio('semanal')" id="btn-atleta-semanal" class="flex-1 py-1.5 rounded-lg bg-af-orange text-black transition-all">📅 Semanal</button>
                 <button onclick="mudarPeriodoAtletaRelatorio('mensal')" id="btn-atleta-mensal" class="flex-1 py-1.5 rounded-lg text-slate-400 transition-all">📆 Mensal</button>
             </div>
@@ -244,7 +245,7 @@
                 <button onclick="mudarSubAbaAtletaRelatorio('grupos')" id="subtab-atleta-grupos" class="flex-1 py-1.5 rounded-lg text-slate-400">🎯 Grupamentos</button>
             </div>
 
-            <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3">
+            <div class="bg-af-card rounded-2xl p-4 space-y-3 neon-glow">
                 <div class="text-center border-b border-slate-800 pb-2.5">
                     <span id="atleta-label-periodo-ativo" class="text-[10px] font-bold text-af-orange uppercase tracking-wider block">Relatório Semanal</span>
                 </div>
@@ -316,13 +317,13 @@
             if (aba === 'treinos') {
                 document.getElementById('aba-atleta-treinos').classList.remove('hidden');
                 document.getElementById('aba-atleta-relatorios').classList.add('hidden');
-                document.getElementById('tab-atleta-treinos').className = 'flex-1 py-1.5 px-3 rounded-xl font-bold bg-af-orange text-black';
-                document.getElementById('tab-atleta-relatorios').className = 'flex-1 py-1.5 px-3 rounded-xl font-bold bg-black text-slate-400 border border-slate-800';
+                document.getElementById('tab-atleta-treinos').className = 'flex-1 py-1.5 px-3 rounded-xl font-bold bg-af-orange text-black shadow-lg shadow-orange-500/20';
+                document.getElementById('tab-atleta-relatorios').className = 'flex-1 py-1.5 px-3 rounded-xl font-bold bg-black/60 text-slate-400 border border-slate-800';
             } else {
                 document.getElementById('aba-atleta-relatorios').classList.remove('hidden');
                 document.getElementById('aba-atleta-treinos').classList.add('hidden');
-                document.getElementById('tab-atleta-relatorios').className = 'flex-1 py-1.5 px-3 rounded-xl font-bold bg-af-orange text-black';
-                document.getElementById('tab-atleta-treinos').className = 'flex-1 py-1.5 px-3 rounded-xl font-bold bg-black text-slate-400 border border-slate-800';
+                document.getElementById('tab-atleta-relatorios').className = 'flex-1 py-1.5 px-3 rounded-xl font-bold bg-af-orange text-black shadow-lg shadow-orange-500/20';
+                document.getElementById('tab-atleta-treinos').className = 'flex-1 py-1.5 px-3 rounded-xl font-bold bg-black/60 text-slate-400 border border-slate-800';
                 atualizarRelatoriosAtletaDashboard();
             }
         }
@@ -353,7 +354,7 @@
             if (!token) {
                 document.getElementById('nome-aluno').innerText = 'Acesso Restrito';
                 document.getElementById('container-lista-divisoes').innerHTML = `
-                    <div class="bg-af-card border border-slate-800 rounded-2xl p-4 space-y-3 text-center">
+                    <div class="bg-af-card rounded-2xl p-4 space-y-3 text-center">
                         <p class="text-xs text-rose-400 font-bold">Nenhum token identificado.</p>
                         <p class="text-[11px] text-slate-400">Cole abaixo o link ou código enviado pelo seu personal para vincular este aparelho:</p>
                         <input type="text" id="input-token-manual" placeholder="Cole o link ou token aqui..." class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-xs text-white text-center focus:border-af-orange focus:outline-none">
@@ -386,12 +387,12 @@
                 return;
             }
             container.innerHTML = treinos.map(t => `
-                <div onclick="abrirExecucaoTreino('${t.id}')" class="bg-af-card border border-slate-800 hover:border-af-orange/50 rounded-2xl p-4 flex justify-between items-center cursor-pointer transition-all">
+                <div onclick="abrirExecucaoTreino('${t.id}')" class="bg-af-card hover:border-af-orange/50 rounded-2xl p-4 flex justify-between items-center cursor-pointer transition-all shadow-md">
                     <div>
                         <h3 class="font-bold text-sm text-af-orange uppercase tracking-wider">${escapeHtml(t.nome)}</h3>
                         <p class="text-[10px] text-slate-500 mt-0.5">${t.exercicios ? t.exercicios.length : 0} exercício(s)</p>
                     </div>
-                    <span class="text-xs text-black font-black bg-af-orange px-3 py-1.5 rounded-xl">Iniciar →</span>
+                    <span class="text-xs text-black font-black bg-af-orange px-3 py-1.5 rounded-xl shadow-md">Iniciar →</span>
                 </div>
             `).join('');
         }
@@ -580,7 +581,7 @@
 
                     if (isApenasConfirmacao) {
                         return `
-                            <div class="bg-black border border-slate-800 p-2.5 rounded-xl space-y-1.5 serie-item" data-serie-concluida="false" data-exige-rpe="false" data-tipo="${tipo}" data-sem-carga="true">
+                            <div class="bg-black/60 border border-slate-800 p-2.5 rounded-xl space-y-1.5 serie-item" data-serie-concluida="false" data-exige-rpe="false" data-tipo="${tipo}" data-sem-carga="true">
                                 <div class="flex items-center justify-between">
                                     <span class="font-bold text-xs text-slate-300">${s.num}ª Série • Meta: <strong class="text-af-orange">${metaTxt}</strong></span>
                                     <button onclick="toggleValidarSerie(this)" class="bg-slate-900 border border-slate-800 text-slate-400 px-3 py-1 rounded-lg text-xs font-bold btn-check-serie">✔ Feito</button>
@@ -604,7 +605,7 @@
                     }
 
                     return `
-                        <div class="bg-black border border-slate-800 p-2.5 rounded-xl space-y-2 serie-item" data-serie-concluida="false" data-exige-rpe="${exigeRpe}" data-tipo="${tipo}" data-sem-carga="${semCarga}" data-carga-anterior="${anterior && anterior.carga > 0 ? anterior.carga : ''}">
+                        <div class="bg-black/60 border border-slate-800 p-2.5 rounded-xl space-y-2 serie-item" data-serie-concluida="false" data-exige-rpe="${exigeRpe}" data-tipo="${tipo}" data-sem-carga="${semCarga}" data-carga-anterior="${anterior && anterior.carga > 0 ? anterior.carga : ''}">
                             <div class="flex items-center gap-1.5 flex-wrap">
                                 <span class="w-4 text-center font-bold text-xs text-slate-400">${s.num}ª</span>
                                 ${badgeSerieHtml}
@@ -624,8 +625,8 @@
                 }).join('');
 
                 return `
-                    <div class="bg-af-card border ${conjugado ? 'border-amber-500/60' : 'border-slate-800'} rounded-2xl overflow-hidden shadow-md" data-nome-exercicio="${escapeHtml(ex.nome)}" data-musculo="${escapeHtml(ex.musculo || '')}" data-sem-carga="${semCarga}">
-                        <div onclick="alternarColapsoExercicio(this)" class="p-3.5 bg-af-card flex justify-between items-center cursor-pointer select-none">
+                    <div class="bg-af-card ${conjugado ? 'border-amber-500/60' : 'border-slate-800'} rounded-2xl overflow-hidden shadow-md" data-nome-exercicio="${escapeHtml(ex.nome)}" data-musculo="${escapeHtml(ex.musculo || '')}" data-sem-carga="${semCarga}">
+                        <div onclick="alternarColapsoExercicio(this)" class="p-3.5 flex justify-between items-center cursor-pointer select-none">
                             <div class="flex items-center gap-2">
                                 <div>
                                     <div class="flex items-center gap-1.5">
@@ -640,7 +641,7 @@
                                 <span class="text-xs text-slate-400">▼</span>
                             </div>
                         </div>
-                        <div class="p-2.5 border-t border-slate-800 space-y-2 bg-af-card">
+                        <div class="p-2.5 border-t border-slate-800 space-y-2">
                             ${sugestaoHtml}
                             ${htmlSeries}
                         </div>
@@ -931,12 +932,11 @@
                 const listaExHtml = exerciciosRealizados.map(e => {
                     const maxCarga = Math.max(...e.series.map(s => s.carga), 0);
                     const totalReps = e.series.reduce((a, b) => a + (b.reps || 0), 0);
-                    const totalTempo = e.series.reduce((a, b) => a + (b.tempoSeg || 0), 0);
                     const partes = [`${e.series.length} séries`];
                     if (totalReps > 0) partes.push(`${totalReps} reps`);
                     const direita = e.semCarga ? `Concluído` : `Máx: ${maxCarga} kg`;
                     return `
-                        <div class="bg-black border border-slate-800 p-2.5 rounded-xl flex justify-between items-center">
+                        <div class="bg-black/60 border border-slate-800 p-2.5 rounded-xl flex justify-between items-center">
                             <div>
                                 <strong class="text-white block">${escapeHtml(e.nome)}</strong>
                                 <span class="text-[10px] text-slate-400">${partes.join(' • ')}</span>
@@ -965,8 +965,8 @@
         function mudarPeriodoAtletaRelatorio(periodo) {
             periodoAtletaRelatorioAtual = periodo;
             grupoMuscularAtletaFiltroAtivo = null;
-            document.getElementById('btn-atleta-semanal').className = periodo === 'semanal' ? 'flex-1 py-1.5 rounded-lg bg-af-orange text-black font-bold transition-all' : 'flex-1 py-1.5 rounded-lg text-slate-400 font-bold transition-all';
-            document.getElementById('btn-atleta-mensal').className = periodo === 'mensal' ? 'flex-1 py-1.5 rounded-lg bg-af-orange text-black font-bold transition-all' : 'flex-1 py-1.5 rounded-lg text-slate-400 font-bold transition-all';
+            document.getElementById('btn-atleta-semanal').className = periodo === 'semanal' ? 'flex-1 py-1.5 rounded-lg bg-af-orange text-black font-bold transition-all shadow-md' : 'flex-1 py-1.5 rounded-lg text-slate-400 font-bold transition-all';
+            document.getElementById('btn-atleta-mensal').className = periodo === 'mensal' ? 'flex-1 py-1.5 rounded-lg bg-af-orange text-black font-bold transition-all shadow-md' : 'flex-1 py-1.5 rounded-lg text-slate-400 font-bold transition-all';
             document.getElementById('atleta-label-periodo-ativo').innerText = periodo === 'semanal' ? 'Relatório Semanal (Últimos 7 dias)' : 'Relatório Mensal (Mês Atual)';
             atualizarRelatoriosAtletaDashboard();
         }
@@ -975,7 +975,7 @@
             subAbaAtletaRelatorioAtual = sub;
             grupoMuscularAtletaFiltroAtivo = null;
             ['peso', 'series', 'grupos'].forEach(s => {
-                document.getElementById(`subtab-atleta-${s}`).className = s === sub ? 'flex-1 py-1.5 rounded-lg bg-af-orange text-black font-bold' : 'flex-1 py-1.5 rounded-lg text-slate-400 font-bold';
+                document.getElementById(`subtab-atleta-${s}`).className = s === sub ? 'flex-1 py-1.5 rounded-lg bg-af-orange text-black font-bold shadow-md' : 'flex-1 py-1.5 rounded-lg text-slate-400 font-bold';
             });
             atualizarRelatoriosAtletaDashboard();
         }
@@ -1029,7 +1029,7 @@
 
             if (subAbaAtletaRelatorioAtual === 'peso') {
                 container.innerHTML = `
-                    <div class="bg-black p-4 rounded-xl border border-slate-800 text-center space-y-1">
+                    <div class="bg-black/60 p-4 rounded-xl border border-slate-800 text-center space-y-1 shadow-inner">
                         <span class="text-[10px] uppercase text-slate-500 font-bold block">Volume Total (Carga × Reps)</span>
                         <strong class="text-xl font-black text-af-orange">${volTotal.toLocaleString('pt-BR')} kg</strong>
                         <p class="text-[10px] text-slate-400">Sessões no período: ${historicoFiltrado.length}</p>
@@ -1037,7 +1037,7 @@
                 `;
             } else if (subAbaAtletaRelatorioAtual === 'series') {
                 container.innerHTML = `
-                    <div class="bg-black p-4 rounded-xl border border-slate-800 text-center space-y-1">
+                    <div class="bg-black/60 p-4 rounded-xl border border-slate-800 text-center space-y-1 shadow-inner">
                         <span class="text-[10px] uppercase text-slate-500 font-bold block">Total de Séries Validadas</span>
                         <strong class="text-xl font-black text-white">${totalSeries} séries</strong>
                     </div>
@@ -1050,12 +1050,12 @@
                     const gData = grupos[grupoMuscularAtletaFiltroAtivo];
                     const exerciciosDoGrupo = Object.keys(gData.exercicios);
                     container.innerHTML = `
-                        <div class="flex items-center justify-between bg-black p-2.5 rounded-xl border border-slate-800">
+                        <div class="flex items-center justify-between bg-black/60 p-2.5 rounded-xl border border-slate-800">
                             <button onclick="grupoMuscularAtletaFiltroAtivo=null; atualizarRelatoriosAtletaDashboard();" class="text-xs text-af-orange font-bold">← Voltar para Grupos</button>
                             <span class="text-xs text-white font-bold uppercase">${escapeHtml(grupoMuscularAtletaFiltroAtivo)}</span>
                         </div>
                         <div class="space-y-3 pt-1">
-                            <div class="bg-black p-3 rounded-xl border border-slate-800 space-y-1 text-xs">
+                            <div class="bg-black/60 p-3 rounded-xl border border-slate-800 space-y-1 text-xs">
                                 ${MUSCULOS_SEM_CARGA.includes(grupoMuscularAtletaFiltroAtivo) ? '' : `<div class="flex justify-between text-slate-300"><span>Volume:</span><strong class="text-af-orange">${gData.volume.toLocaleString('pt-BR')} kg</strong></div>`}
                                 <div class="flex justify-between text-slate-300"><span>Séries Totais:</span><strong class="text-white">${gData.series} séries</strong></div>
                             </div>
@@ -1063,7 +1063,7 @@
                             ${exerciciosDoGrupo.map(exNome => {
                                 const registros = gData.exercicios[exNome];
                                 return `
-                                    <div class="bg-black border border-slate-800 p-3 rounded-xl space-y-2">
+                                    <div class="bg-black/60 border border-slate-800 p-3 rounded-xl space-y-2">
                                         <span class="font-bold text-xs text-white block">${escapeHtml(exNome)}</span>
                                         <div class="space-y-1.5">
                                             ${registros.map(r => `
@@ -1083,7 +1083,7 @@
                         <p class="text-[10px] text-slate-400">Toque em um grupamento para ver o progresso detalhado:</p>
                         <div class="space-y-2">
                             ${nomesGrupos.map(n => `
-                                <div onclick="grupoMuscularAtletaFiltroAtivo='${n}'; atualizarRelatoriosAtletaDashboard();" class="bg-black border border-slate-800 p-3 rounded-xl flex justify-between items-center cursor-pointer hover:border-af-orange">
+                                <div onclick="grupoMuscularAtletaFiltroAtivo='${n}'; atualizarRelatoriosAtletaDashboard();" class="bg-black/60 border border-slate-800 p-3 rounded-xl flex justify-between items-center cursor-pointer hover:border-af-orange transition-all">
                                     <span class="font-bold text-sm text-af-orange">${escapeHtml(n)}</span>
                                     <span class="text-xs text-slate-200">${MUSCULOS_SEM_CARGA.includes(n) ? '' : grupos[n].volume.toLocaleString('pt-BR') + ' kg • '}${grupos[n].series} séries</span>
                                 </div>
