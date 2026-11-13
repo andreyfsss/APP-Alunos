@@ -35,6 +35,160 @@
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- ===== GRÁFICOS NEON (SVG puro, sem biblioteca, funciona offline) ===== -->
+    <script>
+    window.NeonChart = (function () {
+        let uid = 0;
+        const COR = '#FF6A00';
+        const GRID = '#1e293b';
+        const TXT = '#64748b';
+        const fmt = n => Number(n).toLocaleString('pt-BR', { maximumFractionDigits: 1 });
+        const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const pad = n => String(n).padStart(2, '0');
+        const glowLinha = 'filter:drop-shadow(0 0 3px #FF6A00) drop-shadow(0 0 9px rgba(255,106,0,.65))';
+        const glowBarra = 'filter:drop-shadow(0 0 5px rgba(255,106,0,.55))';
+
+        function tempo(seg) {
+            seg = Math.max(0, Math.round(seg || 0));
+            const m = Math.floor(seg / 60), s = seg % 60;
+            if (m && s) return m + 'min ' + s + 's';
+            if (m) return m + 'min';
+            return s + 's';
+        }
+        if (typeof window.formatarTempo !== 'function') window.formatarTempo = tempo;
+
+        function caixa(titulo, direita, corpo) {
+            return '<div class="bg-black/60 border border-slate-800 rounded-xl p-3 space-y-1.5">' +
+                (titulo ? '<div class="flex justify-between items-center gap-2"><span class="text-[10px] uppercase font-bold text-slate-400">' + esc(titulo) + '</span>' +
+                    (direita ? '<span class="text-[10px] font-black" style="color:' + COR + ';text-shadow:0 0 8px rgba(255,106,0,.6)">' + esc(direita) + '</span>' : '') + '</div>' : '') +
+                corpo + '</div>';
+        }
+        function vazio(titulo) {
+            return caixa(titulo, '', '<p class="text-[11px] text-slate-500 text-center py-6">Sem dados no período para montar o gráfico.</p>');
+        }
+        function eixoY(W, L, R, T, H, B, min, max, f) {
+            let s = '';
+            [0, 0.5, 1].forEach(fr => {
+                const v = min + (max - min) * fr;
+                const y = T + (max - v) * (H - T - B) / (max - min);
+                s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y.toFixed(1) + '" y2="' + y.toFixed(1) + '" stroke="' + GRID + '" stroke-width="1" stroke-dasharray="3 4"/>' +
+                     '<text x="' + (L - 5) + '" y="' + (y + 3).toFixed(1) + '" text-anchor="end" font-size="8.5" fill="' + TXT + '">' + esc(f(v)) + '</text>';
+            });
+            return s;
+        }
+
+        function line(pts, o) {
+            o = o || {};
+            pts = (pts || []).filter(p => isFinite(p.value));
+            if (!pts.length) return vazio(o.titulo);
+            const f = o.fmtY || fmt;
+            const id = 'nc' + (++uid);
+            const W = 320, H = o.h || 165, L = 38, R = 16, T = 18, B = 22;
+            const vals = pts.map(p => p.value);
+            const vMin = Math.min(...vals), vMax = Math.max(...vals);
+            let min = vMin, max = vMax;
+            if (min === max) { const d = Math.max(Math.abs(max) * 0.1, 1); min -= d; max += d; }
+            else { const d = (max - min) * 0.18; min -= d; max += d; }
+            if (vMin >= 0 && min < 0) min = 0;
+            const n = pts.length;
+            const x = i => n === 1 ? L + (W - L - R) / 2 : L + i * (W - L - R) / (n - 1);
+            const y = v => T + (max - v) * (H - T - B) / (max - min);
+            const d = pts.map((p, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(p.value).toFixed(1)).join(' ');
+            const area = d + ' L' + x(n - 1).toFixed(1) + ' ' + (H - B) + ' L' + x(0).toFixed(1) + ' ' + (H - B) + ' Z';
+            let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto;display:block" role="img" aria-label="' + esc(o.titulo || 'Gráfico') + '">' +
+                '<defs><linearGradient id="' + id + 'a" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="' + COR + '" stop-opacity=".38"/><stop offset="100%" stop-color="' + COR + '" stop-opacity="0"/></linearGradient></defs>' +
+                eixoY(W, L, R, T, H, B, min, max, o.fmtY || (max - min >= 10 ? (v => Math.round(v).toLocaleString('pt-BR')) : fmt));
+            if (n > 1) {
+                svg += '<path d="' + area + '" fill="url(#' + id + 'a)"/>' +
+                       '<path d="' + d + '" fill="none" stroke="' + COR + '" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="' + glowLinha + '"/>';
+            }
+            const mostrarTodos = n <= 6;
+            pts.forEach((p, i) => {
+                const ult = i === n - 1;
+                svg += '<circle cx="' + x(i).toFixed(1) + '" cy="' + y(p.value).toFixed(1) + '" r="' + (ult ? 4.5 : 3) + '" fill="' + (ult ? '#fff' : COR) + '" stroke="' + COR + '" stroke-width="2" style="' + glowLinha + '"/>';
+                if (mostrarTodos || ult || p.value === vMax) {
+                    svg += '<text x="' + x(i).toFixed(1) + '" y="' + (y(p.value) - 8).toFixed(1) + '" text-anchor="middle" font-size="9" font-weight="700" fill="#e2e8f0">' + esc(f(p.value)) + '</text>';
+                }
+            });
+            const idxLab = n <= 4 ? pts.map((_, i) => i) : [0, Math.floor((n - 1) / 2), n - 1];
+            idxLab.forEach(i => {
+                const anc = n === 1 ? 'middle' : (i === 0 ? 'start' : (i === n - 1 ? 'end' : 'middle'));
+                svg += '<text x="' + x(i).toFixed(1) + '" y="' + (H - 6) + '" text-anchor="' + anc + '" font-size="8.5" fill="' + TXT + '">' + esc(pts[i].label) + '</text>';
+            });
+            svg += '</svg>';
+            return caixa(o.titulo, 'Atual: ' + f(pts[n - 1].value) + (o.unit ? ' ' + o.unit : ''), svg);
+        }
+
+        function bars(pts, o) {
+            o = o || {};
+            pts = (pts || []).filter(p => isFinite(p.value)).slice(-30);
+            if (!pts.length) return vazio(o.titulo);
+            const f = o.fmtY || fmt;
+            const id = 'nc' + (++uid);
+            const W = 320, H = o.h || 150, L = 38, R = 10, T = 18, B = 22;
+            const vMax = Math.max(...pts.map(p => p.value), 1);
+            const max = vMax * 1.18, min = 0;
+            const n = pts.length;
+            const slot = (W - L - R) / n;
+            const bw = Math.min(30, slot * 0.62);
+            const y = v => T + (max - v) * (H - T - B) / (max - min);
+            let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto;display:block" role="img" aria-label="' + esc(o.titulo || 'Gráfico') + '">' +
+                '<defs><linearGradient id="' + id + 'b" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FF8A33"/><stop offset="100%" stop-color="' + COR + '" stop-opacity=".25"/></linearGradient></defs>' +
+                eixoY(W, L, R, T, H, B, min, max, o.fmtY || (max - min >= 10 ? (v => Math.round(v).toLocaleString('pt-BR')) : fmt));
+            const passo = Math.ceil(n / 6);
+            pts.forEach((p, i) => {
+                const cx = L + slot * i + slot / 2;
+                const yy = y(p.value), h = Math.max(H - B - yy, p.value > 0 ? 2 : 0);
+                svg += '<rect x="' + (cx - bw / 2).toFixed(1) + '" y="' + (H - B - h).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + h.toFixed(1) + '" rx="3" fill="url(#' + id + 'b)" stroke="' + COR + '" stroke-width="1" style="' + glowBarra + '"/>';
+                if (n <= 8 && p.value > 0) svg += '<text x="' + cx.toFixed(1) + '" y="' + (H - B - h - 5).toFixed(1) + '" text-anchor="middle" font-size="8.5" font-weight="700" fill="#e2e8f0">' + esc(f(p.value)) + '</text>';
+                if (i % passo === 0 || i === n - 1) svg += '<text x="' + cx.toFixed(1) + '" y="' + (H - 6) + '" text-anchor="middle" font-size="8.5" fill="' + TXT + '">' + esc(p.label) + '</text>';
+            });
+            svg += '</svg>';
+            const total = pts.reduce((a, p) => a + p.value, 0);
+            return caixa(o.titulo, o.somar ? 'Total: ' + f(total) + (o.unit ? ' ' + o.unit : '') : '', svg);
+        }
+
+        function hbars(itens, o) {
+            o = o || {};
+            itens = (itens || []).filter(i => isFinite(i.value) && i.value > 0).sort((a, b) => b.value - a.value);
+            if (!itens.length) return '';
+            const max = itens[0].value;
+            const linhas = itens.map(i => {
+                const pct = Math.max(4, Math.round(i.value / max * 100));
+                return '<div class="space-y-1"><div class="flex justify-between text-[11px]"><span class="font-bold text-slate-200">' + esc(i.label) + '</span>' +
+                    '<span class="font-bold" style="color:' + COR + '">' + esc(fmt(i.value)) + (o.unit ? ' ' + o.unit : '') + '</span></div>' +
+                    '<div style="height:9px;background:#0b0f19;border:1px solid #1e293b;border-radius:99px;overflow:hidden">' +
+                    '<div style="width:' + pct + '%;height:100%;border-radius:99px;background:linear-gradient(90deg,rgba(255,106,0,.45),#FF8A33);box-shadow:0 0 10px rgba(255,106,0,.75)"></div></div></div>';
+            }).join('');
+            return caixa(o.titulo, '', '<div class="space-y-2.5 pt-1">' + linhas + '</div>');
+        }
+
+        function somarDia(mapa, h) {
+            const dt = new Date(h.data);
+            if (isNaN(dt)) return;
+            const k = dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate());
+            const e = mapa[k] || (mapa[k] = { k: k, d: dt, vol: 0, series: 0 });
+            e.vol += h.volume || 0;
+            e.series += h.qtdSeriesValidadas || 0;
+        }
+        function serieDias(mapa, campo) {
+            return Object.values(mapa).sort((a, b) => a.k < b.k ? -1 : 1)
+                .map(e => ({ label: pad(e.d.getDate()) + '/' + pad(e.d.getMonth() + 1), value: e[campo] }));
+        }
+        function serieExercicio(regs) {
+            const sem = regs.some(r => r.semCarga);
+            const soTempo = sem && regs.every(r => r.melhorTempo > 0 && r.melhorReps === 0);
+            const pts = regs.map(r => ({
+                label: String(r.data).slice(0, 5),
+                value: sem ? (soTempo ? r.melhorTempo : r.melhorReps) : r.cargaMax
+            }));
+            return { pts: pts, unit: sem ? (soTempo ? 's' : 'reps') : 'kg', fmtY: soTempo ? tempo : fmt };
+        }
+
+        return { line: line, bars: bars, hbars: hbars, somarDia: somarDia, serieDias: serieDias, serieExercicio: serieExercicio, fmt: fmt };
+    })();
+    </script>
+
     <style>
         body { background-color: #050505; -webkit-text-size-adjust: 100%; }
         .bg-af-card { background: rgba(21, 21, 21, 0.75); backdrop-filter: blur(12px); border: 1px solid rgba(255, 106, 0, 0.2); }
@@ -1000,10 +1154,12 @@
 
             const grupos = {};
             let volTotal = 0, totalSeries = 0;
+            const porDia = {};
 
             historicoFiltrado.forEach(h => {
                 volTotal += h.volume || 0;
                 totalSeries += h.qtdSeriesValidadas || 0;
+                NeonChart.somarDia(porDia, h);
                 (h.exerciciosRealizados || []).forEach(exR => {
                     const musculo = exR.musculo || mapaMusculo[(exR.nome || '').toLowerCase()] || 'Outros';
                     const g = grupos[musculo] || (grupos[musculo] = { volume: 0, series: 0, exercicios: {} });
@@ -1034,6 +1190,7 @@
                         <strong class="text-xl font-black text-af-orange">${volTotal.toLocaleString('pt-BR')} kg</strong>
                         <p class="text-[10px] text-slate-400">Sessões no período: ${historicoFiltrado.length}</p>
                     </div>
+                    ${NeonChart.bars(NeonChart.serieDias(porDia, 'vol'), { titulo: 'Volume por dia de treino', unit: 'kg', somar: true })}
                 `;
             } else if (subAbaAtletaRelatorioAtual === 'series') {
                 container.innerHTML = `
@@ -1041,6 +1198,7 @@
                         <span class="text-[10px] uppercase text-slate-500 font-bold block">Total de Séries Validadas</span>
                         <strong class="text-xl font-black text-white">${totalSeries} séries</strong>
                     </div>
+                    ${NeonChart.bars(NeonChart.serieDias(porDia, 'series'), { titulo: 'Séries por dia de treino', unit: 'séries', somar: true })}
                 `;
             } else {
                 const nomesGrupos = Object.keys(grupos);
@@ -1065,6 +1223,7 @@
                                 return `
                                     <div class="bg-black/60 border border-slate-800 p-3 rounded-xl space-y-2">
                                         <span class="font-bold text-xs text-white block">${escapeHtml(exNome)}</span>
+                                        ${(() => { const se = NeonChart.serieExercicio(registros); return NeonChart.line(se.pts, { titulo: se.unit === 'kg' ? 'Carga máxima por sessão' : 'Melhor marca por sessão', unit: se.unit, fmtY: se.fmtY, h: 130 }); })()}
                                         <div class="space-y-1.5">
                                             ${registros.map(r => `
                                                 <div class="flex justify-between items-center text-[11px] border-t border-slate-900 pt-1.5">
@@ -1080,6 +1239,8 @@
                     `;
                 } else {
                     container.innerHTML = `
+                        ${NeonChart.hbars(nomesGrupos.map(n => ({ label: n, value: grupos[n].series })), { titulo: 'Séries por grupamento', unit: 'séries' })}
+                        ${NeonChart.hbars(nomesGrupos.filter(n => !MUSCULOS_SEM_CARGA.includes(n)).map(n => ({ label: n, value: grupos[n].volume })), { titulo: 'Volume por grupamento', unit: 'kg' })}
                         <p class="text-[10px] text-slate-400">Toque em um grupamento para ver o progresso detalhado:</p>
                         <div class="space-y-2">
                             ${nomesGrupos.map(n => `
