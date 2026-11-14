@@ -649,7 +649,11 @@
                 <div id="painel-volume-montagem"></div>
 
                 <div class="bg-af-card rounded-2xl p-4 space-y-3 relative">
-                    <h3 id="titulo-modo-exercicio" class="font-bold text-xs uppercase text-slate-300">Adicionar Exercício</h3>
+                    <div class="flex justify-between items-center gap-2">
+                        <h3 id="titulo-modo-exercicio" class="font-bold text-xs uppercase text-slate-300">Adicionar Exercício</h3>
+                        <span id="badge-nivel-montagem" class="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-black border border-slate-800 text-af-orange"></span>
+                    </div>
+                    <div id="guia-nivel-montagem" class="text-[11px] rounded-xl p-2.5 bg-black/50 border border-slate-800 text-slate-300 leading-relaxed"></div>
                     
                     <div class="space-y-2.5">
                         <div class="relative">
@@ -749,39 +753,49 @@
             </div>
         </div>
 
-        <!-- SEÇÃO FINANCEIRO ZERADO -->
+        <!-- SEÇÃO FINANCEIRO -->
         <div id="sec-adm-financeiro" class="hidden space-y-4 no-print">
             <div class="bg-af-card rounded-2xl p-4 space-y-3">
                 <div class="flex justify-between items-center">
                     <div>
                         <h2 class="font-bold text-xs text-af-orange uppercase">Painel Financeiro</h2>
-                        <p class="text-[10px] text-slate-400">Controle financeiro limpo</p>
+                        <p class="text-[10px] text-slate-400">Calculado automaticamente pelas fichas dos alunos ativos</p>
                     </div>
-                    <button onclick="carregarFinanceiro()" class="bg-black/80 border border-slate-800 text-slate-300 text-xs px-3 py-1.5 rounded-xl font-bold">🔄 Atualizar</button>
+                    <button onclick="carregarAlunos().then(carregarFinanceiro)" class="bg-black/80 border border-slate-800 text-slate-300 text-xs px-3 py-1.5 rounded-xl font-bold">🔄 Atualizar</button>
                 </div>
             </div>
 
             <div class="grid grid-cols-2 gap-3">
-                <div class="bg-af-card p-4 rounded-2xl space-y-1">
-                    <span class="text-[9px] uppercase font-bold text-slate-400 block">Receita Total</span>
-                    <strong class="text-lg font-black text-af-orange">R$ 0,00</strong>
-                    <p class="text-[10px] text-slate-500">Nenhum lançamento</p>
+                <div class="bg-af-card p-4 rounded-2xl space-y-1 col-span-2 border border-af-orange/40">
+                    <span class="text-[9px] uppercase font-bold text-slate-400 block">Receita Total Mensal (Presencial + Online)</span>
+                    <strong id="fin-receita-total" class="text-2xl font-black text-af-orange">R$ 0,00</strong>
+                    <p id="fin-receita-total-sub" class="text-[10px] text-slate-400">0 alunos pagantes cadastrados</p>
                 </div>
                 <div class="bg-af-card p-4 rounded-2xl space-y-1">
-                    <span class="text-[9px] uppercase font-bold text-slate-400 block">Alunos Ativos</span>
-                    <strong class="text-lg font-black text-white">0</strong>
-                    <p class="text-[10px] text-slate-500">Sem cobranças ativas</p>
+                    <span class="text-[9px] uppercase font-bold text-slate-400 block">Receita Presencial</span>
+                    <strong id="fin-receita-presencial" class="text-lg font-black text-white">R$ 0,00</strong>
+                    <p id="fin-presencial-sub" class="text-[10px] text-slate-400">0 alunos presenciais</p>
                 </div>
                 <div class="bg-af-card p-4 rounded-2xl space-y-1">
-                    <span class="text-[9px] uppercase font-bold text-slate-400 block">Média Hora / Aula</span>
-                    <strong class="text-lg font-black text-white">R$ 0,00</strong>
-                    <p class="text-[10px] text-slate-500">Não definido</p>
+                    <span class="text-[9px] uppercase font-bold text-slate-400 block">Média Hora / Aula (Presencial)</span>
+                    <strong id="fin-media-hora" class="text-lg font-black text-emerald-400">R$ 0,00</strong>
+                    <p id="fin-media-hora-sub" class="text-[10px] text-slate-400">Somente alunos presenciais</p>
+                </div>
+                <div class="bg-af-card p-4 rounded-2xl space-y-1 border border-indigo-500/30">
+                    <span class="text-[9px] uppercase font-bold text-indigo-300 block">💻 Consultoria Online</span>
+                    <strong id="fin-receita-online" class="text-lg font-black text-indigo-400">R$ 0,00</strong>
+                    <p id="fin-online-sub" class="text-[10px] text-slate-400">0 alunos online (não entra na hora/aula)</p>
                 </div>
                 <div class="bg-af-card p-4 rounded-2xl space-y-1">
                     <span class="text-[9px] uppercase font-bold text-slate-400 block">Renovações Próximas</span>
-                    <strong class="text-lg font-black text-amber-400">0</strong>
-                    <p class="text-[10px] text-slate-500">Nenhum vencimento</p>
+                    <strong id="fin-renovacoes" class="text-lg font-black text-amber-400">0</strong>
+                    <p class="text-[10px] text-slate-400">Nos próximos 15 dias</p>
                 </div>
+            </div>
+
+            <div class="bg-af-card rounded-2xl p-4 space-y-2.5">
+                <h3 class="font-bold text-xs text-af-orange uppercase tracking-wider">Detalhamento por Aluno</h3>
+                <div id="fin-lista-alunos" class="space-y-2"></div>
             </div>
         </div>
 
@@ -895,9 +909,11 @@
             return out.sort((x, y) => y.t - x.t);
         }
         function inicioDelta(atual, ant) {
-            if (!ant) return atual ? '<span class="text-slate-400">novo</span>' : '<span class="text-slate-500">—</span>';
-            const p = Math.round((atual - ant) / ant * 100);
-            return p === 0 ? '<span class="text-slate-400">= igual</span>' : `<span class="${p > 0 ? 'text-emerald-400' : 'text-rose-400'}">${p > 0 ? '↑' : '↓'} ${Math.abs(p)}%</span>`;
+            if (!ant) return atual ? '<span class="text-emerald-400">1ª sem. com registro</span>' : '<span class="text-slate-500">sem registros</span>';
+            const diff = atual - ant;
+            const p = Math.round(diff / ant * 100);
+            if (p === 0) return '<span class="text-slate-400">= igual à sem. passada</span>';
+            return `<span class="${p > 0 ? 'text-emerald-400' : 'text-rose-400'}">${p > 0 ? '↑' : '↓'} ${Math.abs(p)}% (${diff > 0 ? '+' : ''}${diff}) vs sem. passada</span>`;
         }
         function inicioHaQuanto(t) {
             const min = Math.round((Date.now() - t) / 60000);
@@ -933,24 +949,20 @@
             const ultima = {};
             sessoes.forEach(s => { if (!ultima[s.aluno.id]) ultima[s.aluno.id] = s.t; });
             const atencao = ativos.map(al => ({ al, dias: ultima[al.id] ? Math.floor((agora - ultima[al.id]) / DIA) : null }))
-                .filter(x => x.dias === null || x.dias >= 7)
+                .filter(x => x.dias === null || x.dias >= 3)
                 .sort((x, y) => (y.dias ?? 9999) - (x.dias ?? 9999));
 
             const kpi = (ico, cor, rot, val, sub) => `<div class="kpi-card flex items-center gap-3"><div class="kpi-ico" style="background:${cor}22;border:1px solid ${cor}66;box-shadow:0 0 14px ${cor}33">${ico}</div><div class="min-w-0"><div class="text-[10px] text-slate-400 font-bold uppercase">${rot}</div><div class="text-xl font-black text-white leading-tight">${val}</div><div class="text-[10px]">${sub}</div></div></div>`;
             document.getElementById('inicio-kpis').innerHTML =
                 kpi('👥', '#FF6A00', 'Alunos ativos', ativos.length, `<span class="text-slate-500">${alunosGlobais.length - ativos.length} arquivados</span>`) +
-                kpi('✅', '#34d399', 'Sessões (7 dias)', sem7.length, inicioDelta(sem7.length, semAnt.length) + ' <span class="text-slate-500">vs semana ant.</span>') +
-                kpi('⏸️', '#fb7185', 'Alunos parados', atencao.length, '<span class="text-slate-500">7+ dias sem treinar</span>') +
+                kpi('✅', '#34d399', 'Treinos feitos (7 dias)', sem7.length, inicioDelta(sem7.length, semAnt.length)) +
+                kpi('⏸️', '#fb7185', 'Alunos parados', atencao.length, '<span class="text-slate-500">3+ dias sem treinar</span>') +
                 kpi('📅', '#fbbf24', 'Aulas hoje', aulasHoje.length, `<span class="text-slate-500">${hojeStr} • ${Math.max(0, 17 - aulasHoje.length)} livres</span>`);
 
-            // anéis de metas
-            const treinaram = ativos.filter(al => ultima[al.id] && agora - ultima[al.id] < 7 * DIA).length;
-            const comFicha = ativos.filter(al => al.perfil && al.perfil.sessoesSemana > 0);
-            const esperado = comFicha.reduce((s, al) => s + al.perfil.sessoesSemana, 0);
-            const idsFicha = new Set(comFicha.map(al => al.id));
-            const feitas = sem7.filter(s => idsFicha.has(s.aluno.id)).length;
+            // Aulas de hoje (removidos Adesão e Sessões combinadas conforme pedido)
             const aulasFeitas = aulasHoje.filter(x => x.hora <= hora).length;
-            document.getElementById('inicio-aneis').innerHTML = inicioPainel('Metas da semana e do dia', `<div class="grid grid-cols-3 gap-2">${NeonChart.ring(treinaram, ativos.length, { label: 'Adesão', sub: `${treinaram} de ${ativos.length} alunos treinaram`, cor: '#34d399', centro: ativos.length ? undefined : '—' })}${NeonChart.ring(Math.min(feitas, esperado), esperado, { label: 'Sessões combinadas', sub: esperado ? `${feitas} de ${esperado} na semana` : 'preencha nas fichas', cor: '#FF6A00', centro: esperado ? undefined : '—' })}${NeonChart.ring(aulasFeitas, aulasHoje.length, { label: 'Aulas de hoje', sub: aulasHoje.length ? `${aulasFeitas} de ${aulasHoje.length} já passaram` : 'sem aulas hoje', cor: '#818cf8', centro: aulasHoje.length ? undefined : '—' })}</div>`);
+            const aulasRestantes = Math.max(0, aulasHoje.length - aulasFeitas);
+            document.getElementById('inicio-aneis').innerHTML = inicioPainel('Progresso das aulas de hoje', `<div class="flex items-center gap-4">${NeonChart.ring(aulasFeitas, aulasHoje.length, { label: '', sub: '', cor: '#818cf8', centro: aulasHoje.length ? `${aulasFeitas}/${aulasHoje.length}` : '0' })}<div class="flex-1 space-y-1 text-xs"><div class="font-bold text-slate-200">${aulasHoje.length ? `${aulasFeitas} aula(s) já concluída(s) • ${aulasRestantes} restante(s)` : 'Nenhuma aula marcada para hoje'}</div><p class="text-[11px] text-slate-400">Acompanhamento automático conforme o horário atual (${hojeStr}).</p></div></div>`);
 
             // agenda de hoje
             const agendaHtml = aulasHoje.length
@@ -961,7 +973,7 @@
             // alunos que precisam de atenção (sem treinar há 7+ dias)
             const atHtml = atencao.length
                 ? `<div class="grid gap-2">${atencao.map(x => `<div onclick="mudarAbaPrincipalAdmin('alunos'); abrirPainelPorId('${x.al.id}')" class="bg-black/60 border border-slate-800 hover:border-af-orange/60 rounded-xl p-3 flex justify-between items-center cursor-pointer"><span class="font-bold text-sm text-slate-200" style="overflow-wrap:anywhere">${escapeHtml(x.al.nome)}</span><span class="text-[11px] font-bold shrink-0 ml-2 ${x.dias === null ? 'text-slate-400' : 'text-rose-400'}">${x.dias === null ? 'nunca treinou' : x.dias + ' dias sem treinar'}</span></div>`).join('')}</div>`
-                : '<p class="text-[11px] text-emerald-400 text-center py-4 font-bold">Todo mundo treinou nos últimos 7 dias. 👏</p>';
+                : '<p class="text-[11px] text-emerald-400 text-center py-4 font-bold">Todo mundo treinou nos últimos 3 dias. 👏</p>';
             document.getElementById('inicio-atencao').innerHTML = inicioPainel('Atenção: alunos parados', atHtml, `<span class="text-[10px] text-slate-500">${atencao.length} de ${ativos.length}</span>`);
 
             // renovações próximas
@@ -1230,6 +1242,7 @@
                 const elResumo = document.getElementById('ficha-resumo');
                 if (elResumo) elResumo.innerText = resumoFicha(novo);
                 renderizarPainelVolume();
+                carregarFinanceiro();
                 alert('Ficha salva!');
             }
         }
@@ -1298,10 +1311,17 @@
             return { linhas, avisos, totalEx, nivel, nivelUso, pf };
         }
 
+        let volumePlanejadoMinimizado = false;
+        function toggleMinimizarVolumePlanejado() {
+            volumePlanejadoMinimizado = !volumePlanejadoMinimizado;
+            renderizarPainelVolume();
+        }
         function htmlPainelVolume(compacto) {
             const r = analisarVolume();
             const nivelTxt = { iniciante: 'Iniciante', intermediario: 'Intermediário', avancado: 'Avançado' }[r.nivelUso] + (r.nivel ? '' : ' (padrão)');
-            if (!r.totalEx) return compacto ? '' : `<div class="bg-af-card rounded-2xl p-4"><h3 class="font-bold text-xs text-af-orange uppercase tracking-wider">🎯 Volume semanal planejado</h3><p class="text-[11px] text-slate-500 mt-2">Adicione exercícios aos treinos para ver o volume por grupamento contra a meta do aluno.</p></div>`;
+            const seta = volumePlanejadoMinimizado ? '▶' : '▼';
+            const cabecalho = `<div class="flex justify-between items-center gap-2 cursor-pointer select-none" onclick="toggleMinimizarVolumePlanejado()"><div class="flex items-center gap-2"><h3 class="font-bold text-xs text-af-orange uppercase tracking-wider">🎯 Volume semanal planejado</h3><span class="text-[10px] text-slate-400">(${nivelTxt})</span></div><span class="text-xs font-bold text-slate-400">${seta}</span></div>`;
+            if (!r.totalEx) return compacto ? '' : `<div class="bg-af-card rounded-2xl p-4 space-y-2 shadow-lg">${cabecalho}${volumePlanejadoMinimizado ? '' : '<p class="text-[11px] text-slate-500">Adicione exercícios aos treinos para ver o volume por grupamento contra a meta do aluno.</p>'}</div>`;
             const cor = { ok: '#34d399', baixo: '#fbbf24', alto: '#fb7185', vazio: '#475569' };
             const linhas = r.linhas.filter(l => l.status !== 'vazio' || !compacto).map(l => {
                 const escala = Math.max(l.meta[1] * 1.25, l.efet * 1.05, 1);
@@ -1322,8 +1342,7 @@
                     <div class="grid gap-1.5">${r.linhas.map((l, i) => `<div class="flex items-center gap-2 text-[11px]"><span class="flex-1 text-slate-300">${NOME_MUSCULO[l.g] || l.g}</span><input id="mv-${i}-min" type="number" inputmode="numeric" min="0" value="${l.meta[0]}" class="w-16 bg-black border border-slate-700 rounded-lg px-2 py-1.5 text-center text-white"><span class="text-slate-500">a</span><input id="mv-${i}-max" type="number" inputmode="numeric" min="0" value="${l.meta[1]}" class="w-16 bg-black border border-slate-700 rounded-lg px-2 py-1.5 text-center text-white"></div>`).join('')}</div>
                     <div class="flex gap-2"><button onclick="salvarMetasVolume()" class="flex-1 bg-af-orange text-black font-black py-2 rounded-xl text-xs">Salvar metas</button><button onclick="restaurarMetasVolume()" class="bg-black border border-slate-700 text-slate-300 font-bold px-3 py-2 rounded-xl text-xs">Padrão</button></div></div></details>`;
             }
-            return `<div class="bg-af-card rounded-2xl p-4 space-y-3 shadow-lg"><div class="flex justify-between items-center gap-2"><h3 class="font-bold text-xs text-af-orange uppercase tracking-wider">🎯 Volume semanal planejado</h3><span class="text-[10px] text-slate-400">Nível: ${nivelTxt}</span></div>
-                <div class="space-y-2.5">${linhas}</div>${avisosHtml}${ajustes}</div>`;
+            return `<div class="bg-af-card rounded-2xl p-4 space-y-3 shadow-lg">${cabecalho}${volumePlanejadoMinimizado ? '' : `<div class="space-y-2.5 pt-2 border-t border-slate-800">${linhas}</div>${avisosHtml}${ajustes}`}</div>`;
         }
         function renderizarPainelVolume() {
             const a1 = document.getElementById('painel-volume-semanal'), a2 = document.getElementById('painel-volume-montagem');
@@ -1740,15 +1759,24 @@
 
         function cancelarEdicaoExercicio() {
             indiceExercicioEditando = null;
+            const cfg = atualizarGuiaNivelMontagem();
+            const qtdPadrao = cfg ? cfg.series : 4;
             document.getElementById('input-busca-ex').value = '';
-            document.getElementById('input-qtd-series-ex').value = '4';
+            document.getElementById('input-qtd-series-ex').value = String(qtdPadrao);
             document.getElementById('select-musculo-ex').value = 'Quadríceps';
             document.getElementById('select-equipamento-ex').value = 'Barra';
             document.getElementById('select-metodo-geral-ex').value = 'Nulo';
             document.getElementById('select-exige-rpe').value = 'sim';
             verificarRegrasMusculo();
             alternarVisibilidadeMetodoMacro('Nulo');
-            gerarCamposSeriesAdmin(4);
+            const initSeries = Array.from({ length: qtdPadrao }, (_, i) => ({
+                num: i + 1,
+                metodo: 'Série Normal',
+                tipoMeta: 'reps',
+                repsSugeridas: cfg ? cfg.reps : '10 a 12',
+                descanso: cfg ? cfg.descanso : 90
+            }));
+            gerarCamposSeriesAdmin(qtdPadrao, initSeries);
             verificarRegrasEquipamento();
             document.getElementById('titulo-modo-exercicio').innerText = 'Adicionar Exercício';
             document.getElementById('btn-salvar-exercicio').innerText = 'Salvar Exercício na Divisão';
@@ -2271,15 +2299,65 @@ DADOS POR GRUPAMENTO E EXERCÍCIO:${txtGrupos}`;
             } catch (err) { alert('Erro ao salvar o treino: ' + err.message); }
         }
 
+        function atualizarGuiaNivelMontagem() {
+            const pf = perfilAtual();
+            const nv = pf.nivel || '';
+            const badge = document.getElementById('badge-nivel-montagem');
+            const guia = document.getElementById('guia-nivel-montagem');
+            const configs = {
+                iniciante: {
+                    rotulo: 'Nível: Iniciante',
+                    series: 3,
+                    reps: '12 a 15',
+                    descanso: 60,
+                    texto: '💡 <strong>Sugestão Iniciante:</strong> 2–3 séries por exercício • 12 a 15 reps • descanso 60–90s • meta semanal de 8–12 séries (grandes) e 6–10 (pequenos). Foco em técnica e controle.'
+                },
+                intermediario: {
+                    rotulo: 'Nível: Intermediário',
+                    series: 4,
+                    reps: '10 a 12',
+                    descanso: 90,
+                    texto: '💡 <strong>Sugestão Intermediário:</strong> 3–4 séries por exercício • 8 a 12 reps • descanso 90s • meta semanal de 10–16 séries (grandes) e 8–14 (pequenos). Boa margem para progressão de carga.'
+                },
+                avancado: {
+                    rotulo: 'Nível: Avançado',
+                    series: 4,
+                    reps: '8 a 10',
+                    descanso: 120,
+                    texto: '💡 <strong>Sugestão Avançado:</strong> 4–5 séries por exercício • faixas variadas (6–12 reps) • descanso 90–150s • meta semanal de 12–20 séries (grandes) e 10–18 (pequenos).'
+                }
+            };
+            const cfg = configs[nv] || {
+                rotulo: 'Nível não definido',
+                series: 4,
+                reps: '10 a 12',
+                descanso: 90,
+                texto: 'ℹ️ Nível não informado na ficha do aluno (usando padrão Intermediário: 3–4 séries, 10 a 12 reps).'
+            };
+            if (badge) badge.innerText = cfg.rotulo;
+            if (guia) guia.innerHTML = cfg.texto;
+            return cfg;
+        }
+
         function abrirMontagemTreino(treinoId) {
             treinoAtivoId = treinoId;
             cancelarEdicaoExercicio();
             const treino = treinosDoAluno.find(t => t.id === treinoId);
             if (!treino) return;
+            const cfg = atualizarGuiaNivelMontagem();
             document.getElementById('titulo-treino-ativo').innerText = treino.nome;
             document.getElementById('view-detalhe-aluno').classList.add('hidden');
             document.getElementById('view-montar-exercicios').classList.remove('hidden');
-            gerarCamposSeriesAdmin(4);
+            const qtdPadrao = cfg ? cfg.series : 4;
+            document.getElementById('input-qtd-series-ex').value = qtdPadrao;
+            const initSeries = Array.from({ length: qtdPadrao }, (_, i) => ({
+                num: i + 1,
+                metodo: 'Série Normal',
+                tipoMeta: 'reps',
+                repsSugeridas: cfg ? cfg.reps : '10 a 12',
+                descanso: cfg ? cfg.descanso : 90
+            }));
+            gerarCamposSeriesAdmin(qtdPadrao, initSeries);
             renderizarListaExerciciosDivisao();
         }
 
@@ -2304,7 +2382,98 @@ DADOS POR GRUPAMENTO E EXERCÍCIO:${txtGrupos}`;
             document.getElementById('sugestoes-autocomplete').classList.add('hidden');
         }
 
-        function carregarFinanceiro() {}
+        function formatarMoedaBR(v) {
+            return Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        function carregarFinanceiro() {
+            const ativos = (alunosGlobais || []).filter(a => !a.arquivado);
+            let receitaPresencial = 0, qtdPresencial = 0;
+            let receitaOnline = 0, qtdOnline = 0;
+            let receitaSemMod = 0, qtdSemMod = 0;
+            let somaPresencialParaHora = 0, totalAulasMesPresencial = 0;
+
+            const agora = new Date(), DIA = 86400000;
+            const hoje0 = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+            let renovacoesProx = 0;
+
+            const linhas = [];
+
+            ativos.forEach(al => {
+                const pf = (al.perfil && typeof al.perfil === 'object') ? al.perfil : {};
+                const valor = parseFloat(pf.valorPago) || 0;
+                const mod = pf.modalidade || '';
+                const sessSem = parseFloat(pf.sessoesSemana) || 0;
+                const sessMes = sessSem > 0 ? Math.round(sessSem * 52 / 12) : 0;
+
+                if (pf.renovacao) {
+                    const [y, m, d] = String(pf.renovacao).split('-').map(Number);
+                    const diffDias = Math.round((new Date(y, m - 1, d) - hoje0) / DIA);
+                    if (diffDias <= 15) renovacoesProx++;
+                }
+
+                if (mod === 'Online') {
+                    qtdOnline++;
+                    receitaOnline += valor;
+                } else if (mod === 'Presencial') {
+                    qtdPresencial++;
+                    receitaPresencial += valor;
+                    if (valor > 0 && sessMes > 0) {
+                        somaPresencialParaHora += valor;
+                        totalAulasMesPresencial += sessMes;
+                    }
+                } else if (valor > 0) {
+                    qtdSemMod++;
+                    receitaSemMod += valor;
+                }
+
+                if (valor > 0 || mod) {
+                    const horaAulaAluno = (mod === 'Presencial' && valor > 0 && sessMes > 0) ? (valor / sessMes) : null;
+                    linhas.push({ nome: al.nome, id: al.id, mod, valor, sessSem, sessMes, horaAulaAluno });
+                }
+            });
+
+            const receitaTotal = receitaPresencial + receitaOnline + receitaSemMod;
+            const pagantes = linhas.filter(x => x.valor > 0).length;
+            const mediaHoraAula = totalAulasMesPresencial > 0 ? (somaPresencialParaHora / totalAulasMesPresencial) : 0;
+
+            document.getElementById('fin-receita-total').innerText = formatarMoedaBR(receitaTotal);
+            document.getElementById('fin-receita-total-sub').innerText = `${pagantes} aluno(s) pagante(s) • Presencial + Online`;
+
+            document.getElementById('fin-receita-presencial').innerText = formatarMoedaBR(receitaPresencial);
+            document.getElementById('fin-presencial-sub').innerText = `${qtdPresencial} aluno(s) presencial(is)`;
+
+            document.getElementById('fin-media-hora').innerText = formatarMoedaBR(mediaHoraAula);
+            document.getElementById('fin-media-hora-sub').innerText = totalAulasMesPresencial > 0
+                ? `${totalAulasMesPresencial} aulas/mês presenciais`
+                : 'Informe valor e sessões/sem no presencial';
+
+            document.getElementById('fin-receita-online').innerText = formatarMoedaBR(receitaOnline);
+            document.getElementById('fin-online-sub').innerText = `${qtdOnline} aluno(s) online (fora da hora/aula)`;
+
+            document.getElementById('fin-renovacoes').innerText = renovacoesProx;
+
+            const listaEl = document.getElementById('fin-lista-alunos');
+            if (!linhas.length) {
+                listaEl.innerHTML = '<p class="text-[11px] text-slate-500 text-center py-4">Preencha modalidade e valor pago na ficha dos alunos para ver o detalhamento aqui.</p>';
+            } else {
+                listaEl.innerHTML = linhas.map(x => `
+                    <div onclick="mudarAbaPrincipalAdmin('alunos'); abrirPainelPorId('${x.id}')" class="bg-black/60 border border-slate-800 hover:border-af-orange/60 p-3 rounded-xl flex justify-between items-center cursor-pointer text-xs">
+                        <div>
+                            <div class="font-bold text-slate-200">${escapeHtml(x.nome)}</div>
+                            <div class="text-[10px] text-slate-400">
+                                ${x.mod === 'Online' ? '<span class="text-indigo-400 font-bold">Online</span>' : x.mod === 'Presencial' ? '<span class="text-af-orange font-bold">Presencial</span>' : 'Modalidade não informada'}
+                                ${x.sessSem > 0 ? ` • ${x.sessSem}×/sem (~${x.sessMes}/mês)` : ''}
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-black text-white">${formatarMoedaBR(x.valor)}</div>
+                            ${x.horaAulaAluno !== null ? `<div class="text-[10px] text-emerald-400 font-bold">${formatarMoedaBR(x.horaAulaAluno)} / aula</div>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
 
         function mudarDiaAgenda(dia) {
             diaAgendaAtual = dia;
