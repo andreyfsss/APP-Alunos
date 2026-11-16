@@ -786,8 +786,11 @@
                     </div>
                 </div>
 
-                <!-- Pills rápidos de alunos ativos -->
-                <div id="des-pills-alunos" class="flex gap-1.5 overflow-x-auto pb-1 pt-0.5"></div>
+                <!-- Pills rápidos de alunos ativos + Filtro de Alunos Parados -->
+                <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+                    <div id="des-pills-alunos" class="flex gap-1.5 overflow-x-auto pb-1 pt-0.5 flex-1"></div>
+                    <button onclick="mudarFiltroAlunosParadosDesempenho()" id="des-btn-filtro-parados" class="shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-bold border border-slate-800 bg-black/70 text-slate-300 hover:border-af-orange/50 transition-all">⚠️ Alunos Parados (3d+)</button>
+                </div>
             </div>
 
             <!-- KPIs Principais -->
@@ -2617,11 +2620,30 @@ DADOS POR GRUPAMENTO E EXERCÍCIO:${txtGrupos}`;
         let desPeriodo = 'semanal'; // 'semanal' (7d) | 'mensal' (30d) | 'trimestral' (90d)
         let desModoGrupo = 'series'; // 'series' | 'kg'
         let desExercicioSelecionado = '';
+        let desFiltroApenasParados = false;
 
         function mudarFiltroAlunoDesempenho(id) {
             desAlunoFiltro = id || 'TODOS';
             desExercicioSelecionado = '';
+            desFiltroApenasParados = false;
+            atualizarBotaoParadosDes();
             renderizarDashboardDesempenho();
+        }
+
+        function mudarFiltroAlunosParadosDesempenho() {
+            desFiltroApenasParados = !desFiltroApenasParados;
+            desAlunoFiltro = 'TODOS';
+            atualizarBotaoParadosDes();
+            renderizarDashboardDesempenho();
+        }
+
+        function atualizarBotaoParadosDes() {
+            const btn = document.getElementById('des-btn-filtro-parados');
+            if (btn) {
+                btn.className = desFiltroApenasParados
+                    ? 'shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-bold border border-af-orange bg-af-orange text-black shadow-md transition-all'
+                    : 'shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-bold border border-slate-800 bg-black/70 text-slate-300 hover:border-af-orange/50 transition-all';
+            }
         }
 
         function mudarPeriodoDesempenho(p) {
@@ -2688,9 +2710,20 @@ DADOS POR GRUPAMENTO E EXERCÍCIO:${txtGrupos}`;
             const ativos = (alunosGlobais || []).filter(a => !a.arquivado);
             popularSeletoresDesempenho(ativos);
 
-            const alvoAlunos = desAlunoFiltro === 'TODOS'
+            let alvoAlunos = desAlunoFiltro === 'TODOS'
                 ? ativos
                 : ativos.filter(a => String(a.id) === String(desAlunoFiltro));
+
+            if (desFiltroApenasParados && desAlunoFiltro === 'TODOS') {
+                alvoAlunos = ativos.filter(al => {
+                    const idsTreinos = new Set((al.treinos || []).map(t => t.id));
+                    const hist = (Array.isArray(al.historico) ? al.historico : []).filter(h => h && h.data && (!h.treinoId || idsTreinos.has(h.treinoId)));
+                    if (!hist.length) return true;
+                    const ultimaDt = new Date(Math.max(...hist.map(h => new Date(h.data))));
+                    const dias = Math.floor((agora - ultimaDt) / DIA);
+                    return dias >= 3;
+                });
+            }
 
             const diasJanela = desPeriodo === 'semanal' ? 7 : (desPeriodo === 'mensal' ? 30 : 90);
             const rotuloPeriodo = desPeriodo === 'semanal' ? 'Últimos 7 dias' : (desPeriodo === 'mensal' ? 'Últimos 30 dias' : 'Últimos 90 dias');
@@ -2862,7 +2895,15 @@ DADOS POR GRUPAMENTO E EXERCÍCIO:${txtGrupos}`;
             // 4. Bloco Inferior: Comparativo entre Alunos (Visão Geral) OU Raio-X de Exercícios (Aluno Específico)
             const blocoDetalhe = document.getElementById('des-bloco-detalhe');
             if (desAlunoFiltro === 'TODOS') {
-                rankingAlunos.sort((a, b) => b.vol - a.vol);
+                let listaRanking = rankingAlunos;
+                if (desFiltroApenasParados) {
+                    listaRanking = rankingAlunos.filter(r => {
+                        if (!r.ultima) return true;
+                        const diasSemTreinar = Math.floor((agora - r.ultima) / DIA);
+                        return diasSeminar >= 3 || diasSemTreinar >= 3;
+                    });
+                }
+                listaRanking.sort((a, b) => b.vol - a.vol);
                 const maxVolAl = Math.max(...rankingAlunos.map(x => x.vol), 1);
 
                 blocoDetalhe.innerHTML = `
