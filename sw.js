@@ -1,5 +1,5 @@
-// v3: service worker "faxina".
-// Limpa caches antigos e garante atualização imediata nos celulares dos alunos.
+// v4: service worker atualizado.
+// Limpa caches antigos e garante atualização imediata nos celulares dos alunos e admin.
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', (e) => {
