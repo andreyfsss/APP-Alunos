@@ -1422,12 +1422,9 @@
             } catch (err) { alert('Erro: ' + err.message); }
         }
 
-        // ===== EXCLUIR SESSÃO ESPECÍFICA DO HISTÓRICO =====
         async function excluirSessaoHistoricoAdmin(indexReverso) {
             if (!alunoSelecionado) return;
             if (!confirm("Deseja realmente excluir esta sessão específica do histórico do aluno?")) return;
-            
-            // O histórico está ordenado de forma cronológica no array, mas exibido invertido. Calculamos o índice real:
             const indexReal = historicoTreinosAluno.length - 1 - indexReverso;
             if (indexReal < 0 || indexReal >= historicoTreinosAluno.length) return;
 
@@ -1453,7 +1450,6 @@
                 container.innerHTML = `<p class="text-[11px] text-slate-500 text-center py-2">Nenhuma sessão registrada no histórico.</p>`;
                 return;
             }
-            // Exibir do mais recente para o mais antigo, passando o índice reverso correto
             container.innerHTML = historicoTreinosAluno.slice().reverse().map((h, revIdx) => {
                 const dataFmt = h.data ? new Date(h.data).toLocaleString('pt-BR') : 'Data inválida';
                 const vol = NeonChart.fmt(h.volume || 0);
@@ -1495,6 +1491,14 @@
             }
             mostrarFichaAluno();
             renderizarTreinosAluno();
+        }
+
+        function voltarParaLista() {
+            alunoSelecionado = null;
+            document.getElementById('view-detalhe-aluno').classList.add('hidden');
+            document.getElementById('view-lista-alunos').classList.remove('hidden');
+            document.getElementById('bloco-agenda-hoje-admin').style.display = 'block';
+            carregarAlunos();
         }
 
         function toggleMinimizarResumoAdmin() {
@@ -1615,6 +1619,63 @@
             `;
         }
 
+        async function salvarTreinosNoSupabase() {
+            if (!alunoSelecionado) return;
+            const { error } = await supabaseClient.from('alunos').update({ treinos: treinosDoAluno }).eq('id', alunoSelecionado.id);
+            if (error) alert('Erro ao salvar treinos: ' + error.message);
+        }
+
+        function abrirMontagemTreino(treinoId) {
+            treinoAtivoId = treinoId;
+            const treino = treinosDoAluno.find(t => t.id === treinoId);
+            if (!treino) return;
+            document.getElementById('titulo-treino-ativo').innerText = treino.nome;
+            document.getElementById('sec-admin-treinos').classList.add('hidden');
+            document.getElementById('view-montar-exercicios').classList.remove('hidden');
+            cancelarEdicaoExercicio();
+            renderizarListaExerciciosDivisao();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function voltarParaTreinos() {
+            treinoAtivoId = null;
+            document.getElementById('view-montar-exercicios').classList.add('hidden');
+            document.getElementById('sec-admin-treinos').classList.remove('hidden');
+            renderizarTreinosAluno();
+        }
+
+        async function criarTreinoDivisao() {
+            const input = document.getElementById('input-nome-treino');
+            const nome = input.value.trim();
+            if (!nome) return;
+            const novoTreino = {
+                id: 't_' + Math.random().toString(36).substr(2, 9),
+                nome,
+                exercicios: []
+            };
+            treinosDoAluno.push(novoTreino);
+            input.value = '';
+            await salvarTreinosNoSupabase();
+            renderizarTreinosAluno();
+        }
+
+        async function renomearTreino(treinoId) {
+            const treino = treinosDoAluno.find(t => t.id === treinoId);
+            if (!treino) return;
+            const novoNome = prompt('Novo nome para a divisão de treino:', treino.nome);
+            if (!novoNome || !novoNome.trim()) return;
+            treino.nome = novoNome.trim();
+            await salvarTreinosNoSupabase();
+            renderizarTreinosAluno();
+        }
+
+        async function excluirTreino(treinoId) {
+            if (!confirm('Deseja realmente excluir esta divisão de treino?')) return;
+            treinosDoAluno = treinosDoAluno.filter(t => t.id !== treinoId);
+            await salvarTreinosNoSupabase();
+            renderizarTreinosAluno();
+        }
+
         function moverTreinoOrdem(idx, direcao) {
             const novoIdx = idx + direcao;
             if (novoIdx < 0 || novoIdx >= treinosDoAluno.length) return;
@@ -1730,7 +1791,7 @@
 
         function cancelarEdicaoExercicio() {
             indiceExercicioEditando = null;
-            const cfg = atualizarGuiaNivelMontagem();
+            const cfg = atualizarGuiaNivelMontagem ? atualizarGuiaNivelMontagem() : null;
             const qtdPadrao = cfg ? cfg.series : 4;
             document.getElementById('input-busca-ex').value = '';
             document.getElementById('input-qtd-series-ex').value = String(qtdPadrao);
@@ -1776,7 +1837,6 @@
                 const descansoIntra = parseInt(item.querySelector('.input-descanso-intra')?.value) || 15;
                 const repsSugeridas = item.querySelector('.input-reps-sugeridas').value.trim() || '10 a 12';
 
-                seriesConfig.py = true;
                 seriesConfig.push({ num, metodo, tipoMeta, descanso, repsSugeridas, qtdDrops, descansoIntra });
             });
 
@@ -1894,7 +1954,6 @@
         function alternarVisibilidadeMetodoMacro(valor) {
             const blocoModular = document.getElementById('bloco-configuracao-modular');
             if (valor !== 'Nulo') {
-                // Se escolheu Pirâmide Crescente ou Decrescente global, aplicamos em todas as séries mas permitimos edição personalizada
                 blocoModular.classList.remove('hidden');
                 document.querySelectorAll('#container-config-series-admin .select-metodo-serie').forEach(sel => {
                     sel.value = valor;
@@ -1961,7 +2020,6 @@
                             <input type="hidden" class="input-tipo-meta" value="${tipoMetaSel}">
                         </div>
 
-                        <!-- Sub-painel dinâmico para parâmetros específicos desta série exata -->
                         <div class="bloco-parametros-metodo ${metodoSel === 'Série Normal' || escondeMetodo ? 'hidden' : ''} bg-black/70 border border-af-orange/30 rounded-xl p-2.5 grid grid-cols-2 gap-2.5">
                             <div class="campo-drops ${metodoSel === 'Drop Set' ? '' : 'hidden'}">
                                 <label class="${labelBase} !text-af-orange">Qtd de Drops (1 a 4)</label>
@@ -2113,15 +2171,48 @@
 
         function renderizarDashboardDesempenho() {
             const ativos = (alunosGlobais || []).filter(a => !a.arquivado);
-            document.getElementById('des-kpis').innerHTML = `<div class="kpi-card col-span-2 text-center p-4 text-xs text-slate-400">Central de Desempenho ativa para ${ativos.length} aluno(s).</div>`;
+            const kpisEl = document.getElementById('des-kpis');
+            if (!kpisEl) return;
+
+            let totalSessoes = 0;
+            let volumeGeral = 0;
+            const grupamentosTotais = {};
+
+            ativos.forEach(al => {
+                const hist = Array.isArray(al.historico) ? al.historico : [];
+                totalSessoes += hist.length;
+                hist.forEach(h => {
+                    volumeGeral += h.volume || 0;
+                    (h.exerciciosRealizados || []).forEach(ex => {
+                        const m = ex.musculo || 'Outros';
+                        grupamentosTotais[m] = (grupamentosTotais[m] || 0) + (ex.series ? ex.series.length : 0);
+                    });
+                });
+            });
+
+            kpisEl.innerHTML = `
+                <div class="kpi-card"><div class="text-[10px] text-slate-400 font-bold uppercase">Alunos Ativos</div><div class="text-xl font-black text-white">${ativos.length}</div></div>
+                <div class="kpi-card"><div class="text-[10px] text-slate-400 font-bold uppercase">Sessões Realizadas</div><div class="text-xl font-black text-af-orange">${totalSessoes}</div></div>
+                <div class="kpi-card"><div class="text-[10px] text-slate-400 font-bold uppercase">Volume Total (kg)</div><div class="text-xl font-black text-emerald-400">${NeonChart.fmt(volumeGeral)}</div></div>
+                <div class="kpi-card"><div class="text-[10px] text-slate-400 font-bold uppercase">Média / Aluno</div><div class="text-xl font-black text-white">${ativos.length ? (totalSessoes / ativos.length).toFixed(1) : 0}</div></div>
+            `;
+
+            const mapaMuscularEl = document.getElementById('des-mapa-muscular');
+            if (mapaMuscularEl) {
+                mapaMuscularEl.innerHTML = BodyMap.render({ valores: grupamentosTotais, titulo: 'Mapa Muscular Geral' });
+            }
+
+            const barrasGrupos = document.getElementById('des-barras-grupos');
+            if (barrasGrupos) {
+                const itens = Object.keys(grupamentosTotais).map(k => ({ label: k, value: grupamentosTotais[k] }));
+                barrasGrupos.innerHTML = NeonChart.hbars(itens, { titulo: 'Séries por Grupamento Muscular', unit: 'séries' });
+            }
         }
 
-        // INICIALIZAÇÃO AUTOMÁTICA DA AGENDA BASEADA NO DIA DA SEMANA ATUAL
         window.onload = () => {
             montarFormsPerfil();
             try { alternarNavLateral(localStorage.getItem('af_nav_recolhida') === '1'); } catch (e) {}
             
-            // Define o dia da agenda automaticamente com base no dia atual da semana (SEG a SEX, padrão SEG se for fim de semana)
             const diasMap = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
             const diaHoje = diasMap[new Date().getDay()] || 'SEG';
             diaAgendaAtual = (diaHoje === 'DOM' || diaHoje === 'SAB') ? 'SEG' : diaHoje;
