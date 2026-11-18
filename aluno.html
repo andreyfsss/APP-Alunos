@@ -44,7 +44,7 @@
             background: var(--card-bg);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            padding: 14px 16px;
+            padding: 12px 16px;
             border-radius: 16px;
             border: 1px solid var(--card-border);
             box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
@@ -52,70 +52,34 @@
             top: 12px;
             z-index: 50;
         }
-        .brand-row { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
         .brand-badge {
-            font-size: 0.62rem; font-weight: 900; letter-spacing: 0.08em; color: var(--accent);
+            font-size: 0.72rem; font-weight: 900; letter-spacing: 0.1em; color: var(--accent);
             background: rgba(252, 109, 2, 0.14); border: 1px solid rgba(252, 109, 2, 0.38);
-            padding: 2px 7px; border-radius: 6px; text-transform: uppercase;
+            padding: 3px 10px; border-radius: 8px; text-transform: uppercase; display: inline-block; margin-bottom: 4px;
         }
         .workout-title { font-size: 1.05rem; font-weight: 800; color: #FFFFFF; letter-spacing: -0.01em; }
         .workout-subinfo { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
         .workout-timer, .workout-volume {
-            font-size: 0.78rem; color: var(--accent); font-weight: 800;
+            font-size: 0.76rem; color: var(--accent); font-weight: 800;
             background: rgba(252, 109, 2, 0.14); border: 1px solid rgba(252, 109, 2, 0.3);
             padding: 3px 8px; border-radius: 7px; display: inline-block;
         }
         .workout-volume { color: var(--success); background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.3); }
 
-        .btn-finish-top {
-            background: var(--success); color: #fff; border: none; padding: 9px 14px;
-            border-radius: 10px; font-weight: 800; font-size: 0.84rem; cursor: pointer; transition: all 0.2s;
-        }
-        .btn-finish-top.incomplete {
-            background: rgba(252, 109, 2, 0.16); color: var(--accent); border: 1px solid rgba(252, 109, 2, 0.45);
-        }
-
-        /* Botão Flutuante de Layout */
-        .floating-layout-btn {
-            position: fixed; bottom: 20px; right: 20px; width: 52px; height: 52px; border-radius: 50%;
-            background: var(--card-solid); border: 2px solid var(--accent); color: var(--accent);
-            display: flex; align-items: center; justify-content: center; font-size: 1.3rem;
-            box-shadow: 0 6px 24px rgba(252, 109, 2, 0.4); cursor: pointer; z-index: 90; transition: transform 0.2s;
-        }
-        .floating-layout-btn:active { transform: scale(0.92); }
-
-        /* Calendário e Seleção Inicial */
-        .calendar-card {
-            background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid var(--card-border);
-            border-radius: 18px; padding: 16px; margin-bottom: 18px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
-        }
-        .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .cal-month-title { font-size: 0.95rem; font-weight: 800; color: #fff; text-transform: capitalize; }
-        .cal-nav-btn {
+        .header-actions { display: flex; align-items: center; gap: 8px; }
+        .btn-header-layout {
             background: #0A0B0E; border: 1px solid var(--card-border); color: var(--accent);
-            width: 32px; height: 32px; border-radius: 9px; font-weight: 800; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
+            width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; cursor: pointer; transition: transform 0.15s;
         }
-        .cal-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 0.7rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; }
-        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
-        .cal-day {
-            aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            font-size: 0.8rem; font-weight: 600; border-radius: 10px; background: rgba(10, 11, 14, 0.72);
-            color: var(--text-muted); position: relative; border: 1px solid rgba(255, 255, 255, 0.04);
-        }
-        .cal-day.today { border-color: var(--accent); color: #fff; box-shadow: 0 0 10px rgba(252, 109, 2, 0.25); }
-        .cal-day.trained { background: rgba(16, 185, 129, 0.18); border-color: var(--success); color: #fff; font-weight: 800; }
-        .cal-day.trained::after { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--success); position: absolute; bottom: 4px; }
-        .cal-summary-bar { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.07); font-size: 0.75rem; color: var(--text-muted); }
+        .btn-header-layout:active { transform: scale(0.92); }
 
-        .workout-choice-card {
-            background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid var(--card-border);
-            border-radius: 16px; padding: 18px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s;
-            display: flex; justify-content: space-between; align-items: center; box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
+        .btn-finish-top {
+            background: linear-gradient(135deg, var(--accent), #E05A00); color: #fff; border: none; padding: 9px 14px;
+            border-radius: 10px; font-weight: 800; font-size: 0.82rem; cursor: pointer; box-shadow: 0 4px 14px var(--accent-glow);
         }
-        .workout-choice-card:active { transform: translateY(-1px); border-color: var(--accent); }
 
-        /* Estilos dos Cartões de Exercício conforme o Layout escolhido */
+        /* Cartão de Exercício */
         .exercise-card {
             background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid var(--card-border);
             border-radius: 18px; padding: 16px; margin-bottom: 16px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55);
@@ -127,12 +91,12 @@
 
         .exercise-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; gap: 10px; cursor: pointer; }
         .exercise-name { font-size: 1.1rem; font-weight: 900; color: #fff; margin-bottom: 2px; letter-spacing: -0.015em; }
-        .exercise-meta { font-size: 0.8rem; color: var(--text-muted); font-weight: 500; }
-
-        /* Modo Lista / Compacto */
-        .exercise-card.list-mode { border-left: 4px solid var(--accent); }
-        .exercise-card.compact-mode .set-row { padding: 6px 8px; margin-bottom: 6px; }
-        .exercise-card.compact-mode .exercise-meta { display: none; }
+        .exercise-meta { font-size: 0.8rem; color: var(--text-muted); font-weight: 500; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+        
+        .method-badge {
+            background: rgba(252, 109, 2, 0.15); border: 1px solid rgba(252, 109, 2, 0.4); color: var(--accent);
+            font-size: 0.65rem; font-weight: 800; padding: 2px 7px; border-radius: 6px; text-transform: uppercase; cursor: pointer;
+        }
 
         .set-row {
             display: grid; grid-template-columns: 26px 1fr 1fr 1fr 34px 34px; gap: 6px; align-items: center;
@@ -168,18 +132,17 @@
         .btn-prev { background: rgba(255, 255, 255, 0.08); color: var(--text-main); border: 1px solid rgba(255,255,255,0.1); }
         .btn-next { background: var(--accent); color: #050505; box-shadow: 0 4px 16px var(--accent-glow); }
 
-        /* Modal de Layout */
+        /* Modals e Banners */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.84); backdrop-filter: blur(6px); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
         .modal-card { background: var(--card-solid); border: 1px solid var(--card-border); border-radius: 20px; padding: 20px; width: 100%; max-width: 380px; box-shadow: 0 18px 45px rgba(0, 0, 0, 0.75); }
         .layout-option-btn {
             width: 100%; background: #0A0B0E; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
             padding: 12px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;
-            color: #fff; cursor: pointer; font-weight: 700; font-size: 0.9rem; text-align: left; transition: all 0.15s;
+            color: #fff; cursor: pointer; font-weight: 700; font-size: 0.9rem; text-align: left;
         }
         .layout-option-btn.selected { border-color: var(--accent); background: rgba(252, 109, 2, 0.12); color: var(--accent); }
         .layout-option-btn.disabled { opacity: 0.4; cursor: not-allowed; }
 
-        /* Banner de Descanso Flutuante */
         .rest-timer-banner {
             position: fixed; bottom: 85px; left: 50%; transform: translateX(-50%);
             background: #181920; border: 2px solid var(--accent); border-radius: 30px;
@@ -192,26 +155,23 @@
 
     <header id="mainHeader" style="display:none;">
         <div>
-            <div class="brand-row">
-                <span style="font-size: 0.68rem; font-weight: 900; color: #fff;">ANDREY FRANCO</span>
-                <span class="brand-badge">AF PRO</span>
-            </div>
+            <span class="brand-badge">AF PRO</span>
             <div class="workout-title" id="workoutName">Treino</div>
             <div class="workout-subinfo">
                 <div class="workout-timer" id="timerDisplay">00:00</div>
                 <div class="workout-volume" id="volumeDisplay">0 kg</div>
             </div>
         </div>
-        <button class="btn-finish-top" id="btnFinishTop" onclick="handleFinishRequest()">Terminar</button>
+        <div class="header-actions">
+            <button class="btn-header-layout" onclick="openLayoutModal()" title="Layout">⚙️</button>
+            <button class="btn-finish-top" onclick="handleFinishRequest()">Terminar</button>
+        </div>
     </header>
 
     <div id="workoutSelectionContainer"></div>
     <div id="workoutActiveContainer" style="display:none;"></div>
 
-    <!-- Botão flutuante de Layout (visível apenas durante o treino) -->
-    <div class="floating-layout-btn" id="floatingLayoutBtn" style="display:none;" onclick="openLayoutModal()">⚙️</div>
-
-    <!-- Banner de Descanso -->
+    <!-- Banner de Descanso Flutuante -->
     <div class="rest-timer-banner" id="restTimerBanner">
         <div>
             <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Descanso</div>
@@ -255,6 +215,15 @@
         </div>
     </div>
 
+    <!-- Modal Explicação de Métodos -->
+    <div class="modal-overlay" id="methodModal" onclick="closeMethodModal()">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <div style="font-size: 1.1rem; font-weight: 800; color: var(--accent); margin-bottom: 6px;" id="methodModalTitle">Método</div>
+            <div style="font-size: 0.85rem; color: var(--text-main); line-height: 1.4; margin-bottom: 16px;" id="methodModalDesc"></div>
+            <button onclick="closeMethodModal()" style="width:100%; background:var(--accent); color:#050505; border:none; padding:10px; border-radius:10px; font-weight:800; cursor:pointer;">Entendi</button>
+        </div>
+    </div>
+
     <!-- Modal Finalizar -->
     <div class="modal-overlay" id="finishModal" onclick="closeFinishModal()">
         <div class="modal-card" onclick="event.stopPropagation()">
@@ -282,6 +251,15 @@
             { val: 5,  title: "Moderado", desc: "Esforço sustentável." }
         ];
 
+        const METHOD_EXPLANATIONS = {
+            'drop-set': { title: "Drop-Set", desc: "Após atingir a falha na série principal, reduza a carga em cerca de 20% a 30% e continue executando o movimento sem descanso até nova falha." },
+            'rest-pause': { title: "Rest-Pause", desc: "Execute até a falha, descanse por um curto período (ex: 10 a 15 segundos) mantendo a mesma carga e faça mais repetições até a falha." },
+            'fst-7': { title: "FST-7 (Fascia Stretch Training)", desc: "Consiste em realizar 7 séries do exercício com curtos intervalos de descanso (30 a 45 segundos) entre elas, visando a expansão da fáscia muscular." },
+            'cluster-set': { title: "Cluster Set", desc: "Série com pequenos descansos intra-série programados (ex: 15 seg a cada 3 reps), permitindo usar cargas mais elevadas com maior qualidade de execução." },
+            'piramide-crescente': { title: "Pirâmide Crescente", desc: "As cargas aumentam progressivamente a cada série enquanto o número de repetições diminui." },
+            'piramide-decrescente': { title: "Pirâmide Decrescente", desc: "Inicia-se com carga mais alta e vai reduzindo nas séries seguintes conforme a fadiga acumula." }
+        };
+
         let alunoData = null;
         let treinosDisponiveis = [];
         let workoutData = null;
@@ -290,7 +268,7 @@
         let currentExerciseIndex = 0;
         let activeSetForRpe = null;
 
-        let currentLayout = 'cards'; // 'cards', 'list', 'compact', 'focus'
+        let currentLayout = 'cards';
         let autoMinimizeEnabled = true;
 
         let restTimerInterval = null;
@@ -312,7 +290,6 @@
 
         function renderHome() {
             document.getElementById('mainHeader').style.display = 'none';
-            document.getElementById('floatingLayoutBtn').style.display = 'none';
             const selContainer = document.getElementById('workoutSelectionContainer');
             selContainer.style.display = 'block';
             document.getElementById('workoutActiveContainer').style.display = 'none';
@@ -329,12 +306,14 @@
             } else {
                 treinosDisponiveis.forEach((t, idx) => {
                     html += `
-                        <div class="workout-choice-card" onclick="startWorkout(${idx})">
-                            <div>
-                                <div style="font-weight: 800; font-size: 1.05rem; color: #fff;">${t.nome}</div>
-                                <div style="font-size: 0.78rem; color: var(--text-muted); margin-top:2px;">${(t.exercicios || []).length} exercícios</div>
+                        <div class="exercise-card" style="cursor:pointer;" onclick="startWorkout(${idx})">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <div>
+                                    <div style="font-weight: 800; font-size: 1.05rem; color: #fff;">${t.nome}</div>
+                                    <div style="font-size: 0.78rem; color: var(--text-muted); margin-top:2px;">${(t.exercicios || []).length} exercícios</div>
+                                </div>
+                                <div style="background:var(--accent); color:#050505; font-weight:900; font-size:0.78rem; padding:8px 12px; border-radius:10px;">Iniciar →</div>
                             </div>
-                            <div style="background:var(--accent); color:#050505; font-weight:900; font-size:0.78rem; padding:8px 12px; border-radius:10px;">Iniciar →</div>
                         </div>
                     `;
                 });
@@ -347,20 +326,32 @@
             workoutData = {
                 id: t.id,
                 name: t.nome,
-                exercises: t.exercicios.map(e => ({
-                    name: e.nome,
-                    muscle: e.musculo || '',
-                    equipment: e.equipamento || '',
-                    descanso: parseInt(e.descanso) || 60,
-                    exigeRpe: e.exigeRpe !== false,
-                    sets: Array.from({ length: parseInt(e.qtdSeries) || 4 }, () => ({
-                        weight: '', reps: '', repsMeta: '10-12', rpe: '', done: false, minimized: false
-                    }))
-                }))
+                exercises: t.exercicios.map(e => {
+                    const method = e.metodo || 'padrao';
+                    const baseDescanso = parseInt(e.descanso) || 60;
+                    const qtdSets = parseInt(e.qtdSeries) || 4;
+                    const sets = [];
+
+                    for (let i = 0; i < qtdSets; i++) {
+                        let isDrop = method === 'drop-set' && i >= (qtdSets - (parseInt(e.qtdDrops) || 1));
+                        sets.push({
+                            weight: '', reps: '', rpe: '', done: false, isDrop, dropIndex: isDrop ? (i - (qtdSets - (parseInt(e.qtdDrops) || 1)) + 1) : 0
+                        });
+                    }
+
+                    return {
+                        name: e.nome,
+                        muscle: e.musculo || '',
+                        equipment: e.equipamento || '',
+                        metodo: method,
+                        descanso: baseDescanso,
+                        sets: sets,
+                        minimized: false
+                    };
+                })
             };
 
             document.getElementById('mainHeader').style.display = 'flex';
-            document.getElementById('floatingLayoutBtn').style.display = 'flex';
             document.getElementById('workoutSelectionContainer').style.display = 'none';
             document.getElementById('workoutActiveContainer').style.display = 'block';
             document.getElementById('workoutName').innerText = workoutData.name;
@@ -418,12 +409,21 @@
                 if (currentLayout === 'compact') cardClass += ' compact-mode';
                 if (currentLayout === 'focus') cardClass += ' focus-mode';
 
+                let badgeHtml = '';
+                if (ex.metodo && ex.metodo !== 'padrao') {
+                    const niceName = ex.metodo.replace('-', ' ').toUpperCase();
+                    badgeHtml = `<span class="method-badge" onclick="showMethodInfo('${ex.metodo}')">${niceName} ℹ️</span>`;
+                }
+
                 html += `
                     <div class="${cardClass}" id="ex-card-${exIdx}">
                         <div class="exercise-header" onclick="toggleMinimizeExercise(${exIdx})">
                             <div>
                                 <div class="exercise-name">${ex.name}</div>
-                                <div class="exercise-meta">${ex.muscle} ${ex.equipment ? '• ' + ex.equipment : ''} • Descanso: ${ex.descanso}s</div>
+                                <div class="exercise-meta">
+                                    <span>${ex.muscle} ${ex.equipment ? '• ' + ex.equipment : ''}</span>
+                                    ${badgeHtml}
+                                </div>
                             </div>
                             <div style="font-size:0.75rem; color:var(--accent); font-weight:800;">
                                 ${isMinimized ? 'Expandir ▾' : (currentLayout === 'focus' ? `${exIdx + 1}/${totalEx}` : 'Minimizar ▴')}
@@ -435,9 +435,10 @@
                 `;
 
                 ex.sets.forEach((set, sIdx) => {
+                    const rowLabel = set.isDrop ? `Drop ${set.dropIndex}` : `${sIdx + 1}`;
                     html += `
                         <div class="set-row ${set.done ? 'completed' : ''}" id="set-row-${exIdx}-${sIdx}">
-                            <div class="set-number">${sIdx + 1}</div>
+                            <div class="set-number" style="${set.isDrop ? 'color: #FF8524; font-size:0.68rem;' : ''}">${rowLabel}</div>
                             <div class="set-input-group">
                                 <label>Peso</label>
                                 <input type="number" inputmode="decimal" value="${set.weight}" placeholder="0" onchange="updateSet(${exIdx}, ${sIdx}, 'weight', this.value)">
@@ -481,11 +482,24 @@
         }
 
         function toggleSetDone(exIdx, sIdx) {
-            const set = workoutData.exercises[exIdx].sets[sIdx];
+            const ex = workoutData.exercises[exIdx];
+            const set = ex.sets[sIdx];
+
+            if (!set.done) {
+                const hasWeight = set.weight !== '' && !isNaN(Number(set.weight));
+                const hasReps = set.reps !== '' && Number(set.reps) > 0;
+                const hasRpe = set.rpe !== '';
+
+                if (!hasWeight || !hasReps || !hasRpe) {
+                    alert('Preencha o Peso, as Repetições e o RPE antes de marcar esta série como concluída!');
+                    return;
+                }
+            }
+
             set.done = !set.done;
             renderActiveWorkout();
             if (set.done) {
-                triggerRestTimer(workoutData.exercises[exIdx].descanso);
+                triggerRestTimer(ex.descanso);
             }
         }
 
@@ -501,6 +515,15 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
+        function showMethodInfo(metodoKey) {
+            const info = METHOD_EXPLANATIONS[metodoKey] || { title: "Método", desc: "Informação do método de treino." };
+            document.getElementById('methodModalTitle').innerText = info.title;
+            document.getElementById('methodModalDesc').innerText = info.desc;
+            document.getElementById('methodModal').style.display = 'flex';
+        }
+
+        function closeMethodModal() { document.getElementById('methodModal').style.display = 'none'; }
+
         function triggerRestTimer(seconds) {
             if (restTimerInterval) clearInterval(restTimerInterval);
             restSecondsRemaining = seconds || 60;
@@ -515,7 +538,7 @@
                     clearInterval(restTimerInterval);
                     banner.style.display = 'none';
                     if ("vibrate" in navigator) {
-                        navigator.vibrate([200, 100, 200, 100, 400]);
+                        navigator.vibrate([300, 150, 300, 150, 500]);
                     }
                 }
             }, 1000);

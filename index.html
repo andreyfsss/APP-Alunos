@@ -232,7 +232,6 @@
             return caixa(o.titulo, '', '<div class="space-y-2.5 pt-1">' + linhas + '</div>');
         }
 
-
         function donut(itens, o) {
             o = o || {};
             itens = (itens || []).filter(i => i.value > 0);
@@ -251,8 +250,6 @@
             const leg = itens.map(i => '<div class="flex justify-between items-center gap-3 text-[11px]"><span class="flex items-center gap-1.5 text-slate-300"><span style="width:8px;height:8px;border-radius:99px;background:' + i.cor + ';box-shadow:0 0 6px ' + i.cor + '"></span>' + esc(i.label) + '</span><strong class="text-white">' + esc(fmt(i.value)) + '</strong></div>').join('');
             return caixa(o.titulo, '', '<div class="flex items-center gap-4"><div style="flex-shrink:0">' + svg + '</div><div class="flex-1 space-y-1.5 min-w-0">' + leg + '</div></div>');
         }
-
-
 
         function ring(valor, max, o) {
             o = o || {};
@@ -322,7 +319,6 @@
         .border-af-orange { border-color: #FF6A00; }
         .neon-glow { box-shadow: 0 0 20px rgba(255, 106, 0, 0.15); }
 
-        /* ===== LAYOUT APP: sidebar no desktop, barra inferior no celular ===== */
         #nav-lateral { display: none; }
         #nav-inferior { display: flex; }
         #app-shell { width: 100%; max-width: 28rem; }
@@ -351,7 +347,6 @@
             #sec-adm-inicio .col-cheio { grid-column: 1 / -1; }
         }
 
-        /* ===== VISUAL GLASS / NEON ===== */
         body { background-image: radial-gradient(60rem 40rem at 85% -10%, rgba(255,106,0,.14), transparent 60%), radial-gradient(50rem 40rem at -10% 110%, rgba(99,102,241,.11), transparent 60%); background-attachment: fixed; }
         .bg-af-card { background: rgba(255,255,255,.035) !important; -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border: 1px solid rgba(255,106,0,.17); box-shadow: 0 8px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.05); }
         .kpi-card { background: rgba(255,255,255,.04); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); box-shadow: 0 6px 24px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.05); }
@@ -759,7 +754,6 @@
 
         <!-- SEÇÃO DESEMPENHO (DASHBOARD ANALÍTICO GERAL E POR ALUNO) -->
         <div id="sec-adm-desempenho" class="hidden space-y-4 no-print">
-            <!-- Cabeçalho + Seletor de Aluno e Período -->
             <div class="bg-af-card rounded-2xl p-4 space-y-3 shadow-xl neon-glow">
                 <div class="flex flex-wrap justify-between items-center gap-2">
                     <div>
@@ -786,23 +780,19 @@
                     </div>
                 </div>
 
-                <!-- Pills rápidos de alunos ativos + Filtro de Alunos Parados -->
                 <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
                     <div id="des-pills-alunos" class="flex gap-1.5 overflow-x-auto pb-1 pt-0.5 flex-1"></div>
                     <button onclick="mudarFiltroAlunosParadosDesempenho()" id="des-btn-filtro-parados" class="shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-bold border border-slate-800 bg-black/70 text-slate-300 hover:border-af-orange/50 transition-all">⚠️ Alunos Parados (3d+)</button>
                 </div>
             </div>
 
-            <!-- KPIs Principais -->
             <div id="des-kpis" class="grid grid-cols-2 grid-kpi-des gap-2.5"></div>
 
-            <!-- Gráficos Principais (Volume em kg e Séries por dia/semana) -->
             <div class="grid grid-cols-1 grid-graficos-des gap-3">
                 <div id="des-grafico-volume-kg" class="bg-af-card rounded-2xl p-4 space-y-2 shadow-lg"></div>
                 <div id="des-grafico-series" class="bg-af-card rounded-2xl p-4 space-y-2 shadow-lg"></div>
             </div>
 
-            <!-- Volume por Grupamento Muscular (Mapa Corporal + Barras + Meta) -->
             <div class="bg-af-card rounded-2xl p-4 space-y-3 shadow-lg">
                 <div class="flex flex-wrap justify-between items-center gap-2 border-b border-slate-800 pb-2.5">
                     <div>
@@ -820,7 +810,6 @@
                 </div>
             </div>
 
-            <!-- Bloco inferior: Ranking dos Alunos (quando Todos) OU Raio-X de Exercícios (quando Aluno específico) -->
             <div id="des-bloco-detalhe" class="bg-af-card rounded-2xl p-4 space-y-3 shadow-lg"></div>
         </div>
 
@@ -967,7 +956,6 @@
             if (aba === 'agenda') { carregarAgenda().then(renderizarGradeAgenda); }
         }
 
-        // ===== DASHBOARD INÍCIO (usa alunosGlobais, que já traz historico de todos) =====
         function inicioSessoes() {
             const out = [];
             alunosGlobais.filter(al => !al.arquivado).forEach(al => {
@@ -1031,24 +1019,20 @@
                 kpi('⏸️', '#fb7185', 'Alunos parados', atencao.length, '<span class="text-slate-500">3+ dias sem treinar</span>') +
                 kpi('📅', '#fbbf24', 'Aulas hoje', aulasHoje.length, `<span class="text-slate-500">${hojeStr} • ${Math.max(0, 17 - aulasHoje.length)} livres</span>`);
 
-            // Aulas de hoje (removidos Adesão e Sessões combinadas conforme pedido)
             const aulasFeitas = aulasHoje.filter(x => x.hora <= hora).length;
             const aulasRestantes = Math.max(0, aulasHoje.length - aulasFeitas);
             document.getElementById('inicio-aneis').innerHTML = inicioPainel('Progresso das aulas de hoje', `<div class="flex items-center gap-4">${NeonChart.ring(aulasFeitas, aulasHoje.length, { label: '', sub: '', cor: '#818cf8', centro: aulasHoje.length ? `${aulasFeitas}/${aulasHoje.length}` : '0' })}<div class="flex-1 space-y-1 text-xs"><div class="font-bold text-slate-200">${aulasHoje.length ? `${aulasFeitas} aula(s) já concluída(s) • ${aulasRestantes} restante(s)` : 'Nenhuma aula marcada para hoje'}</div><p class="text-[11px] text-slate-400">Acompanhamento automático conforme o horário atual (${hojeStr}).</p></div></div>`);
 
-            // agenda de hoje
             const agendaHtml = aulasHoje.length
                 ? aulasHoje.map(x => `<div class="flex items-center gap-3 text-xs ${x.hora < hora ? 'opacity-40' : ''}"><span class="font-black text-af-orange w-12">${String(x.hora).padStart(2, '0')}:00</span><span class="flex-1 bg-black/60 border border-slate-800 rounded-xl px-3 py-2 font-bold text-slate-200">${escapeHtml(x.nome)}</span></div>`).join('')
                 : '<p class="text-[11px] text-slate-500 text-center py-6">Nenhuma aula marcada para hoje.</p>';
             document.getElementById('inicio-agenda').innerHTML = inicioPainel(`Agenda de hoje (${hojeStr})`, `<div class="space-y-1.5 max-h-60 overflow-y-auto">${agendaHtml}</div>`, `<button onclick="mudarAbaPrincipalAdmin('agenda')" class="text-[10px] text-af-orange font-bold">Ver agenda →</button>`);
 
-            // alunos que precisam de atenção (sem treinar há 7+ dias)
             const atHtml = atencao.length
                 ? `<div class="grid gap-2">${atencao.map(x => `<div onclick="mudarAbaPrincipalAdmin('alunos'); abrirPainelPorId('${x.al.id}')" class="bg-black/60 border border-slate-800 hover:border-af-orange/60 rounded-xl p-3 flex justify-between items-center cursor-pointer"><span class="font-bold text-sm text-slate-200" style="overflow-wrap:anywhere">${escapeHtml(x.al.nome)}</span><span class="text-[11px] font-bold shrink-0 ml-2 ${x.dias === null ? 'text-slate-400' : 'text-rose-400'}">${x.dias === null ? 'nunca treinou' : x.dias + ' dias sem treinar'}</span></div>`).join('')}</div>`
                 : '<p class="text-[11px] text-emerald-400 text-center py-4 font-bold">Todo mundo treinou nos últimos 3 dias. 👏</p>';
             document.getElementById('inicio-atencao').innerHTML = inicioPainel('Atenção: alunos parados', atHtml, `<span class="text-[10px] text-slate-500">${atencao.length} de ${ativos.length}</span>`);
 
-            // renovações próximas
             const hoje0 = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
             const renov = ativos.filter(al => al.perfil && al.perfil.renovacao).map(al => {
                 const [y, m, d] = String(al.perfil.renovacao).split('-').map(Number);
@@ -1056,7 +1040,6 @@
             }).filter(x => x.dias <= 15).sort((x, y) => x.dias - y.dias);
             document.getElementById('inicio-renovacoes').innerHTML = renov.length ? inicioPainel('Renovações próximas', `<div class="grid gap-2 lg:grid-cols-2">${renov.map(x => `<div onclick="mudarAbaPrincipalAdmin('alunos'); abrirPainelPorId('${x.al.id}')" class="bg-black/60 border border-slate-800 hover:border-af-orange/60 rounded-xl p-3 flex justify-between items-center gap-2 cursor-pointer"><span class="font-bold text-sm text-slate-200" style="overflow-wrap:anywhere">${escapeHtml(x.al.nome)}</span><span class="text-[11px] font-bold shrink-0 ${x.dias < 0 ? 'text-rose-400' : x.dias <= 5 ? 'text-amber-300' : 'text-slate-300'}">${x.dias < 0 ? 'venceu há ' + Math.abs(x.dias) + ' d' : x.dias === 0 ? 'renova hoje' : 'renova em ' + x.dias + ' d'}</span></div>`).join('')}</div>`) : '';
 
-            // atividade recente
             const rec = sessoes.slice(0, 8);
             const recHtml = rec.length ? `<div class="grid gap-2 lg:grid-cols-2">${rec.map(s => `<div onclick="mudarAbaPrincipalAdmin('alunos'); abrirPainelPorId('${s.aluno.id}')" class="bg-black/60 border border-slate-800 hover:border-af-orange/60 rounded-xl p-3 flex items-start gap-3 cursor-pointer"><div class="w-9 h-9 shrink-0 rounded-xl bg-black text-af-orange font-black flex items-center justify-center text-xs border border-slate-800">${escapeHtml(s.aluno.nome.substring(0, 2).toUpperCase())}</div><div class="flex-1 min-w-0" style="overflow-wrap:anywhere"><div class="text-xs font-bold text-slate-100">${escapeHtml(s.aluno.nome)}</div><div class="text-[11px] text-slate-400 leading-snug">finalizou <span class="text-slate-200 font-semibold">${escapeHtml(s.h.treinoNome || 'um treino')}</span></div><div class="text-[10px] text-slate-500 mt-0.5">${NeonChart.fmt(s.h.volume || 0)} kg • ${s.h.qtdSeriesValidadas || 0} séries • ${inicioHaQuanto(s.t)}</div></div></div>`).join('')}</div>` : '<p class="text-[11px] text-slate-500 text-center py-6">Nenhuma sessão registrada ainda.</p>';
             document.getElementById('inicio-atividade').innerHTML = inicioPainel('Atividade recente', recHtml);
@@ -1846,7 +1829,9 @@
                 metodo: 'Série Normal',
                 tipoMeta: 'reps',
                 repsSugeridas: cfg ? cfg.reps : '10 a 12',
-                descanso: cfg ? cfg.descanso : 90
+                descanso: cfg ? cfg.descanso : 90,
+                qtdDrops: 1,
+                descansoIntra: 15
             }));
             gerarCamposSeriesAdmin(qtdPadrao, initSeries);
             verificarRegrasEquipamento();
@@ -1872,7 +1857,7 @@
             if (metodoGeral !== 'Nulo') {
                 repsPiramide = document.getElementById('input-reps-piramide').value.trim() || '10 a 12';
                 for (let i = 1; i <= qtdSeries; i++) {
-                    seriesConfig.push({ num: i, metodo: 'Série Normal', tipoMeta: 'reps', descanso: 90, repsSugeridas: repsPiramide });
+                    seriesConfig.push({ num: i, metodo: 'Série Normal', tipoMeta: 'reps', descanso: 90, repsSugeridas: repsPiramide, qtdDrops: 0, descansoIntra: 0 });
                 }
             } else {
                 document.querySelectorAll('#container-config-series-admin .serie-config-item').forEach(item => {
@@ -1880,20 +1865,57 @@
                     const metodo = item.querySelector('.select-metodo-serie')?.value || 'Série Normal';
                     const tipoMeta = item.querySelector('.input-tipo-meta').value === 'tempo' ? 'tempo' : 'reps';
                     const descanso = parseInt(item.querySelector('.input-descanso-serie').value) || 90;
+                    const qtdDrops = parseInt(item.querySelector('.input-qtd-drops')?.value) || 1;
+                    const descansoIntra = parseInt(item.querySelector('.input-descanso-intra')?.value) || 15;
+
                     if (tipoMeta === 'tempo') {
                         const metaSeg = ((parseInt(item.querySelector('.input-tempo-min').value) || 0) * 60 + (parseInt(item.querySelector('.input-tempo-seg').value) || 0)) || 30;
-                        seriesConfig.push({ num, metodo, tipoMeta, descanso, repsSugeridas: formatarTempo(metaSeg), metaSeg });
+                        seriesConfig.push({ num, metodo, tipoMeta, descanso, repsSugeridas: formatarTempo(metaSeg), metaSeg, qtdDrops, descansoIntra });
                     } else {
                         const repsSugeridas = item.querySelector('.input-reps-sugeridas').value.trim() || '10 a 12';
-                        seriesConfig.push({ num, metodo, tipoMeta, descanso, repsSugeridas });
+                        seriesConfig.push({ num, metodo, tipoMeta, descanso, repsSugeridas, qtdDrops, descansoIntra });
                     }
                 });
+            }
+
+            // Define o método principal resumido e total de drops/descanso para compatibilidade direta com o app do aluno
+            let metodoPrincipal = 'padrao';
+            let maxDrops = 1;
+            let descansoBase = seriesConfig[0]?.descanso || 90;
+
+            if (metodoGeral !== 'Nulo') {
+                metodoPrincipal = metodoGeral.toLowerCase().includes('crescente') ? 'piramide-crescente' : 'piramide-decrescente';
+            } else {
+                const metodosEncontrados = seriesConfig.map(s => s.metodo);
+                if (metodosEncontrados.includes('Drop Set')) {
+                    metodoPrincipal = 'drop-set';
+                    maxDrops = Math.max(...seriesConfig.filter(s => s.metodo === 'Drop Set').map(s => s.qtdDrops || 1), 1);
+                } else if (metodosEncontrados.includes('Rest Pause')) {
+                    metodoPrincipal = 'rest-pause';
+                } else if (metodosEncontrados.includes('Cluster Set')) {
+                    metodoPrincipal = 'cluster-set';
+                } else if (metodosEncontrados.includes('FST-7')) {
+                    metodoPrincipal = 'fst-7';
+                }
             }
 
             const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
             if (treino) {
                 if (!treino.exercicios) treino.exercicios = [];
-                const dadosEx = { nome, musculo, equipamento, conjugado: 'Nenhum', qtdSeries, metodoGeral, repsPiramide, exigeRpe, seriesConfig };
+                const dadosEx = {
+                    nome,
+                    musculo,
+                    equipamento,
+                    conjugado: 'Nenhum',
+                    qtdSeries,
+                    metodoGeral,
+                    metodo: metodoPrincipal,
+                    qtdDrops: maxDrops,
+                    descanso: descansoBase,
+                    repsPiramide,
+                    exigeRpe,
+                    seriesConfig
+                };
                 if (indiceExercicioEditando !== null) {
                     dadosEx.conjugado = treino.exercicios[indiceExercicioEditando].conjugado || 'Nenhum';
                     treino.exercicios[indiceExercicioEditando] = dadosEx;
@@ -2110,7 +2132,9 @@
                 tipoMeta: item.querySelector('.input-tipo-meta').value,
                 repsSugeridas: item.querySelector('.input-reps-sugeridas').value,
                 metaSeg: (parseInt(item.querySelector('.input-tempo-min').value) || 0) * 60 + (parseInt(item.querySelector('.input-tempo-seg').value) || 0),
-                descanso: parseInt(item.querySelector('.input-descanso-serie').value) || 90
+                descanso: parseInt(item.querySelector('.input-descanso-serie').value) || 90,
+                qtdDrops: parseInt(item.querySelector('.input-qtd-drops')?.value) || 1,
+                descansoIntra: parseInt(item.querySelector('.input-descanso-intra')?.value) || 15
             }));
         }
 
@@ -2149,6 +2173,8 @@
                 const metaSeg = sData.metaSeg || (tipoMetaSel === 'tempo' ? parseTempoTexto(sData.repsSugeridas) : 30);
                 const tMin = Math.floor(metaSeg / 60), tSeg = metaSeg % 60;
                 const descansoSel = sData.descanso || 90;
+                const qtdDropsSel = sData.qtdDrops || 1;
+                const descansoIntraSel = sData.descansoIntra || 15;
 
                 html += `
                     <div class="serie-config-item bg-slate-900/60 border border-slate-800 rounded-2xl p-3 space-y-3" data-serie="${i}">
@@ -2168,6 +2194,22 @@
                             </div>
                             <input type="hidden" class="input-tipo-meta" value="${tipoMetaSel}">
                         </div>
+
+                        <!-- Sub-painel dinâmico para parâmetros de Métodos Avançados -->
+                        <div class="bloco-parametros-metodo ${metodoSel === 'Série Normal' || escondeMetodo ? 'hidden' : ''} bg-black/70 border border-af-orange/30 rounded-xl p-2.5 grid grid-cols-2 gap-2.5">
+                            <div class="campo-drops ${metodoSel === 'Drop Set' ? '' : 'hidden'}">
+                                <label class="${labelBase} !text-af-orange">Qtd de Drops (1 a 4)</label>
+                                <input type="number" inputmode="numeric" min="1" max="4" value="${qtdDropsSel}" oninput="validarApenasNumeros(this)" class="input-qtd-drops ${inputBase} !border-af-orange/40">
+                            </div>
+                            <div class="campo-intra ${metodoSel === 'Rest Pause' || metodoSel === 'Cluster Set' ? '' : 'hidden'}">
+                                <label class="${labelBase} !text-af-orange">Descanso Intra-Série (s)</label>
+                                <input type="number" inputmode="numeric" min="5" max="60" value="${descansoIntraSel}" oninput="validarApenasNumeros(this)" class="input-descanso-intra ${inputBase} !border-af-orange/40">
+                            </div>
+                            <div class="campo-fst7 col-span-2 ${metodoSel === 'FST-7' ? '' : 'hidden'} text-[10px] text-af-orange font-bold flex items-center gap-1.5">
+                                <span>🔥 FST-7 Ativo:</span> <span class="text-slate-300 font-normal">Sugestão de 7 séries com descanso curto (30s–45s) para máxima expansão da fáscia.</span>
+                            </div>
+                        </div>
+
                         <div class="grid grid-cols-5 gap-2.5">
                             <div class="col-span-3">
                                 <div class="bloco-meta-reps">
@@ -2196,7 +2238,37 @@
             });
         }
 
-        function atualizarMetodoSerieAdmin(select) {}
+        function atualizarMetodoSerieAdmin(select) {
+            const item = select.closest('.serie-config-item');
+            const val = select.value;
+            const painel = item.querySelector('.bloco-parametros-metodo');
+            const campoDrops = item.querySelector('.campo-drops');
+            const campoIntra = item.querySelector('.campo-intra');
+            const campoFst7 = item.querySelector('.campo-fst7');
+            const inputDescanso = item.querySelector('.input-descanso-serie');
+
+            if (val === 'Série Normal') {
+                painel.classList.add('hidden');
+            } else {
+                painel.classList.remove('hidden');
+                campoDrops.classList.toggle('hidden', val !== 'Drop Set');
+                campoIntra.classList.toggle('hidden', val !== 'Rest Pause' && val !== 'Cluster Set');
+                campoFst7.classList.toggle('hidden', val !== 'FST-7');
+
+                if (val === 'FST-7') {
+                    inputDescanso.value = '30';
+                    const qtdEl = document.getElementById('input-qtd-series-ex');
+                    if (qtdEl && parseInt(qtdEl.value) < 7) {
+                        qtdEl.value = '7';
+                        const seriesAtuais = lerSeriesAdminAtuais();
+                        while (seriesAtuais.length < 7) {
+                            seriesAtuais.push({ metodo: 'FST-7', tipoMeta: 'reps', repsSugeridas: '10 a 12', descanso: 30 });
+                        }
+                        gerarCamposSeriesAdmin(7, seriesAtuais);
+                    }
+                }
+            }
+        }
 
         async function removerExercicioDivisao(idx) {
             const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
@@ -2427,7 +2499,9 @@ DADOS POR GRUPAMENTO E EXERCÍCIO:${txtGrupos}`;
                 metodo: 'Série Normal',
                 tipoMeta: 'reps',
                 repsSugeridas: cfg ? cfg.reps : '10 a 12',
-                descanso: cfg ? cfg.descanso : 90
+                descanso: cfg ? cfg.descanso : 90,
+                qtdDrops: 1,
+                descansoIntra: 15
             }));
             gerarCamposSeriesAdmin(qtdPadrao, initSeries);
             renderizarListaExerciciosDivisao();
@@ -2617,8 +2691,8 @@ DADOS POR GRUPAMENTO E EXERCÍCIO:${txtGrupos}`;
 
         // ===== CENTRAL DE DESEMPENHO (DASHBOARD GERAL E POR ALUNO) =====
         let desAlunoFiltro = 'TODOS';
-        let desPeriodo = 'semanal'; // 'semanal' (7d) | 'mensal' (30d) | 'trimestral' (90d)
-        let desModoGrupo = 'series'; // 'series' | 'kg'
+        let desPeriodo = 'semanal';
+        let desModoGrupo = 'series';
         let desExercicioSelecionado = '';
         let desFiltroApenasParados = false;
 
@@ -2710,6 +2784,7 @@ DADOS POR GRUPAMENTO E EXERCÍCIO:${txtGrupos}`;
             const ativos = (alunosGlobais || []).filter(a => !a.arquivado);
             popularSeletoresDesempenho(ativos);
 
+            const agora = new Date(), DIA = 86400000;
             let alvoAlunos = desAlunoFiltro === 'TODOS'
                 ? ativos
                 : ativos.filter(a => String(a.id) === String(desAlunoFiltro));
@@ -2727,7 +2802,6 @@ DADOS POR GRUPAMENTO E EXERCÍCIO:${txtGrupos}`;
 
             const diasJanela = desPeriodo === 'semanal' ? 7 : (desPeriodo === 'mensal' ? 30 : 90);
             const rotuloPeriodo = desPeriodo === 'semanal' ? 'Últimos 7 dias' : (desPeriodo === 'mensal' ? 'Últimos 30 dias' : 'Últimos 90 dias');
-            const agora = new Date(), DIA = 86400000;
 
             let volAtual = 0, volAnt = 0;
             let seriesAtual = 0, seriesAnt = 0;
@@ -2735,9 +2809,9 @@ DADOS POR GRUPAMENTO E EXERCÍCIO:${txtGrupos}`;
             let maisPeso = 0, totalComparaveis = 0;
 
             const porDia = {};
-            const grupos = {}; // { musculo: { series, kg } }
+            const grupos = {};
             const rankingAlunos = [];
-            const exerciciosAluno = {}; // usado quando 1 aluno está selecionado
+            const exerciciosAluno = {};
 
             alvoAlunos.forEach(al => {
                 const idsTreinos = new Set((al.treinos || []).map(t => t.id));
@@ -2822,7 +2896,6 @@ DADOS POR GRUPAMENTO E EXERCÍCIO:${txtGrupos}`;
                 });
             });
 
-            // 1. Renderizar KPIs
             const taxaProg = totalComparaveis > 0 ? `${Math.round((maisPeso / totalComparaveis) * 100)}%` : '—';
             const subProg = totalComparaveis > 0 ? `${maisPeso} de ${totalComparaveis} treinos com +carga` : 'sem comparativo ainda';
             const kpiBox = (ico, cor, tit, val, sub) => `
@@ -2841,7 +2914,6 @@ DADOS POR GRUPAMENTO E EXERCÍCIO:${txtGrupos}`;
                 kpiBox('✅', '#34d399', `Sessões Concluídas`, `${sessoesAtual} treino(s)`, desDeltaBadge(sessoesAtual, sessoesAnt, 'treinos')) +
                 kpiBox('🚀', '#818cf8', `Progressão de Carga`, taxaProg, `<span class="text-slate-400">${subProg}</span>`);
 
-            // 2. Gráficos de Volume (kg) e Séries ao longo do período
             const serieVol = NeonChart.serieDias(porDia, 'vol');
             const serieSer = NeonChart.serieDias(porDia, 'series');
 
@@ -2851,7 +2923,6 @@ DADOS POR GRUPAMENTO E EXERCÍCIO:${txtGrupos}`;
             document.getElementById('des-grafico-series').innerHTML =
                 NeonChart.bars(serieSer, { titulo: `Volume de Séries por Dia de Treino (${rotuloPeriodo})`, unit: 'séries', somar: true, h: 170 });
 
-            // 3. Volume por Grupamento Muscular (Mapa Corporal + Barras)
             const nomesGrupos = Object.keys(grupos);
             const valoresMapa = {};
             nomesGrupos.forEach(g => {
@@ -2892,7 +2963,6 @@ DADOS POR GRUPAMENTO E EXERCÍCIO:${txtGrupos}`;
                 ? (NeonChart.hbars(itensBarras, { titulo: desModoGrupo === 'series' ? 'Ranking de Séries por Grupamento' : 'Ranking de Tonelagem (kg) por Grupamento', unit: desModoGrupo === 'series' ? 'séries' : 'kg' }) + donutHtml)
                 : '<p class="text-xs text-slate-500 text-center py-8">Nenhum treino registrado neste período para exibir os grupamentos.</p>';
 
-            // 4. Bloco Inferior: Comparativo entre Alunos (Visão Geral) OU Raio-X de Exercícios (Aluno Específico)
             const blocoDetalhe = document.getElementById('des-bloco-detalhe');
             if (desAlunoFiltro === 'TODOS') {
                 let listaRanking = rankingAlunos;
@@ -2900,7 +2970,7 @@ DADOS POR GRUPAMENTO E EXERCÍCIO:${txtGrupos}`;
                     listaRanking = rankingAlunos.filter(r => {
                         if (!r.ultima) return true;
                         const diasSemTreinar = Math.floor((agora - r.ultima) / DIA);
-                        return diasSeminar >= 3 || diasSemTreinar >= 3;
+                        return diasSemTreinar >= 3;
                     });
                 }
                 listaRanking.sort((a, b) => b.vol - a.vol);
@@ -2912,12 +2982,12 @@ DADOS POR GRUPAMENTO E EXERCÍCIO:${txtGrupos}`;
                             <h3 class="font-bold text-xs text-af-orange uppercase tracking-wider">🏆 Comparativo Geral por Aluno (${rotuloPeriodo})</h3>
                             <p class="text-[10px] text-slate-400">Toque em um aluno para filtrar todo o dashboard só para ele</p>
                         </div>
-                        <span class="text-[10px] text-slate-500 font-bold">${rankingAlunos.length} ativo(s)</span>
+                        <span class="text-[10px] text-slate-500 font-bold">${listaRanking.length} ativo(s)</span>
                     </div>
-                    ${rankingAlunos.length === 0
+                    ${listaRanking.length === 0
                         ? '<p class="text-xs text-slate-500 text-center py-6">Nenhum aluno ativo cadastrado.</p>'
                         : `<div class="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
-                            ${rankingAlunos.map(r => {
+                            ${listaRanking.map(r => {
                                 const pct = r.vol > 0 ? Math.max(6, Math.round((r.vol / maxVolAl) * 100)) : 0;
                                 const aderenciaTxt = r.esperado > 0 ? `${r.sessoes}/${r.esperado} treinos` : `${r.sessoes} treino(s)`;
                                 return `
