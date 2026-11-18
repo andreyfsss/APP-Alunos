@@ -84,7 +84,7 @@
         }
         .floating-layout-btn:active { transform: scale(0.92); }
 
-        /* Calendário */
+        /* Calendário e Seleção Inicial */
         .calendar-card {
             background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid var(--card-border);
             border-radius: 18px; padding: 16px; margin-bottom: 18px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
@@ -115,7 +115,7 @@
         }
         .workout-choice-card:active { transform: translateY(-1px); border-color: var(--accent); }
 
-        /* Cartão de Exercício */
+        /* Estilos dos Cartões de Exercício conforme o Layout escolhido */
         .exercise-card {
             background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid var(--card-border);
             border-radius: 18px; padding: 16px; margin-bottom: 16px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55);
@@ -129,17 +129,10 @@
         .exercise-name { font-size: 1.1rem; font-weight: 900; color: #fff; margin-bottom: 2px; letter-spacing: -0.015em; }
         .exercise-meta { font-size: 0.8rem; color: var(--text-muted); font-weight: 500; }
 
-        /* Layout Compacto / Lista */
+        /* Modo Lista / Compacto */
+        .exercise-card.list-mode { border-left: 4px solid var(--accent); }
         .exercise-card.compact-mode .set-row { padding: 6px 8px; margin-bottom: 6px; }
         .exercise-card.compact-mode .exercise-meta { display: none; }
-
-        .progression-panel {
-            background: rgba(8, 9, 12, 0.84); border: 1px solid rgba(252, 109, 2, 0.18);
-            border-radius: 12px; padding: 10px; margin-bottom: 12px; font-size: 0.78rem;
-        }
-        .prev-sets-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
-        .prev-chip { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.09); border-radius: 6px; padding: 3px 7px; font-size: 0.72rem; color: #E5E7EB; font-weight: 600; }
-        .prev-chip span { color: var(--accent); font-weight: 800; }
 
         .set-row {
             display: grid; grid-template-columns: 26px 1fr 1fr 1fr 34px 34px; gap: 6px; align-items: center;
@@ -147,7 +140,6 @@
             border-radius: 10px; border: 1px solid var(--card-border-subtle);
         }
         .set-row.completed { border-color: var(--success); background: rgba(16, 185, 129, 0.08); }
-        .set-row.pending-highlight { border-color: var(--danger); background: rgba(239, 68, 68, 0.1); }
         .set-number { font-weight: 800; text-align: center; color: var(--accent); font-size: 0.8rem; }
         .set-input-group { display: flex; flex-direction: column; }
         .set-input-group label { font-size: 0.58rem; color: var(--text-muted); margin-bottom: 2px; text-transform: uppercase; font-weight: 700; }
@@ -162,10 +154,8 @@
         .btn-timer-set {
             background: rgba(252, 109, 2, 0.12); border: 1px solid rgba(252, 109, 2, 0.3); border-radius: 8px;
             width: 32px; height: 34px; display: flex; align-items: center; justify-content: center;
-            color: var(--accent); cursor: pointer; font-size: 0.9rem; transition: background 0.15s;
+            color: var(--accent); cursor: pointer; font-size: 0.9rem;
         }
-        .btn-timer-set:active { background: var(--accent); color: #000; }
-
         .btn-check-set {
             background: #07080A; border: 2px solid rgba(255, 255, 255, 0.16); border-radius: 50%;
             width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
@@ -177,7 +167,6 @@
         .btn-wizard { flex: 1; padding: 12px; border-radius: 11px; font-weight: 800; font-size: 0.9rem; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
         .btn-prev { background: rgba(255, 255, 255, 0.08); color: var(--text-main); border: 1px solid rgba(255,255,255,0.1); }
         .btn-next { background: var(--accent); color: #050505; box-shadow: 0 4px 16px var(--accent-glow); }
-        .btn-next.ready-finish { background: var(--success); color: #fff; }
 
         /* Modal de Layout */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.84); backdrop-filter: blur(6px); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
@@ -190,7 +179,7 @@
         .layout-option-btn.selected { border-color: var(--accent); background: rgba(252, 109, 2, 0.12); color: var(--accent); }
         .layout-option-btn.disabled { opacity: 0.4; cursor: not-allowed; }
 
-        /* Cronômetro Flutuante de Descanso */
+        /* Banner de Descanso Flutuante */
         .rest-timer-banner {
             position: fixed; bottom: 85px; left: 50%; transform: translateX(-50%);
             background: #181920; border: 2px solid var(--accent); border-radius: 30px;
@@ -219,10 +208,10 @@
     <div id="workoutSelectionContainer"></div>
     <div id="workoutActiveContainer" style="display:none;"></div>
 
-    <!-- Botão flutuante de Layout -->
+    <!-- Botão flutuante de Layout (visível apenas durante o treino) -->
     <div class="floating-layout-btn" id="floatingLayoutBtn" style="display:none;" onclick="openLayoutModal()">⚙️</div>
 
-    <!-- Banner de Descanso Flutuante -->
+    <!-- Banner de Descanso -->
     <div class="rest-timer-banner" id="restTimerBanner">
         <div>
             <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Descanso</div>
@@ -266,7 +255,7 @@
         </div>
     </div>
 
-    <!-- Modal Finalizar / Resumo -->
+    <!-- Modal Finalizar -->
     <div class="modal-overlay" id="finishModal" onclick="closeFinishModal()">
         <div class="modal-card" onclick="event.stopPropagation()">
             <div style="font-size: 2rem; text-align: center; margin-bottom: 8px;">🏆</div>
@@ -301,11 +290,9 @@
         let currentExerciseIndex = 0;
         let activeSetForRpe = null;
 
-        // Preferências de Layout
         let currentLayout = 'cards'; // 'cards', 'list', 'compact', 'focus'
         let autoMinimizeEnabled = true;
 
-        // Cronômetro de Descanso
         let restTimerInterval = null;
         let restSecondsRemaining = 0;
 
@@ -313,19 +300,14 @@
         const token = urlParams.get('token');
 
         async function initApp() {
-            if (!token) {
-                document.getElementById('workoutSelectionContainer').innerHTML = '<p style="text-align:center; color:#9CA3AF; padding: 40px;">Link inválido ou expirado.</p>';
-                return;
-            }
+            if (!token) return;
             try {
                 const { data, error } = await supabaseClient.from('alunos').select('*').eq('token', token).single();
                 if (error || !data) return;
                 alunoData = data;
                 treinosDisponiveis = Array.isArray(data.treinos) ? data.treinos : [];
                 renderHome();
-            } catch (err) {
-                console.error(err);
-            }
+            } catch (err) { console.error(err); }
         }
 
         function renderHome() {
@@ -369,7 +351,7 @@
                     name: e.nome,
                     muscle: e.musculo || '',
                     equipment: e.equipamento || '',
-                    descanso: parseInt(e.descanso) || 60, // Tempo de descanso em segundos vindo do admin
+                    descanso: parseInt(e.descanso) || 60,
                     exigeRpe: e.exigeRpe !== false,
                     sets: Array.from({ length: parseInt(e.qtdSeries) || 4 }, () => ({
                         weight: '', reps: '', repsMeta: '10-12', rpe: '', done: false, minimized: false
@@ -432,6 +414,7 @@
                 
                 let cardClass = 'exercise-card';
                 if (isMinimized) cardClass += ' minimized';
+                if (currentLayout === 'list') cardClass += ' list-mode';
                 if (currentLayout === 'compact') cardClass += ' compact-mode';
                 if (currentLayout === 'focus') cardClass += ' focus-mode';
 
@@ -482,7 +465,7 @@
 
             if (currentLayout === 'focus') {
                 html += `
-                    <div style="display:flex; gap:10px; margin-top:16px;">
+                    <div class="wizard-nav">
                         <button class="btn-wizard btn-prev" ${currentExerciseIndex === 0 ? 'disabled' : ''} onclick="changeFocusEx(-1)">Anterior</button>
                         <button class="btn-wizard btn-next" ${currentExerciseIndex === totalEx - 1 ? 'disabled' : ''} onclick="changeFocusEx(1)">Próximo</button>
                     </div>
@@ -501,8 +484,6 @@
             const set = workoutData.exercises[exIdx].sets[sIdx];
             set.done = !set.done;
             renderActiveWorkout();
-            
-            // Se concluiu a série, inicia o cronômetro automaticamente se desejar
             if (set.done) {
                 triggerRestTimer(workoutData.exercises[exIdx].descanso);
             }
@@ -520,11 +501,9 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // --- SISTEMA DE CRONÔMETRO DE DESCANSO & VIBRAÇÃO ---
         function triggerRestTimer(seconds) {
             if (restTimerInterval) clearInterval(restTimerInterval);
             restSecondsRemaining = seconds || 60;
-            
             const banner = document.getElementById('restTimerBanner');
             banner.style.display = 'flex';
             updateRestBannerText();
@@ -535,7 +514,6 @@
                 if (restSecondsRemaining <= 0) {
                     clearInterval(restTimerInterval);
                     banner.style.display = 'none';
-                    // Dispara vibração no celular do aluno (suporta Android e iOS moderno)
                     if ("vibrate" in navigator) {
                         navigator.vibrate([200, 100, 200, 100, 400]);
                     }
@@ -554,7 +532,6 @@
             document.getElementById('restTimerBanner').style.display = 'none';
         }
 
-        // --- MODAL DE LAYOUT ---
         function openLayoutModal() {
             const list = document.getElementById('layoutOptionsList');
             const layouts = [
@@ -574,7 +551,6 @@
                 </button>
             `).join('');
 
-            // Trava o recolhimento automático se estiver no modo Foco
             const autoMinChk = document.getElementById('autoMinimizeCheck');
             const autoMinBox = document.getElementById('autoMinimizeOption');
             autoMinChk.checked = autoMinimizeEnabled;
@@ -589,15 +565,11 @@
             document.getElementById('layoutModal').style.display = 'flex';
         }
 
-        function closeLayoutModal() {
-            document.getElementById('layoutModal').style.display = 'none';
-        }
+        function closeLayoutModal() { document.getElementById('layoutModal').style.display = 'none'; }
 
         function selectLayout(layoutName) {
             currentLayout = layoutName;
-            if (currentLayout === 'focus') {
-                autoMinimizeEnabled = false; // Foco desativa recolhimento automático conforme solicitado
-            }
+            if (currentLayout === 'focus') autoMinimizeEnabled = false;
             openLayoutModal();
             renderActiveWorkout();
         }
@@ -608,7 +580,6 @@
             renderActiveWorkout();
         }
 
-        // --- RPE & FINALIZAÇÃO ---
         function openRpe(exIdx, sIdx) {
             activeSetForRpe = { exIdx, sIdx };
             const list = document.getElementById('rpeOptionsList');
