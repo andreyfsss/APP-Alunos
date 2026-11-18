@@ -1479,7 +1479,24 @@
 
             try {
                 const { data } = await supabaseClient.from('alunos').select('treinos, historico').eq('id', id).single();
-                treinosDoAluno = (data && data.treinos) ? data.treinos : [];
+                const rawTreinos = (data && data.treinos) ? (Array.isArray(data.treinos) ? data.treinos : JSON.parse(data.treinos)) : [];
+                
+                // NORMALIZADOR INTELIGENTE DE TREINOS E EXERCÍCIOS ANTIGOS
+                treinosDoAluno = rawTreinos.map(t => ({
+                    id: t.id || ('t_' + Math.random().toString(36).substr(2, 9)),
+                    nome: t.nome || t.name || 'Treino',
+                    exercicios: (t.exercicios || t.lista || t.exercises || []).map(ex => ({
+                        nome: ex.nome || ex.name || 'Exercício',
+                        musculo: ex.musculo || ex.muscle || 'Quadríceps',
+                        equipamento: ex.equipamento || ex.equipment || 'Barra',
+                        conjugado: ex.conjugado || 'Nenhum',
+                        qtdSeries: ex.qtdSeries || ex.series || 4,
+                        metodoGeral: ex.metodoGeral || 'Nulo',
+                        exigeRpe: ex.exigeRpe !== false,
+                        seriesConfig: ex.seriesConfig || []
+                    }))
+                }));
+
                 historicoTreinosAluno = (data && data.historico && Array.isArray(data.historico)) ? data.historico : [];
                 calcularEvolucaoRecenteAdmin();
                 popularSelectRaioXAdmin();
@@ -1551,7 +1568,21 @@
             if (!alunoSelecionado) return;
             const { data, error } = await supabaseClient.from('alunos').select('treinos, historico').eq('id', alunoSelecionado.id).single();
             if (error) return;
-            treinosDoAluno = (data && data.treinos) ? data.treinos : [];
+            const rawTreinos = (data && data.treinos) ? (Array.isArray(data.treinos) ? data.treinos : JSON.parse(data.treinos)) : [];
+            treinosDoAluno = rawTreinos.map(t => ({
+                id: t.id || ('t_' + Math.random().toString(36).substr(2, 9)),
+                nome: t.nome || t.name || 'Treino',
+                exercicios: (t.exercicios || t.lista || t.exercises || []).map(ex => ({
+                    nome: ex.nome || ex.name || 'Exercício',
+                    musculo: ex.musculo || ex.muscle || 'Quadríceps',
+                    equipamento: ex.equipamento || ex.equipment || 'Barra',
+                    conjugado: ex.conjugado || 'Nenhum',
+                    qtdSeries: ex.qtdSeries || ex.series || 4,
+                    metodoGeral: ex.metodoGeral || 'Nulo',
+                    exigeRpe: ex.exigeRpe !== false,
+                    seriesConfig: ex.seriesConfig || []
+                }))
+            }));
             historicoTreinosAluno = (data && data.historico && Array.isArray(data.historico)) ? data.historico : [];
         }
 
@@ -1791,8 +1822,7 @@
 
         function cancelarEdicaoExercicio() {
             indiceExercicioEditando = null;
-            const cfg = atualizarGuiaNivelMontagem ? atualizarGuiaNivelMontagem() : null;
-            const qtdPadrao = cfg ? cfg.series : 4;
+            const qtdPadrao = 4;
             document.getElementById('input-busca-ex').value = '';
             document.getElementById('input-qtd-series-ex').value = String(qtdPadrao);
             document.getElementById('select-musculo-ex').value = 'Quadríceps';
@@ -1805,8 +1835,8 @@
                 num: i + 1,
                 metodo: 'Série Normal',
                 tipoMeta: 'reps',
-                repsSugeridas: cfg ? cfg.reps : '10 a 12',
-                descanso: cfg ? cfg.descanso : 90,
+                repsSugeridas: '10 a 12',
+                descanso: 90,
                 qtdDrops: 1,
                 descansoIntra: 15
             }));
@@ -1974,16 +2004,6 @@
                 descansoIntra: parseInt(item.querySelector('.input-descanso-intra')?.value) || 15
             }));
         }
-
-        function aplicarTipoMetaNoItem(item, tipo) {
-            item.querySelector('.input-tipo-meta').value = tipo;
-            item.querySelectorAll('.btn-tipo').forEach(b => {
-                const ativo = b.getAttribute('data-tipo') === tipo;
-                b.className = 'btn-tipo px-3 py-1.5 rounded-lg transition-all ' + (ativo ? 'bg-af-orange text-black font-bold' : 'text-slate-400 font-semibold');
-            });
-        }
-        function definirTipoMeta(btn, tipo) { aplicarTipoMetaNoItem(btn.closest('.serie-config-item'), tipo); }
-        function definirTipoTodasSeries(tipo) { document.querySelectorAll('#container-config-series-admin .serie-config-item').forEach(i => aplicarTipoMetaNoItem(i, tipo)); }
 
         function gerarCamposSeriesAdmin(qtd, valoresExistentes = []) {
             qtd = parseInt(qtd) || 0;
