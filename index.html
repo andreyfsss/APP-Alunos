@@ -1714,6 +1714,23 @@
             renderizarTreinosAluno();
         }
 
+        async function moverExercicioOrdem(idx, direcao) {
+            const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
+            if (!treino || !treino.exercicios) return;
+            const novoIdx = idx + direcao;
+            if (novoIdx < 0 || novoIdx >= treino.exercicios.length) return;
+
+            const temp = treino.exercicios[idx];
+            treino.exercicios[idx] = treino.exercicios[novoIdx];
+            treino.exercicios[novoIdx] = temp;
+
+            if (indiceExercicioEditando === idx) indiceExercicioEditando = novoIdx;
+            else if (indiceExercicioEditando === novoIdx) indiceExercicioEditando = idx;
+
+            renderizarListaExerciciosDivisao();
+            await salvarTreinosNoSupabase();
+        }
+
         function conjugarExercicioComCima(idx) {
             const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
             if (!treino || idx <= 0) return;
@@ -1760,22 +1777,25 @@
             const container = document.getElementById('container-lista-exercicios-divisao');
             const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
             if (!treino || !treino.exercicios || treino.exercicios.length === 0) { container.innerHTML = `<p class="text-xs text-slate-600 text-center py-4">Nenhum exercício adicionado ainda.</p>`; return; }
+            const totalEx = treino.exercicios.length;
             container.innerHTML = treino.exercicios.map((ex, idx) => {
                 const conj = ex.conjugado && ex.conjugado !== 'Nenhum' ? ex.conjugado : null;
                 return `
-                    <div class="bg-black/60 border ${conj ? 'border-amber-500/60' : 'border-slate-900'} p-3 rounded-xl flex justify-between items-center text-xs shadow-sm">
-                        <div>
-                            <div class="flex items-center gap-1.5">
+                    <div class="bg-black/60 border ${conj ? 'border-amber-500/60' : 'border-slate-900'} p-3 rounded-xl flex justify-between items-center gap-2 text-xs shadow-sm">
+                        <div class="min-w-0 flex-1">
+                            <div class="flex flex-wrap items-center gap-1.5">
                                 <span class="text-[10px] text-af-orange font-bold uppercase">${escapeHtml(ex.musculo)} • ${escapeHtml(ex.equipamento)}</span>
                                 ${conj ? `<span class="text-[9px] bg-amber-950 text-amber-400 border border-amber-800 px-1.5 py-0.5 rounded font-black">🔗 ${conj}</span>` : ''}
                             </div>
-                            <div class="font-bold text-slate-200">${idx + 1}. ${escapeHtml(ex.nome)} (${ex.qtdSeries} Séries)</div>
+                            <div class="font-bold text-slate-200 truncate">${idx + 1}. ${escapeHtml(ex.nome)} (${ex.qtdSeries} Séries)</div>
                         </div>
-                        <div class="flex gap-1 items-center">
-                            ${idx > 0 ? `<button onclick="conjugarExercicioComCima(${idx})" class="text-[10px] text-amber-400 bg-slate-900 border border-slate-800 px-2 py-1 rounded-lg font-bold">🔗 Bi-Set</button>` : ''}
-                            ${conj ? `<button onclick="desconjugarExercicio(${idx})" class="text-[10px] text-rose-400 bg-slate-900 border border-slate-800 px-1.5 py-1 rounded-lg font-bold">🔓</button>` : ''}
-                            <button onclick="prepararEdicaoExercicio(${idx})" class="text-xs text-slate-300 bg-slate-900 border border-slate-800 px-2 py-1 rounded-lg">✏️</button>
-                            <button onclick="removerExercicioDivisao(${idx})" class="text-xs text-rose-400 bg-slate-900 border border-slate-800 px-2 py-1 rounded-lg">✕</button>
+                        <div class="flex flex-wrap gap-1 items-center justify-end shrink-0">
+                            <button onclick="moverExercicioOrdem(${idx}, -1)" ${idx === 0 ? 'disabled' : ''} title="Mover para cima" class="text-xs bg-slate-900 text-slate-300 border border-slate-800 p-1.5 rounded-lg ${idx === 0 ? 'opacity-30 cursor-not-allowed' : 'hover:border-af-orange'}">⬆️</button>
+                            <button onclick="moverExercicioOrdem(${idx}, 1)" ${idx === totalEx - 1 ? 'disabled' : ''} title="Mover para baixo" class="text-xs bg-slate-900 text-slate-300 border border-slate-800 p-1.5 rounded-lg ${idx === totalEx - 1 ? 'opacity-30 cursor-not-allowed' : 'hover:border-af-orange'}">⬇️</button>
+                            ${idx > 0 ? `<button onclick="conjugarExercicioComCima(${idx})" class="text-[10px] text-amber-400 bg-slate-900 border border-slate-800 px-2 py-1.5 rounded-lg font-bold">🔗 Bi-Set</button>` : ''}
+                            ${conj ? `<button onclick="desconjugarExercicio(${idx})" class="text-[10px] text-rose-400 bg-slate-900 border border-slate-800 px-1.5 py-1.5 rounded-lg font-bold">🔓</button>` : ''}
+                            <button onclick="prepararEdicaoExercicio(${idx})" title="Editar exercício" class="text-xs text-slate-300 bg-slate-900 border border-slate-800 px-2 py-1.5 rounded-lg">✏️</button>
+                            <button onclick="removerExercicioDivisao(${idx})" title="Remover exercício" class="text-xs text-rose-400 bg-slate-900 border border-slate-800 px-2 py-1.5 rounded-lg">✕</button>
                         </div>
                     </div>
                 `;
@@ -2111,6 +2131,8 @@
             const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
             if (treino && treino.exercicios) {
                 treino.exercicios.splice(idx, 1);
+                if (indiceExercicioEditando === idx) cancelarEdicaoExercicio();
+                else if (indiceExercicioEditando !== null && indiceExercicioEditando > idx) indiceExercicioEditando--;
                 await salvarTreinosNoSupabase();
                 renderizarListaExerciciosDivisao();
             }
@@ -2271,3 +2293,4 @@
     </script>
 </body>
 </html>
+```[cite: 5]

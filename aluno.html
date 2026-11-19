@@ -66,9 +66,31 @@
                 <h1 id="aluno-nome-topo" class="text-xl font-black text-white mt-1">Carregando...</h1>
             </div>
             <div class="flex items-center gap-1.5">
+                <button onclick="trocarTokenAluno()" title="Trocar token de acesso" class="bg-black/80 hover:border-af-orange text-slate-300 p-2.5 rounded-xl border border-slate-800 text-xs">🔑</button>
                 <button onclick="abrirModalLayout()" title="Escolher layout dos exercícios" class="bg-black/80 hover:border-af-orange text-slate-200 p-2.5 rounded-xl border border-slate-800 text-xs">⚙️</button>
                 <button onclick="carregarDadosAluno()" title="Atualizar" class="bg-black/80 text-slate-300 p-2.5 rounded-xl border border-slate-800 text-xs">🔄</button>
             </div>
+        </div>
+
+        <!-- TELA DE ACESSO POR TOKEN (EXIBIDA QUANDO NÃO HÁ TOKEN NA URL NEM SALVO NO APARELHO) -->
+        <div id="sec-pedir-token" class="hidden bg-af-card rounded-2xl p-5 space-y-3.5 shadow-xl border border-af-orange/30">
+            <div class="space-y-1">
+                <span class="text-[10px] font-black text-af-orange tracking-widest bg-orange-950/60 px-2 py-0.5 rounded border border-orange-600/40 uppercase">Primeiro Acesso / Tela Inicial</span>
+                <h2 class="text-base font-black text-white pt-1">Informe seu token de aluno</h2>
+                <p class="text-xs text-slate-400 leading-relaxed">
+                    Cole abaixo o código (token) enviado pelo seu personal. Ele ficará salvo automaticamente neste celular para os próximos acessos.
+                </p>
+            </div>
+
+            <div class="space-y-2">
+                <label for="input-token-aluno" class="block text-[10px] text-slate-400 uppercase font-bold">Seu Token de Acesso</label>
+                <input type="text" id="input-token-aluno" placeholder="Cole seu token aqui..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" onkeydown="if(event.key==='Enter') confirmarTokenManual()" class="w-full bg-black border border-slate-800 rounded-xl px-3.5 py-3 text-white text-xs font-mono focus:border-af-orange focus:outline-none">
+                <p id="erro-token-manual" class="hidden text-[11px] text-rose-400 font-bold"></p>
+            </div>
+
+            <button id="btn-confirmar-token" onclick="confirmarTokenManual()" class="w-full bg-af-orange hover:bg-orange-600 text-black font-black py-3 rounded-xl text-xs uppercase tracking-wider shadow-lg">
+                Salvar e Acessar Treinos →
+            </button>
         </div>
 
         <!-- CRONÔMETRO FLUTUANTE DE DESCANSO -->
@@ -193,6 +215,8 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6aWZ6aWtkZW9qYXp5c3dqZ3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MTg3NjgsImV4cCI6MjEwODk5NDc2OH0.Y3rycAN_O1IL99OdMJsC_TRMrSEKJp4vQJho2P4D_W0';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        const STORAGE_TOKEN_ALUNO_KEY = 'af_aluno_token_salvo';
+
         const OPCOES_RPE = [
             { val: 10, texto: 'Máximo — não faria mais nenhuma repetição.' },
             { val: 9,  texto: 'Muito pesado — faria mais 1 repetição.' },
@@ -249,25 +273,118 @@
         let layoutAluno = localStorage.getItem('af_layout_aluno') || 'detalhado';
         let alvoRpe = null;
 
-        function obterTokenUrl() {
-            const params = new URLSearchParams(window.location.search);
-            return params.get('token');
+        function extrairTokenLimpo(valor) {
+            const bruto = String(valor || '').trim();
+            if (!bruto) return '';
+            // Caso o aluno cole o link inteiro em vez de só o código do token
+            if (bruto.includes('token=')) {
+                try {
+                    const urlObj = new URL(bruto.startsWith('http') ? bruto : `https://exemplo.com/?${bruto.split('?').pop()}`);
+                    const extraido = (urlObj.searchParams.get('token') || '').trim();
+                    if (extraido) return extraido;
+                } catch (e) {}
+            }
+            return bruto;
         }
 
-        async function carregarDadosAluno() {
-            const token = obterTokenUrl();
-            if (!token) {
-                document.getElementById('aluno-nome-topo').innerText = 'Token não informado';
+        function obterTokenAtivo() {
+            const params = new URLSearchParams(window.location.search);
+            const tokenUrl = extrairTokenLimpo(params.get('token') || params.get('t') || '');
+
+            if (tokenUrl) {
+                try { localStorage.setItem(STORAGE_TOKEN_ALUNO_KEY, tokenUrl); } catch (e) {}
+                return tokenUrl;
+            }
+
+            try {
+                const tokenSalvo = extrairTokenLimpo(localStorage.getItem(STORAGE_TOKEN_ALUNO_KEY) || '');
+                if (tokenSalvo) return tokenSalvo;
+            } catch (e) {}
+
+            return '';
+        }
+
+        function mostrarTelaPedirToken(mensagemErro = '') {
+            pararCronometro();
+            document.getElementById('sec-lista-treinos').classList.add('hidden');
+            document.getElementById('sec-execucao-treino').classList.add('hidden');
+            document.getElementById('sec-resumo-treino').classList.add('hidden');
+            document.getElementById('sec-pedir-token').classList.remove('hidden');
+            document.getElementById('aluno-nome-topo').innerText = 'Identificação do Aluno';
+
+            const erroEl = document.getElementById('erro-token-manual');
+            if (mensagemErro) {
+                erroEl.innerText = mensagemErro;
+                erroEl.classList.remove('hidden');
+            } else {
+                erroEl.innerText = '';
+                erroEl.classList.add('hidden');
+            }
+        }
+
+        function ocultarTelaPedirToken() {
+            document.getElementById('sec-pedir-token').classList.add('hidden');
+            document.getElementById('erro-token-manual').classList.add('hidden');
+            document.getElementById('sec-lista-treinos').classList.remove('hidden');
+        }
+
+        async function confirmarTokenManual() {
+            const input = document.getElementById('input-token-aluno');
+            const tokenDigitado = extrairTokenLimpo(input.value);
+            if (!tokenDigitado) {
+                mostrarTelaPedirToken('Por favor, cole ou digite o token enviado pelo seu personal.');
+                input.focus();
                 return;
             }
+
+            const btn = document.getElementById('btn-confirmar-token');
+            btn.disabled = true;
+            btn.innerText = 'Verificando token...';
+
+            try {
+                localStorage.setItem(STORAGE_TOKEN_ALUNO_KEY, tokenDigitado);
+            } catch (e) {}
+
+            await carregarDadosAluno(tokenDigitado);
+
+            btn.disabled = false;
+            btn.innerText = 'Salvar e Acessar Treinos →';
+        }
+
+        function trocarTokenAluno() {
+            if (!confirm('Deseja informar outro token de aluno neste aparelho?')) return;
+            try { localStorage.removeItem(STORAGE_TOKEN_ALUNO_KEY); } catch (e) {}
+            // Limpa parâmetro da URL sem recarregar para não puxar o token antigo novamente
+            try {
+                const urlLimpa = window.location.pathname;
+                window.history.replaceState({}, document.title, urlLimpa);
+            } catch (e) {}
+            alunoDados = null;
+            treinoAtivoExecucao = null;
+            progressoExecucao = {};
+            document.getElementById('input-token-aluno').value = '';
+            mostrarTelaPedirToken();
+        }
+
+        async function carregarDadosAluno(tokenForcado = '') {
+            const token = extrairTokenLimpo(tokenForcado) || obterTokenAtivo();
+            if (!token) {
+                mostrarTelaPedirToken();
+                return;
+            }
+
             try {
                 const { data, error } = await supabaseClient.from('alunos').select('*').eq('token', token).single();
-                if (error || !data) throw new Error('Aluno não encontrado');
+                if (error || !data) throw new Error('Token inválido ou aluno não encontrado');
+
+                try { localStorage.setItem(STORAGE_TOKEN_ALUNO_KEY, token); } catch (e) {}
                 alunoDados = data;
                 document.getElementById('aluno-nome-topo').innerText = alunoDados.nome;
+                ocultarTelaPedirToken();
                 renderizarDivisoesAluno();
             } catch (err) {
-                document.getElementById('aluno-nome-topo').innerText = 'Erro ao carregar dados';
+                try { localStorage.removeItem(STORAGE_TOKEN_ALUNO_KEY); } catch (e) {}
+                mostrarTelaPedirToken('Token não encontrado. Verifique se copiou corretamente e tente novamente.');
             }
         }
 
