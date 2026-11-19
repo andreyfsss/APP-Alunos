@@ -19,6 +19,27 @@
         .text-af-orange { color: #FF6A00; }
         .bg-af-orange { background-color: #FF6A00; }
         .border-af-orange { border-color: #FF6A00; }
+        /* Badge estilo "Área do Aluno" clicável */
+        .badge-metodo-clicavel {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #FF6A00;
+            background-color: rgba(67, 20, 7, 0.65);
+            border: 1px solid rgba(234, 88, 12, 0.45);
+            border-radius: 0.375rem;
+            padding: 0.2rem 0.45rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .badge-metodo-clicavel:hover {
+            border-color: #FF6A00;
+            background-color: rgba(124, 45, 18, 0.65);
+        }
         /* Cronômetro flutuante com bordas arredondadas acompanhando o scroll */
         #card-cronometro {
             position: fixed;
@@ -119,6 +140,15 @@
         </div>
     </div>
 
+    <!-- MODAL AVISO CAMPOS OBRIGATÓRIOS DA SÉRIE -->
+    <div id="modal-campos-obrigatorios" class="fixed inset-0 bg-black/85 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-af-card rounded-2xl max-w-sm w-full p-5 space-y-4 text-center shadow-2xl">
+            <h3 class="text-sm font-black text-af-orange uppercase">Preenchimento obrigatório</h3>
+            <p id="texto-campos-obrigatorios" class="text-xs text-slate-300 leading-relaxed">Preencha carga, repetições e RPE antes de concluir a série.</p>
+            <button onclick="fecharModalCamposObrigatorios()" class="w-full bg-af-orange text-black font-black py-2.5 rounded-xl text-xs">Entendi</button>
+        </div>
+    </div>
+
     <script>
         const SUPABASE_URL = 'https://dzifzikdeojazyswjguw.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6aWZ6aWtkZW9qYXp5c3dqZ3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MTg3NjgsImV4cCI6MjEwODk5NDc2OH0.Y3rycAN_O1IL99OdMJsC_TRMrSEKJp4vQJho2P4D_W0';
@@ -199,16 +229,77 @@
             document.getElementById('sec-lista-treinos').classList.remove('hidden');
         }
 
-        function caixaExplicacaoMetodoAluno(s) {
+        function garantirEstadoSerie(exIdx, sIdx, exigeRpe = true) {
+            if (!progressoExecucao[exIdx]) progressoExecucao[exIdx] = {};
+            if (!progressoExecucao[exIdx][sIdx]) {
+                progressoExecucao[exIdx][sIdx] = {
+                    carga: '',
+                    reps: '',
+                    rpe: '',
+                    concluida: false,
+                    metodoExpandido: false,
+                    drops: {}
+                };
+            }
+            if (!progressoExecucao[exIdx][sIdx].drops) {
+                progressoExecucao[exIdx][sIdx].drops = {};
+            }
+            return progressoExecucao[exIdx][sIdx];
+        }
+
+        function alternarMetodoSerieAluno(exIdx, sIdx, exigeRpe = true) {
+            const p = garantirEstadoSerie(exIdx, sIdx, exigeRpe);
+            p.metodoExpandido = !p.metodoExpandido;
+            renderizarExerciciosExecucao();
+        }
+
+        function atualizarDropSerie(exIdx, sIdx, dropNum, campo, valor, exigeRpe = true) {
+            const p = garantirEstadoSerie(exIdx, sIdx, exigeRpe);
+            if (!p.drops[dropNum]) p.drops[dropNum] = { carga: '', reps: '' };
+            p.drops[dropNum][campo] = valor;
+        }
+
+        function caixaExplicacaoMetodoAluno(s, exIdx, sIdx, exigeRpe) {
             if (layoutAluno !== 'detalhado') return '';
+            const p = garantirEstadoSerie(exIdx, sIdx, exigeRpe);
+            const isExpandido = !!p.metodoExpandido;
+
             if (s.metodo === 'Drop Set') {
+                const qtdDrops = s.qtdDrops || 1;
+                let dropsInputsHtml = '';
+                for (let d = 1; d <= qtdDrops; d++) {
+                    const dropVal = p.drops?.[d] || { carga: '', reps: '' };
+                    dropsInputsHtml += `
+                        <div class="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-800/70">
+                            <div>
+                                <label class="text-[9px] text-amber-400 font-bold block mb-1">Drop ${d} - Carga (kg)</label>
+                                <input type="number" inputmode="decimal" value="${escapeHtml(dropVal.carga)}" oninput="atualizarDropSerie(${exIdx}, ${sIdx}, ${d}, 'carga', this.value, ${exigeRpe})" placeholder="kg" class="w-full bg-black border border-slate-800 rounded-xl p-2 text-white text-center text-xs">
+                            </div>
+                            <div>
+                                <label class="text-[9px] text-amber-400 font-bold block mb-1">Drop ${d} - Reps</label>
+                                <input type="number" inputmode="numeric" value="${escapeHtml(dropVal.reps)}" oninput="atualizarDropSerie(${exIdx}, ${sIdx}, ${d}, 'reps', this.value, ${exigeRpe})" placeholder="reps" class="w-full bg-black border border-slate-800 rounded-xl p-2 text-white text-center text-xs">
+                            </div>
+                        </div>
+                    `;
+                }
+
                 return `
-                    <div class="bg-orange-950/35 border border-af-orange/40 rounded-xl p-2.5 text-[11px] text-orange-100 leading-snug">
-                        <strong class="text-af-orange block uppercase text-[10px] mb-0.5">Como fazer Drop-Set (${s.qtdDrops || 1} drop(s))</strong>
-                        Vá até próximo da falha, reduza a carga sem descanso longo e continue as repetições imediatamente.
+                    <div class="space-y-2">
+                        <button type="button" onclick="alternarMetodoSerieAluno(${exIdx}, ${sIdx}, ${exigeRpe})" class="badge-metodo-clicavel">
+                            <span>Drop-Set (${qtdDrops} drop${qtdDrops > 1 ? 's' : ''})</span>
+                            <span>${isExpandido ? '▲' : '▼'}</span>
+                        </button>
+                        ${isExpandido ? `
+                            <div class="bg-orange-950/35 border border-af-orange/40 rounded-xl p-2.5 text-[11px] text-orange-100 leading-snug">
+                                <strong class="text-af-orange block uppercase text-[10px] mb-0.5">Como fazer Drop-Set (${qtdDrops} drop(s))</strong>
+                                Vá até próximo da falha, reduza a carga sem descanso longo e continue as repetições imediatamente.
+                                ${dropsInputsHtml}
+                            </div>
+                        ` : ''}
                     </div>
                 `;
             }
+
             if (s.metodo === 'Rest Pause') {
                 const pausas = Array.isArray(s.pausasRestPause) && s.pausasRestPause.length
                     ? s.pausasRestPause
@@ -216,14 +307,24 @@
                 const minP = Math.min(...pausas);
                 const maxP = Math.max(...pausas);
                 const faixaTxt = minP === maxP ? `${minP}s` : `${minP}s a ${maxP}s`;
+
                 return `
-                    <div class="bg-amber-950/30 border border-amber-500/40 rounded-xl p-2.5 text-[11px] text-amber-100 leading-snug space-y-1">
-                        <strong class="text-amber-400 block uppercase text-[10px]">Como fazer Rest-Pause</strong>
-                        <div>Vá até próximo da falha, faça uma pausa curta (recomendado entre <b>10s e 20s</b> — prescrito: <b>${faixaTxt}</b>) e volte para mais repetições.</div>
-                        <div class="text-[10px] text-amber-300/90">Pausas: ${pausas.map((p, idx) => `Pausa ${idx+1}: ${p}s`).join(' • ')}</div>
+                    <div class="space-y-2">
+                        <button type="button" onclick="alternarMetodoSerieAluno(${exIdx}, ${sIdx}, ${exigeRpe})" class="badge-metodo-clicavel">
+                            <span>Rest-Pause (${faixaTxt})</span>
+                            <span>${isExpandido ? '▲' : '▼'}</span>
+                        </button>
+                        ${isExpandido ? `
+                            <div class="bg-amber-950/30 border border-amber-500/40 rounded-xl p-2.5 text-[11px] text-amber-100 leading-snug space-y-1">
+                                <strong class="text-amber-400 block uppercase text-[10px]">Como fazer Rest-Pause</strong>
+                                <div>Vá até próximo da falha, faça uma pausa curta (recomendado entre <b>10s e 20s</b> — prescrito: <b>${faixaTxt}</b>) e volte para mais repetições.</div>
+                                <div class="text-[10px] text-amber-300/90">Pausas: ${pausas.map((p, idx) => `Pausa ${idx+1}: ${p}s`).join(' • ')}</div>
+                            </div>
+                        ` : ''}
                     </div>
                 `;
             }
+
             return '';
         }
 
@@ -241,51 +342,34 @@
                 const conj = ex.conjugado && ex.conjugado !== 'Nenhum' ? ex.conjugado : null;
 
                 let seriesHtml = seriesConfig.map((s, sIdx) => {
-                    if (!progressoExecucao[exIdx]) progressoExecucao[exIdx] = {};
-                    if (!progressoExecucao[exIdx][sIdx]) progressoExecucao[exIdx][sIdx] = { carga: '', reps: '', rpe: exigeRpe ? 8 : '', concluida: false };
-                    const p = progressoExecucao[exIdx][sIdx];
-
-                    const isDrop = s.metodo === 'Drop Set';
-                    const qtdDrops = s.qtdDrops || 1;
-
-                    let dropInputsHtml = '';
-                    if (isDrop) {
-                        for (let d = 1; d <= qtdDrops; d++) {
-                            dropInputsHtml += `
-                                <div class="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-800/60 pl-3">
-                                    <div><label class="text-[9px] text-amber-400 font-bold block">Drop ${d} - Carga (kg)</label><input type="number" inputmode="decimal" placeholder="kg" class="w-full bg-black border border-slate-800 rounded-xl p-2 text-white text-center text-xs"></div>
-                                    <div><label class="text-[9px] text-amber-400 font-bold block">Drop ${d} - Reps</label><input type="number" inputmode="numeric" placeholder="reps" class="w-full bg-black border border-slate-800 rounded-xl p-2 text-white text-center text-xs"></div>
-                                </div>
-                            `;
-                        }
-                    }
+                    const p = garantirEstadoSerie(exIdx, sIdx, exigeRpe);
+                    const metaTexto = s.repsSugeridas || '10 a 12';
+                    const metodoLabel = s.metodo && s.metodo !== 'Série Normal' ? ` (${s.metodo})` : '';
 
                     return `
                         <div class="bg-black/60 border ${p.concluida ? 'border-emerald-500/60 bg-emerald-950/10' : 'border-slate-800'} rounded-xl p-3 space-y-2.5">
-                            <div class="flex justify-between items-center text-xs">
-                                <span class="font-bold text-af-orange">Série ${s.num} (${s.metodo || 'Normal'})</span>
-                                <span class="text-slate-400">Meta: <b>${s.repsSugeridas || '10 a 12'}</b></span>
+                            <div class="flex justify-between items-center text-xs gap-2">
+                                <span class="font-bold text-af-orange">Série ${s.num}${metodoLabel}</span>
                             </div>
-                            ${caixaExplicacaoMetodoAluno(s)}
+                            ${caixaExplicacaoMetodoAluno(s, exIdx, sIdx, exigeRpe)}
                             <div class="grid ${exigeRpe ? 'grid-cols-3' : 'grid-cols-2'} gap-2">
                                 <div>
                                     <label class="block text-[9px] text-slate-400 uppercase font-bold mb-1">Carga (kg)</label>
-                                    <input type="number" inputmode="decimal" value="${p.carga}" oninput="atualizarProgressoSerie(${exIdx}, ${sIdx}, 'carga', this.value)" placeholder="0" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-white text-center font-bold text-xs">
+                                    <input type="number" inputmode="decimal" value="${escapeHtml(p.carga)}" oninput="atualizarProgressoSerie(${exIdx}, ${sIdx}, 'carga', this.value, ${exigeRpe})" placeholder="0" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-white text-center font-bold text-xs">
                                 </div>
                                 <div>
-                                    <label class="block text-[9px] text-slate-400 uppercase font-bold mb-1">Reps</label>
-                                    <input type="number" inputmode="numeric" value="${p.reps}" oninput="atualizarProgressoSerie(${exIdx}, ${sIdx}, 'reps', this.value)" placeholder="0" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-white text-center font-bold text-xs">
+                                    <label class="block text-[9px] text-slate-400 uppercase font-bold mb-1">REPS - META: ${escapeHtml(metaTexto)}</label>
+                                    <input type="number" inputmode="numeric" value="${escapeHtml(p.reps)}" oninput="atualizarProgressoSerie(${exIdx}, ${sIdx}, 'reps', this.value, ${exigeRpe})" placeholder="0" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-white text-center font-bold text-xs">
                                 </div>
                                 ${exigeRpe ? `
                                 <div>
                                     <label class="block text-[9px] text-slate-400 uppercase font-bold mb-1">RPE (5–10)</label>
                                     <button type="button" onclick="abrirModalRpe(${exIdx}, ${sIdx})" class="w-full bg-black border border-af-orange/50 hover:border-af-orange rounded-xl p-2.5 text-af-orange text-center font-black text-xs">
-                                        ${p.rpe !== '' ? p.rpe : 'Escolher'}
+                                        ${p.rpe !== '' && p.rpe !== null && p.rpe !== undefined ? p.rpe : 'Escolher'}
                                     </button>
                                 </div>` : ''}
                             </div>
-                            ${dropInputsHtml}
-                            <button onclick="concluirSerie(${exIdx}, ${sIdx}, ${s.descanso || 90})" class="w-full py-2 rounded-xl font-bold text-xs transition-all ${p.concluida ? 'bg-emerald-500 text-black shadow-md' : 'bg-slate-900 border border-slate-800 text-slate-300 hover:border-af-orange'}">
+                            <button onclick="concluirSerie(${exIdx}, ${sIdx}, ${s.descanso || 90}, ${exigeRpe})" class="w-full py-2 rounded-xl font-bold text-xs transition-all ${p.concluida ? 'bg-emerald-500 text-black shadow-md' : 'bg-slate-900 border border-slate-800 text-slate-300 hover:border-af-orange'}">
                                 ${p.concluida ? '✅ Série Concluida (Toque para refazer)' : 'Concluir Série ⏱️'}
                             </button>
                         </div>
@@ -307,21 +391,48 @@
             }).join('');
         }
 
-        function atualizarProgressoSerie(exIdx, sIdx, campo, valor) {
-            if (!progressoExecucao[exIdx]) progressoExecucao[exIdx] = {};
-            if (!progressoExecucao[exIdx][sIdx]) progressoExecucao[exIdx][sIdx] = { carga: '', reps: '', rpe: '', concluida: false };
-            progressoExecucao[exIdx][sIdx][campo] = valor;
+        function atualizarProgressoSerie(exIdx, sIdx, campo, valor, exigeRpe = true) {
+            const p = garantirEstadoSerie(exIdx, sIdx, exigeRpe);
+            p[campo] = valor;
         }
 
-        function concluirSerie(exIdx, sIdx, segundosDescanso) {
-            if (!progressoExecucao[exIdx]) progressoExecucao[exIdx] = {};
-            if (!progressoExecucao[exIdx][sIdx]) progressoExecucao[exIdx][sIdx] = { carga: '', reps: '', rpe: '', concluida: false };
-            
-            const p = progressoExecucao[exIdx][sIdx];
-            p.concluida = !p.concluida;
+        function mostrarAvisoCamposObrigatorios(mensagem) {
+            document.getElementById('texto-campos-obrigatorios').innerText = mensagem;
+            document.getElementById('modal-campos-obrigatorios').classList.remove('hidden');
+        }
+
+        function fecharModalCamposObrigatorios() {
+            document.getElementById('modal-campos-obrigatorios').classList.add('hidden');
+        }
+
+        function concluirSerie(exIdx, sIdx, segundosDescanso, exigeRpe = true) {
+            const p = garantirEstadoSerie(exIdx, sIdx, exigeRpe);
+
+            if (p.concluida) {
+                p.concluida = false;
+                renderizarExerciciosExecucao();
+                return;
+            }
+
+            const temCarga = String(p.carga ?? '').trim() !== '';
+            const repsNum = parseInt(p.reps, 10);
+            const temReps = String(p.reps ?? '').trim() !== '' && !isNaN(repsNum) && repsNum > 0;
+            const temRpe = !exigeRpe || (String(p.rpe ?? '').trim() !== '' && p.rpe !== null && p.rpe !== undefined);
+
+            const faltando = [];
+            if (!temCarga) faltando.push('Carga (kg)');
+            if (!temReps) faltando.push('Repetições');
+            if (!temRpe) faltando.push('RPE');
+
+            if (faltando.length > 0) {
+                mostrarAvisoCamposObrigatorios(`Para concluir a série, preencha: ${faltando.join(', ')}.`);
+                return;
+            }
+
+            p.concluida = true;
             renderizarExerciciosExecucao();
 
-            if (p.concluida && segundosDescanso > 0) {
+            if (segundosDescanso > 0) {
                 iniciarCronometro(segundosDescanso);
             }
         }
@@ -411,9 +522,8 @@
 
         function selecionarRpeAluno(val) {
             if (alvoRpe) {
-                if (!progressoExecucao[alvoRpe.exIdx]) progressoExecucao[alvoRpe.exIdx] = {};
-                if (!progressoExecucao[alvoRpe.exIdx][alvoRpe.sIdx]) progressoExecucao[alvoRpe.exIdx][alvoRpe.sIdx] = { carga: '', reps: '', rpe: '', concluida: false };
-                progressoExecucao[alvoRpe.exIdx][alvoRpe.sIdx].rpe = val;
+                const p = garantirEstadoSerie(alvoRpe.exIdx, alvoRpe.sIdx, true);
+                p.rpe = val;
                 renderizarExerciciosExecucao();
             }
             fecharModalRpe();
@@ -427,17 +537,20 @@
 
             exercicios.forEach((ex, exIdx) => {
                 const totalSeries = (ex.seriesConfig && ex.seriesConfig.length) ? ex.seriesConfig.length : (ex.qtdSeries || 4);
+                const exigeRpe = ex.exigeRpe !== false;
                 for (let sIdx = 0; sIdx < totalSeries; sIdx++) {
                     const p = progressoExecucao[exIdx]?.[sIdx];
                     const repsNum = parseInt(p?.reps, 10) || 0;
-                    if (!p || !p.concluida || repsNum <= 0) {
+                    const temCarga = String(p?.carga ?? '').trim() !== '';
+                    const temRpe = !exigeRpe || (String(p?.rpe ?? '').trim() !== '' && p?.rpe !== null && p?.rpe !== undefined);
+                    if (!p || !p.concluida || repsNum <= 0 || !temCarga || !temRpe) {
                         pendentes++;
                     }
                 }
             });
 
             if (pendentes > 0) {
-                document.getElementById('texto-pendencias-treino').innerText = `Você ainda tem ${pendentes} série(s) sem concluir ou sem repetições preenchidas. Conclua cada série para poder finalizar.`;
+                document.getElementById('texto-pendencias-treino').innerText = `Você ainda tem ${pendentes} série(s) sem concluir ou sem carga, repetições e RPE preenchidos. Conclua cada série para poder finalizar.`;
                 document.getElementById('modal-pendencias-treino').classList.remove('hidden');
                 return;
             }
@@ -471,9 +584,24 @@
                         const carga = parseFloat(s.carga) || 0;
                         const reps = parseInt(s.reps) || 0;
                         const rpe = parseFloat(s.rpe) || null;
-                        volEx += carga * reps;
+                        let volSerie = carga * reps;
+
+                        const dropsArr = [];
+                        if (s.drops && typeof s.drops === 'object') {
+                            Object.keys(s.drops).forEach(dKey => {
+                                const dObj = s.drops[dKey];
+                                const dCarga = parseFloat(dObj?.carga) || 0;
+                                const dReps = parseInt(dObj?.reps, 10) || 0;
+                                if (dCarga > 0 || dReps > 0) {
+                                    volSerie += dCarga * dReps;
+                                    dropsArr.push({ drop: Number(dKey), carga: dCarga, reps: dReps });
+                                }
+                            });
+                        }
+
+                        volEx += volSerie;
                         seriesValidadas++;
-                        seriesRealizadas.push({ carga, reps, rpe });
+                        seriesRealizadas.push({ carga, reps, rpe, drops: dropsArr });
                     }
                 });
 
