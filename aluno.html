@@ -19,30 +19,45 @@
         .text-af-orange { color: #FF6A00; }
         .bg-af-orange { background-color: #FF6A00; }
         .border-af-orange { border-color: #FF6A00; }
+        /* Cronômetro flutuante com bordas arredondadas acompanhando o scroll */
+        #card-cronometro {
+            position: fixed;
+            left: 0.75rem;
+            right: 0.75rem;
+            bottom: 1rem;
+            max-width: 28rem;
+            margin: 0 auto;
+            z-index: 45;
+            border-radius: 1.25rem;
+            background: rgba(12, 12, 14, 0.95);
+        }
         input, select, textarea { font-size: 16px !important; }
         html { touch-action: manipulation; }
     </style>
 </head>
-<body class="text-slate-100 min-h-screen p-3 md:p-6 flex flex-col items-center antialiased pb-24">
+<body class="text-slate-100 min-h-screen p-3 md:p-6 flex flex-col items-center antialiased pb-28">
     <div id="app-shell" class="w-full max-w-md space-y-4">
         
-        <!-- TOPO / IDENTIFICAÇÃO -->
+        <!-- TOPO / IDENTIFICAÇÃO + ENGRENAGEM DE LAYOUT -->
         <div class="bg-af-card rounded-2xl p-4 flex justify-between items-center shadow-lg">
             <div>
                 <span class="text-[10px] font-black text-af-orange tracking-widest bg-orange-950/60 px-2 py-0.5 rounded border border-orange-600/40 uppercase">Área do Aluno</span>
                 <h1 id="aluno-nome-topo" class="text-xl font-black text-white mt-1">Carregando...</h1>
             </div>
-            <button onclick="carregarDadosAluno()" class="bg-black/80 text-slate-300 p-2.5 rounded-xl border border-slate-800 text-xs">🔄</button>
+            <div class="flex items-center gap-1.5">
+                <button onclick="abrirModalLayout()" title="Escolher layout dos exercícios" class="bg-black/80 hover:border-af-orange text-slate-200 p-2.5 rounded-xl border border-slate-800 text-xs">⚙️</button>
+                <button onclick="carregarDadosAluno()" title="Atualizar" class="bg-black/80 text-slate-300 p-2.5 rounded-xl border border-slate-800 text-xs">🔄</button>
+            </div>
         </div>
 
         <!-- CRONÔMETRO FLUTUANTE DE DESCANSO -->
-        <div id="card-cronometro" class="hidden bg-af-card border-2 border-af-orange rounded-2xl p-4 text-center space-y-2 shadow-2xl animate-pulse">
+        <div id="card-cronometro" class="hidden border-2 border-af-orange p-4 text-center space-y-2 shadow-2xl">
             <span class="text-[10px] font-bold text-af-orange uppercase tracking-wider">⏱️ Descanso entre Séries</span>
-            <div id="display-tempo-cronometro" class="text-3xl font-black text-white">01:30</div>
+            <div id="display-tempo-cronometro" class="text-3xl font-black text-white tabular-nums">01:30</div>
             <div class="flex gap-2 justify-center pt-1">
-                <button onclick="ajustarTempoCronometro(-15)" class="bg-black/80 border border-slate-800 px-3 py-1 rounded-lg text-xs font-bold text-slate-300">-15s</button>
-                <button onclick="pararCronometro()" class="bg-rose-950 text-rose-400 border border-rose-800 px-4 py-1 rounded-lg text-xs font-bold">Pular</button>
-                <button onclick="ajustarTempoCronometro(15)" class="bg-black/80 border border-slate-800 px-3 py-1 rounded-lg text-xs font-bold text-slate-300">+15s</button>
+                <button onclick="ajustarTempoCronometro(-15)" class="bg-black/80 border border-slate-800 px-3 py-1 rounded-xl text-xs font-bold text-slate-300">-15s</button>
+                <button onclick="pararCronometro()" class="bg-rose-950 text-rose-400 border border-rose-800 px-4 py-1 rounded-xl text-xs font-bold">Pular</button>
+                <button onclick="ajustarTempoCronometro(15)" class="bg-black/80 border border-slate-800 px-3 py-1 rounded-xl text-xs font-bold text-slate-300">+15s</button>
             </div>
         </div>
 
@@ -59,10 +74,48 @@
             <div class="flex items-center justify-between bg-af-card rounded-2xl p-4">
                 <button onclick="voltarParaListaTreinos()" class="bg-black text-slate-400 px-3 py-2 rounded-xl text-xs font-bold border border-slate-800">← Voltar</button>
                 <h2 id="titulo-treino-execucao" class="font-bold text-sm text-af-orange uppercase tracking-wider">Treino</h2>
-                <button onclick="finalizarTreinoDefinitivo()" class="bg-emerald-500 hover:bg-emerald-600 text-black font-black px-4 py-2 rounded-xl text-xs shadow-lg">Finalizar 🎯</button>
+                <button onclick="tentarFinalizarTreino()" class="bg-emerald-500 hover:bg-emerald-600 text-black font-black px-4 py-2 rounded-xl text-xs shadow-lg">Finalizar 🎯</button>
             </div>
 
             <div id="container-exercicios-execucao" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <!-- MODAL ENGRENAGEM DE LAYOUT -->
+    <div id="modal-layout-aluno" class="fixed inset-0 bg-black/85 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-af-card rounded-2xl max-w-sm w-full p-5 space-y-3 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                <h3 class="text-xs font-black text-af-orange uppercase">Como você quer ver os exercícios?</h3>
+                <button onclick="fecharModalLayout()" class="text-slate-400 text-xs font-bold bg-black border border-slate-800 px-2 py-1 rounded-lg">✕</button>
+            </div>
+            <div class="space-y-2 text-xs">
+                <button onclick="escolherLayoutAluno('detalhado')" class="w-full text-left p-3 rounded-xl bg-black border border-slate-800 hover:border-af-orange font-bold">📋 Detalhado (explicações de Drop-Set e Rest-Pause)</button>
+                <button onclick="escolherLayoutAluno('compacto')" class="w-full text-left p-3 rounded-xl bg-black border border-slate-800 hover:border-af-orange font-bold">⚡ Compacto (foco direto em carga, reps e RPE)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL RPE CLICÁVEL (5 A 10) -->
+    <div id="modal-rpe-aluno" class="fixed inset-0 bg-black/85 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-af-card rounded-2xl max-w-sm w-full p-5 space-y-3 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                <h3 class="text-xs font-black text-af-orange uppercase">Escala de Esforço (RPE 5 a 10)</h3>
+                <button onclick="fecharModalRpe()" class="text-slate-400 text-xs font-bold bg-black border border-slate-800 px-2 py-1 rounded-lg">✕</button>
+            </div>
+            <p class="text-[11px] text-slate-400">Quantas repetições você ainda conseguiria fazer com boa técnica?</p>
+            <div id="lista-opcoes-rpe" class="space-y-1.5"></div>
+        </div>
+    </div>
+
+    <!-- MODAL PENDÊNCIAS AO FINALIZAR (CONTINUAR TREINO / DESCARTAR TREINO) -->
+    <div id="modal-pendencias-treino" class="fixed inset-0 bg-black/85 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-af-card rounded-2xl max-w-sm w-full p-5 space-y-4 text-center shadow-2xl">
+            <h3 class="text-sm font-black text-af-orange uppercase">Séries pendentes</h3>
+            <p id="texto-pendencias-treino" class="text-xs text-slate-300 leading-relaxed">Você precisa concluir e preencher todas as séries antes de finalizar.</p>
+            <div class="flex gap-2 pt-1">
+                <button onclick="fecharModalPendencias()" class="flex-1 bg-af-orange text-black font-black py-2.5 rounded-xl text-xs">Continuar treino</button>
+                <button onclick="descartarTreinoAtivo()" class="flex-1 bg-rose-950 text-rose-300 border border-rose-700 font-bold py-2.5 rounded-xl text-xs">Descartar treino</button>
+            </div>
         </div>
     </div>
 
@@ -71,11 +124,22 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6aWZ6aWtkZW9qYXp5c3dqZ3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MTg3NjgsImV4cCI6MjEwODk5NDc2OH0.Y3rycAN_O1IL99OdMJsC_TRMrSEKJp4vQJho2P4D_W0';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        const OPCOES_RPE = [
+            { val: 10, texto: 'Máximo — não faria mais nenhuma repetição.' },
+            { val: 9,  texto: 'Muito pesado — faria mais 1 repetição.' },
+            { val: 8,  texto: 'Pesado/controlado — faria mais 2 repetições.' },
+            { val: 7,  texto: 'Moderado-alto — faria mais 3 repetições.' },
+            { val: 6,  texto: 'Moderado — faria mais 4 repetições.' },
+            { val: 5,  texto: 'Leve/moderado — faria mais 4 ou 5 repetições.' }
+        ];
+
         let alunoDados = null;
         let treinoAtivoExecucao = null;
-        let progressoExecucao = {}; // Guarda { [exercicioIdx]: { [serieIdx]: { carga, reps, rpe, concluida } } }
+        let progressoExecucao = {};
         let cronometroInterval = null;
         let segundosRestantes = 0;
+        let layoutAluno = localStorage.getItem('af_layout_aluno') || 'detalhado';
+        let alvoRpe = null;
 
         function obterTokenUrl() {
             const params = new URLSearchParams(window.location.search);
@@ -129,9 +193,38 @@
         }
 
         function voltarParaListaTreinos() {
+            pararCronometro();
             treinoAtivoExecucao = null;
             document.getElementById('sec-execucao-treino').classList.add('hidden');
             document.getElementById('sec-lista-treinos').classList.remove('hidden');
+        }
+
+        function caixaExplicacaoMetodoAluno(s) {
+            if (layoutAluno !== 'detalhado') return '';
+            if (s.metodo === 'Drop Set') {
+                return `
+                    <div class="bg-orange-950/35 border border-af-orange/40 rounded-xl p-2.5 text-[11px] text-orange-100 leading-snug">
+                        <strong class="text-af-orange block uppercase text-[10px] mb-0.5">Como fazer Drop-Set (${s.qtdDrops || 1} drop(s))</strong>
+                        Vá até próximo da falha, reduza a carga sem descanso longo e continue as repetições imediatamente.
+                    </div>
+                `;
+            }
+            if (s.metodo === 'Rest Pause') {
+                const pausas = Array.isArray(s.pausasRestPause) && s.pausasRestPause.length
+                    ? s.pausasRestPause
+                    : [s.descansoIntra || 15];
+                const minP = Math.min(...pausas);
+                const maxP = Math.max(...pausas);
+                const faixaTxt = minP === maxP ? `${minP}s` : `${minP}s a ${maxP}s`;
+                return `
+                    <div class="bg-amber-950/30 border border-amber-500/40 rounded-xl p-2.5 text-[11px] text-amber-100 leading-snug space-y-1">
+                        <strong class="text-amber-400 block uppercase text-[10px]">Como fazer Rest-Pause</strong>
+                        <div>Vá até próximo da falha, faça uma pausa curta (recomendado entre <b>10s e 20s</b> — prescrito: <b>${faixaTxt}</b>) e volte para mais repetições.</div>
+                        <div class="text-[10px] text-amber-300/90">Pausas: ${pausas.map((p, idx) => `Pausa ${idx+1}: ${p}s`).join(' • ')}</div>
+                    </div>
+                `;
+            }
+            return '';
         }
 
         function renderizarExerciciosExecucao() {
@@ -149,7 +242,7 @@
 
                 let seriesHtml = seriesConfig.map((s, sIdx) => {
                     if (!progressoExecucao[exIdx]) progressoExecucao[exIdx] = {};
-                    if (!progressoExecucao[exIdx][sIdx]) progressoExecucao[exIdx][sIdx] = { carga: '', reps: '', rpe: '', concluida: false };
+                    if (!progressoExecucao[exIdx][sIdx]) progressoExecucao[exIdx][sIdx] = { carga: '', reps: '', rpe: exigeRpe ? 8 : '', concluida: false };
                     const p = progressoExecucao[exIdx][sIdx];
 
                     const isDrop = s.metodo === 'Drop Set';
@@ -168,12 +261,13 @@
                     }
 
                     return `
-                        <div class="bg-black/60 border ${p.concluida ? 'border-emerald-500/60 bg-emerald-950/10' : 'border-slate-800'} rounded-xl p-3 space-y-2">
+                        <div class="bg-black/60 border ${p.concluida ? 'border-emerald-500/60 bg-emerald-950/10' : 'border-slate-800'} rounded-xl p-3 space-y-2.5">
                             <div class="flex justify-between items-center text-xs">
                                 <span class="font-bold text-af-orange">Série ${s.num} (${s.metodo || 'Normal'})</span>
                                 <span class="text-slate-400">Meta: <b>${s.repsSugeridas || '10 a 12'}</b></span>
                             </div>
-                            <div class="grid grid-cols-3 gap-2">
+                            ${caixaExplicacaoMetodoAluno(s)}
+                            <div class="grid ${exigeRpe ? 'grid-cols-3' : 'grid-cols-2'} gap-2">
                                 <div>
                                     <label class="block text-[9px] text-slate-400 uppercase font-bold mb-1">Carga (kg)</label>
                                     <input type="number" inputmode="decimal" value="${p.carga}" oninput="atualizarProgressoSerie(${exIdx}, ${sIdx}, 'carga', this.value)" placeholder="0" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-white text-center font-bold text-xs">
@@ -184,8 +278,10 @@
                                 </div>
                                 ${exigeRpe ? `
                                 <div>
-                                    <label class="block text-[9px] text-slate-400 uppercase font-bold mb-1">RPE (6-10)</label>
-                                    <input type="number" inputmode="decimal" value="${p.rpe}" oninput="atualizarProgressoSerie(${exIdx}, ${sIdx}, 'rpe', this.value)" placeholder="8" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-white text-center font-bold text-xs">
+                                    <label class="block text-[9px] text-slate-400 uppercase font-bold mb-1">RPE (5–10)</label>
+                                    <button type="button" onclick="abrirModalRpe(${exIdx}, ${sIdx})" class="w-full bg-black border border-af-orange/50 hover:border-af-orange rounded-xl p-2.5 text-af-orange text-center font-black text-xs">
+                                        ${p.rpe !== '' ? p.rpe : 'Escolher'}
+                                    </button>
                                 </div>` : ''}
                             </div>
                             ${dropInputsHtml}
@@ -230,7 +326,6 @@
             }
         }
 
-        // ===== CRONÔMETRO COM ALARME SONORO E VIBRAÇÃO =====
         function iniciarCronometro(segundos) {
             segundosRestantes = segundos;
             const card = document.getElementById('card-cronometro');
@@ -267,17 +362,15 @@
         }
 
         function dispararAlarmeConclusao() {
-            // Vibração nativa no celular
             if ('vibrate' in navigator) {
                 try { navigator.vibrate([300, 150, 300, 150, 500]); } catch (e) {}
             }
-            // Alarme sonoro sintetizado (Web Audio API)
             try {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(880, ctx.currentTime); // Tom agudo
+                osc.frequency.setValueAtTime(880, ctx.currentTime);
                 gain.gain.setValueAtTime(0.2, ctx.currentTime);
                 osc.connect(gain);
                 gain.connect(ctx.destination);
@@ -286,9 +379,83 @@
             } catch (e) {}
         }
 
+        // Layout
+        function abrirModalLayout() { document.getElementById('modal-layout-aluno').classList.remove('hidden'); }
+        function fecharModalLayout() { document.getElementById('modal-layout-aluno').classList.add('hidden'); }
+        function escolherLayoutAluno(modo) {
+            layoutAluno = modo;
+            localStorage.setItem('af_layout_aluno', modo);
+            fecharModalLayout();
+            if (!document.getElementById('sec-execucao-treino').classList.contains('hidden')) {
+                renderizarExerciciosExecucao();
+            }
+        }
+
+        // RPE Clicável (5 a 10)
+        function abrirModalRpe(exIdx, sIdx) {
+            alvoRpe = { exIdx, sIdx };
+            const atual = progressoExecucao[exIdx]?.[sIdx]?.rpe;
+            document.getElementById('lista-opcoes-rpe').innerHTML = OPCOES_RPE.map(o => `
+                <button type="button" onclick="selecionarRpeAluno(${o.val})" class="w-full text-left p-2.5 rounded-xl border transition-all ${atual == o.val ? 'bg-af-orange/20 border-af-orange text-white' : 'bg-black/70 border-slate-800 hover:border-af-orange/60 text-slate-200'}">
+                    <div class="text-xs font-black text-af-orange">RPE ${o.val}</div>
+                    <div class="text-[11px] text-slate-300">${escapeHtml(o.texto)}</div>
+                </button>
+            `).join('');
+            document.getElementById('modal-rpe-aluno').classList.remove('hidden');
+        }
+
+        function fecharModalRpe() {
+            alvoRpe = null;
+            document.getElementById('modal-rpe-aluno').classList.add('hidden');
+        }
+
+        function selecionarRpeAluno(val) {
+            if (alvoRpe) {
+                if (!progressoExecucao[alvoRpe.exIdx]) progressoExecucao[alvoRpe.exIdx] = {};
+                if (!progressoExecucao[alvoRpe.exIdx][alvoRpe.sIdx]) progressoExecucao[alvoRpe.exIdx][alvoRpe.sIdx] = { carga: '', reps: '', rpe: '', concluida: false };
+                progressoExecucao[alvoRpe.exIdx][alvoRpe.sIdx].rpe = val;
+                renderizarExerciciosExecucao();
+            }
+            fecharModalRpe();
+        }
+
+        // Validação de séries concluídas/preenchidas antes de finalizar
+        function tentarFinalizarTreino() {
+            if (!treinoAtivoExecucao) return;
+            const exercicios = treinoAtivoExecucao.exercicios || [];
+            let pendentes = 0;
+
+            exercicios.forEach((ex, exIdx) => {
+                const totalSeries = (ex.seriesConfig && ex.seriesConfig.length) ? ex.seriesConfig.length : (ex.qtdSeries || 4);
+                for (let sIdx = 0; sIdx < totalSeries; sIdx++) {
+                    const p = progressoExecucao[exIdx]?.[sIdx];
+                    const repsNum = parseInt(p?.reps, 10) || 0;
+                    if (!p || !p.concluida || repsNum <= 0) {
+                        pendentes++;
+                    }
+                }
+            });
+
+            if (pendentes > 0) {
+                document.getElementById('texto-pendencias-treino').innerText = `Você ainda tem ${pendentes} série(s) sem concluir ou sem repetições preenchidas. Conclua cada série para poder finalizar.`;
+                document.getElementById('modal-pendencias-treino').classList.remove('hidden');
+                return;
+            }
+
+            finalizarTreinoDefinitivo();
+        }
+
+        function fecharModalPendencias() {
+            document.getElementById('modal-pendencias-treino').classList.add('hidden');
+        }
+
+        function descartarTreinoAtivo() {
+            fecharModalPendencias();
+            progressoExecucao = {};
+            voltarParaListaTreinos();
+        }
+
         async function finalizarTreinoDefinitivo() {
-            if (!confirm("Deseja finalizar o treino e enviar o registro para o personal?")) return;
-            
             let volumeTotal = 0;
             let seriesValidadas = 0;
             const exerciciosRealizados = [];

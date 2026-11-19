@@ -583,7 +583,6 @@
                         <button onclick="gerarRelatorioPDF()" class="bg-af-orange text-black font-black px-3.5 py-2 rounded-xl text-xs shadow-lg shadow-orange-500/20">📄 Imprimir PDF</button>
                     </div>
 
-                    <!-- HISTÓRICO DE SESSÕES COM OPÇÃO DE EXCLUIR TESTES -->
                     <div class="bg-af-card rounded-2xl p-4 space-y-3 shadow-xl">
                         <div class="flex justify-between items-center">
                             <h3 class="font-bold text-xs text-af-orange uppercase">Histórico de Sessões Realizadas</h3>
@@ -1481,7 +1480,6 @@
                 const { data } = await supabaseClient.from('alunos').select('treinos, historico').eq('id', id).single();
                 const rawTreinos = (data && data.treinos) ? (Array.isArray(data.treinos) ? data.treinos : JSON.parse(data.treinos)) : [];
                 
-                // NORMALIZADOR INTELIGENTE DE TREINOS E EXERCÍCIOS ANTIGOS
                 treinosDoAluno = rawTreinos.map(t => ({
                     id: t.id || ('t_' + Math.random().toString(36).substr(2, 9)),
                     nome: t.nome || t.name || 'Treino',
@@ -1637,7 +1635,6 @@
             const se = NeonChart.serieExercicio(registros);
             const vals = se.pts.map(p => p.value);
             const ini = vals[0], atual = vals[vals.length - 1], melhor = Math.max(...vals);
-            const diff = atual - ini;
             const fv = v => se.unit === 's' ? formatarTempo(v) : NeonChart.fmt(v) + ' ' + se.unit;
 
             container.innerHTML = `
@@ -1715,18 +1712,6 @@
             treinosDoAluno[novoIdx] = temp;
             salvarTreinosNoSupabase();
             renderizarTreinosAluno();
-        }
-
-        function moverExercicioOrdem(idx, direcao) {
-            const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
-            if (!treino || !treino.exercicios) return;
-            const novoIdx = idx + direcao;
-            if (novoIdx < 0 || novoIdx >= treino.exercicios.length) return;
-            const temp = treino.exercicios[idx];
-            treino.exercicios[idx] = treino.exercicios[novoIdx];
-            treino.exercicios[novoIdx] = temp;
-            salvarTreinosNoSupabase();
-            renderizarListaExerciciosDivisao();
         }
 
         function conjugarExercicioComCima(idx) {
@@ -1838,6 +1823,7 @@
                 repsSugeridas: '10 a 12',
                 descanso: 90,
                 qtdDrops: 1,
+                pausasRestPause: [15],
                 descansoIntra: 15
             }));
             gerarCamposSeriesAdmin(qtdPadrao, initSeries);
@@ -1864,10 +1850,11 @@
                 const tipoMeta = item.querySelector('.input-tipo-meta').value === 'tempo' ? 'tempo' : 'reps';
                 const descanso = parseInt(item.querySelector('.input-descanso-serie').value) || 90;
                 const qtdDrops = parseInt(item.querySelector('.input-qtd-drops')?.value) || 1;
-                const descansoIntra = parseInt(item.querySelector('.input-descanso-intra')?.value) || 15;
+                const pausasRestPause = Array.from(item.querySelectorAll('.input-pausa-restpause')).map(inp => parseInt(inp.value) || 15);
+                const descansoIntra = pausasRestPause[0] || parseInt(item.querySelector('.input-descanso-intra')?.value) || 15;
                 const repsSugeridas = item.querySelector('.input-reps-sugeridas').value.trim() || '10 a 12';
 
-                seriesConfig.push({ num, metodo, tipoMeta, descanso, repsSugeridas, qtdDrops, descansoIntra });
+                seriesConfig.push({ num, metodo, tipoMeta, descanso, repsSugeridas, qtdDrops, pausasRestPause, descansoIntra });
             });
 
             const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
@@ -1995,14 +1982,18 @@
         }
 
         function lerSeriesAdminAtuais() {
-            return Array.from(document.querySelectorAll('#container-config-series-admin .serie-config-item')).map(item => ({
-                metodo: item.querySelector('.select-metodo-serie')?.value,
-                tipoMeta: item.querySelector('.input-tipo-meta').value,
-                repsSugeridas: item.querySelector('.input-reps-sugeridas').value,
-                descanso: parseInt(item.querySelector('.input-descanso-serie').value) || 90,
-                qtdDrops: parseInt(item.querySelector('.input-qtd-drops')?.value) || 1,
-                descansoIntra: parseInt(item.querySelector('.input-descanso-intra')?.value) || 15
-            }));
+            return Array.from(document.querySelectorAll('#container-config-series-admin .serie-config-item')).map(item => {
+                const pausasRestPause = Array.from(item.querySelectorAll('.input-pausa-restpause')).map(inp => parseInt(inp.value) || 15);
+                return {
+                    metodo: item.querySelector('.select-metodo-serie')?.value,
+                    tipoMeta: item.querySelector('.input-tipo-meta').value,
+                    repsSugeridas: item.querySelector('.input-reps-sugeridas').value,
+                    descanso: parseInt(item.querySelector('.input-descanso-serie').value) || 90,
+                    qtdDrops: parseInt(item.querySelector('.input-qtd-drops')?.value) || 1,
+                    pausasRestPause: pausasRestPause.length ? pausasRestPause : [15],
+                    descansoIntra: pausasRestPause[0] || parseInt(item.querySelector('.input-descanso-intra')?.value) || 15
+                };
+            });
         }
 
         function gerarCamposSeriesAdmin(qtd, valoresExistentes = []) {
@@ -2021,7 +2012,18 @@
                 const repsSel = sData.repsSugeridas || '10 a 12';
                 const descansoSel = sData.descanso || 90;
                 const qtdDropsSel = sData.qtdDrops || 1;
-                const descansoIntraSel = sData.descansoIntra || 15;
+                const pausasList = Array.isArray(sData.pausasRestPause) && sData.pausasRestPause.length
+                    ? sData.pausasRestPause
+                    : [sData.descansoIntra || 15];
+                const descansoIntraSel = pausasList[0] || 15;
+
+                const pausasHtml = pausasList.map((pVal, idxP) => `
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[10px] font-bold text-amber-400 shrink-0">Pausa ${idxP + 1}:</span>
+                        <input type="number" inputmode="numeric" min="5" max="60" value="${pVal}" oninput="validarApenasNumeros(this)" class="input-pausa-restpause ${inputBase} !border-amber-500/40">
+                        <span class="text-[10px] text-slate-400">s</span>
+                    </div>
+                `).join('');
 
                 html += `
                     <div class="serie-config-item bg-slate-900/60 border border-slate-800 rounded-2xl p-3 space-y-3" data-serie="${i}">
@@ -2040,12 +2042,19 @@
                             <input type="hidden" class="input-tipo-meta" value="${tipoMetaSel}">
                         </div>
 
-                        <div class="bloco-parametros-metodo ${metodoSel === 'Série Normal' || escondeMetodo ? 'hidden' : ''} bg-black/70 border border-af-orange/30 rounded-xl p-2.5 grid grid-cols-2 gap-2.5">
+                        <div class="bloco-parametros-metodo ${metodoSel === 'Série Normal' || escondeMetodo ? 'hidden' : ''} bg-black/70 border border-af-orange/30 rounded-xl p-2.5 space-y-2.5">
                             <div class="campo-drops ${metodoSel === 'Drop Set' ? '' : 'hidden'}">
                                 <label class="${labelBase} !text-af-orange">Qtd de Drops (1 a 4)</label>
                                 <input type="number" inputmode="numeric" min="1" max="4" value="${qtdDropsSel}" oninput="validarApenasNumeros(this)" class="input-qtd-drops ${inputBase} !border-af-orange/40">
                             </div>
-                            <div class="campo-intra ${metodoSel === 'Rest Pause' || metodoSel === 'Cluster Set' ? '' : 'hidden'}">
+                            <div class="campo-restpause ${metodoSel === 'Rest Pause' ? '' : 'hidden'} space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <label class="${labelBase} !text-amber-400 !mb-0">Pausas Rest-Pause (recomendado 10s–20s)</label>
+                                    <button type="button" onclick="adicionarPausaRestPause(this)" class="text-[10px] bg-amber-950/80 text-amber-300 border border-amber-600/50 px-2 py-0.5 rounded-lg font-bold">+ Pausa</button>
+                                </div>
+                                <div class="lista-pausas-restpause grid grid-cols-2 gap-2">${pausasHtml}</div>
+                            </div>
+                            <div class="campo-intra ${metodoSel === 'Cluster Set' ? '' : 'hidden'}">
                                 <label class="${labelBase} !text-af-orange">Descanso Intra (s)</label>
                                 <input type="number" inputmode="numeric" min="5" max="60" value="${descansoIntraSel}" oninput="validarApenasNumeros(this)" class="input-descanso-intra ${inputBase} !border-af-orange/40">
                             </div>
@@ -2067,11 +2076,25 @@
             container.innerHTML = html;
         }
 
+        function adicionarPausaRestPause(btn) {
+            const lista = btn.closest('.campo-restpause').querySelector('.lista-pausas-restpause');
+            const idx = lista.querySelectorAll('.input-pausa-restpause').length + 1;
+            const div = document.createElement('div');
+            div.className = 'flex items-center gap-1.5';
+            div.innerHTML = `
+                <span class="text-[10px] font-bold text-amber-400 shrink-0">Pausa ${idx}:</span>
+                <input type="number" inputmode="numeric" min="5" max="60" value="15" oninput="validarApenasNumeros(this)" class="input-pausa-restpause w-full bg-black border border-amber-500/40 rounded-xl px-2.5 py-2 text-center text-white font-bold">
+                <span class="text-[10px] text-slate-400">s</span>
+            `;
+            lista.appendChild(div);
+        }
+
         function atualizarMetodoSerieAdmin(select) {
             const item = select.closest('.serie-config-item');
             const val = select.value;
             const painel = item.querySelector('.bloco-parametros-metodo');
             const campoDrops = item.querySelector('.campo-drops');
+            const campoRP = item.querySelector('.campo-restpause');
             const campoIntra = item.querySelector('.campo-intra');
 
             if (val === 'Série Normal') {
@@ -2079,7 +2102,8 @@
             } else {
                 painel.classList.remove('hidden');
                 campoDrops.classList.toggle('hidden', val !== 'Drop Set');
-                campoIntra.classList.toggle('hidden', val !== 'Rest Pause' && val !== 'Cluster Set');
+                campoRP.classList.toggle('hidden', val !== 'Rest Pause');
+                campoIntra.classList.toggle('hidden', val !== 'Cluster Set');
             }
         }
 
@@ -2178,7 +2202,6 @@
             if (agendaNoServidor) await supabaseClient.from('agenda').delete().eq('slot', slotAgendaSelecionado);
         }
 
-        // ===== CENTRAL DE DESEMPENHO =====
         let desAlunoFiltro = 'TODOS';
         let desPeriodo = 'semanal';
         let desModoGrupo = 'series';
