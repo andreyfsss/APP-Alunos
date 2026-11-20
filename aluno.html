@@ -11,15 +11,14 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="AF Pro">
-    <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
-    <script src="[https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2](https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2)"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { background-color: #050505; -webkit-text-size-adjust: 100%; }
         .bg-af-card { background: rgba(255,255,255,.035); backdrop-filter: blur(14px); border: 1px solid rgba(255,106,0,.17); }
         .text-af-orange { color: #FF6A00; }
         .bg-af-orange { background-color: #FF6A00; }
         .border-af-orange { border-color: #FF6A00; }
-        /* Badge estilo "Área do Aluno" clicável */
         .badge-metodo-clicavel {
             display: inline-flex;
             align-items: center;
@@ -40,7 +39,6 @@
             border-color: #FF6A00;
             background-color: rgba(124, 45, 18, 0.65);
         }
-        /* Cronômetro flutuante com bordas arredondadas acompanhando o scroll */
         #card-cronometro {
             position: fixed;
             left: 0.75rem;
@@ -72,7 +70,7 @@
             </div>
         </div>
 
-        <!-- TELA DE ACESSO POR TOKEN (EXIBIDA QUANDO NÃO HÁ TOKEN NA URL NEM SALVO NO APARELHO) -->
+        <!-- TELA DE ACESSO POR TOKEN -->
         <div id="sec-pedir-token" class="hidden bg-af-card rounded-2xl p-5 space-y-3.5 shadow-xl border border-af-orange/30">
             <div class="space-y-1">
                 <span class="text-[10px] font-black text-af-orange tracking-widest bg-orange-950/60 px-2 py-0.5 rounded border border-orange-600/40 uppercase">Primeiro Acesso / Tela Inicial</span>
@@ -132,13 +130,9 @@
                     <p id="resumo-subtitulo-data" class="text-[11px] text-slate-400"></p>
                 </div>
 
-                <!-- MÉTRICAS GERAIS DE VOLUME E DENSIDADE -->
                 <div id="resumo-cards-gerais" class="grid grid-cols-2 gap-2.5"></div>
-
-                <!-- DESTAQUES DE EVOLUÇÃO -->
                 <div id="resumo-destaques-evolucao" class="space-y-1.5"></div>
 
-                <!-- TABELA DETALHADA POR EXERCÍCIO -->
                 <div class="space-y-2">
                     <h3 class="text-[11px] font-black text-af-orange uppercase tracking-wider">Desempenho por Exercício</h3>
                     <div class="overflow-x-auto rounded-xl border border-slate-800 bg-black/70">
@@ -189,7 +183,7 @@
         </div>
     </div>
 
-    <!-- MODAL PENDÊNCIAS AO FINALIZAR (CONTINUAR TREINO / DESCARTAR TREINO) -->
+    <!-- MODAL PENDÊNCIAS AO FINALIZAR -->
     <div id="modal-pendencias-treino" class="fixed inset-0 bg-black/85 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
         <div class="bg-af-card rounded-2xl max-w-sm w-full p-5 space-y-4 text-center shadow-2xl">
             <h3 class="text-sm font-black text-af-orange uppercase">Séries pendentes</h3>
@@ -211,7 +205,7 @@
     </div>
 
     <script>
-        const SUPABASE_URL = '[https://dzifzikdeojazyswjguw.supabase.co](https://dzifzikdeojazyswjguw.supabase.co)';
+        const SUPABASE_URL = 'https://dzifzikdeojazyswjguw.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6aWZ6aWtkZW9qYXp5c3dqZ3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MTg3NjgsImV4cCI6MjEwODk5NDc2OH0.Y3rycAN_O1IL99OdMJsC_TRMrSEKJp4vQJho2P4D_W0';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -276,10 +270,10 @@
         function extrairTokenLimpo(valor) {
             const bruto = String(valor || '').trim();
             if (!bruto) return '';
-            // Caso o aluno cole o link inteiro em vez de só o código do token
             if (bruto.includes('token=')) {
                 try {
-                    const urlObj = new URL(bruto.startsWith('http') ? bruto : `[https://exemplo.com/?$](https://exemplo.com/?$){bruto.split('?').pop()}`);
+                    const parteQuery = bruto.split('?').pop();
+                    const urlObj = new URL(bruto.startsWith('http') ? bruto : `https://exemplo.com/?${parteQuery}`);
                     const extraido = (urlObj.searchParams.get('token') || '').trim();
                     if (extraido) return extraido;
                 } catch (e) {}
@@ -335,34 +329,33 @@
 
         async function confirmarTokenManual() {
             const input = document.getElementById('input-token-aluno');
+            const btn = document.getElementById('btn-confirmar-token');
+            const textoOriginalBtn = 'Salvar e Acessar Treinos →';
             const tokenDigitado = extrairTokenLimpo(input.value);
+
             if (!tokenDigitado) {
                 mostrarTelaPedirToken('Por favor, cole ou digite o token enviado pelo seu personal.');
                 input.focus();
                 return;
             }
 
-            const btn = document.getElementById('btn-confirmar-token');
             btn.disabled = true;
             btn.innerText = 'Verificando token...';
 
             try {
-                localStorage.setItem(STORAGE_TOKEN_ALUNO_KEY, tokenDigitado);
-            } catch (e) {}
-
-            await carregarDadosAluno(tokenDigitado);
-
-            btn.disabled = false;
-            btn.innerText = 'Salvar e Acessar Treinos →';
+                try { localStorage.setItem(STORAGE_TOKEN_ALUNO_KEY, tokenDigitado); } catch (e) {}
+                await carregarDadosAluno(tokenDigitado);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = textoOriginalBtn;
+            }
         }
 
         function trocarTokenAluno() {
             if (!confirm('Deseja informar outro token de aluno neste aparelho?')) return;
             try { localStorage.removeItem(STORAGE_TOKEN_ALUNO_KEY); } catch (e) {}
-            // Limpa parâmetro da URL sem recarregar para não puxar o token antigo novamente
             try {
-                const urlLimpa = window.location.pathname;
-                window.history.replaceState({}, document.title, urlLimpa);
+                window.history.replaceState({}, document.title, window.location.pathname);
             } catch (e) {}
             alunoDados = null;
             treinoAtivoExecucao = null;
@@ -520,6 +513,7 @@
         }
 
         function renderizarBadgeEExplicacaoMetodo(s, exIdx, sIdx) {
+            if (layoutAluno === 'compacto') return '';
             const info = obterInfoBadgeMetodo(s);
             if (!info) return '';
 
@@ -745,7 +739,6 @@
             } catch (e) {}
         }
 
-        // Layout
         function abrirModalLayout() { document.getElementById('modal-layout-aluno').classList.remove('hidden'); }
         function fecharModalLayout() { document.getElementById('modal-layout-aluno').classList.add('hidden'); }
         function escolherLayoutAluno(modo) {
@@ -757,7 +750,6 @@
             }
         }
 
-        // RPE Clicável (5 a 10)
         function abrirModalRpe(exIdx, sIdx) {
             alvoRpe = { exIdx, sIdx };
             const atual = progressoExecucao[exIdx]?.[sIdx]?.rpe;
@@ -784,7 +776,6 @@
             fecharModalRpe();
         }
 
-        // Validação de séries concluídas/preenchidas antes de finalizar
         function tentarFinalizarTreino() {
             if (!treinoAtivoExecucao) return;
             const exercicios = treinoAtivoExecucao.exercicios || [];
@@ -883,7 +874,6 @@
                 day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
             });
 
-            // Comparar volume total com o último treino de mesmo nome (se existir)
             const ultimoMesmoTreino = [...historicoAnterior].reverse().find(h => h.treinoId === novoRegistro.treinoId || h.treinoNome === novoRegistro.treinoNome);
             let diffVolumeHtml = '<span class="text-[10px] text-slate-400">1º registro deste treino</span>';
             if (ultimoMesmoTreino && ultimoMesmoTreino.volume > 0) {
@@ -1001,7 +991,7 @@
                     const s = seriesProg[sIdx];
                     if (s && s.concluida) {
                         const carga = parseFloat(s.carga) || 0;
-                        const reps = parseInt(s.reps) || 0;
+                        const reps = parseInt(s.reps, 10) || 0;
                         const rpe = parseFloat(s.rpe) || null;
                         let volSerie = carga * reps;
 
