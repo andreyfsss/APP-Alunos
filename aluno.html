@@ -64,7 +64,7 @@
                 <h1 id="aluno-nome-topo" class="text-xl font-black text-white mt-1">Carregando...</h1>
             </div>
             <div class="flex items-center gap-1.5">
-                <button onclick="trocarTokenAluno()" title="Trocar token de acesso" class="bg-black/80 hover:border-af-orange text-slate-300 p-2.5 rounded-xl border border-slate-800 text-xs">🔑</button>
+                <button onclick="solicitarPermissaoNotificacoes(true)" title="Ativar notificações de descanso" class="bg-black/80 hover:border-af-orange text-slate-300 p-2.5 rounded-xl border border-slate-800 text-xs">🔔</button>
                 <button onclick="abrirModalLayout()" title="Escolher layout dos exercícios" class="bg-black/80 hover:border-af-orange text-slate-200 p-2.5 rounded-xl border border-slate-800 text-xs">⚙️</button>
                 <button onclick="carregarDadosAluno()" title="Atualizar" class="bg-black/80 text-slate-300 p-2.5 rounded-xl border border-slate-800 text-xs">🔄</button>
             </div>
@@ -107,6 +107,33 @@
             <h2 class="font-bold text-xs uppercase tracking-wider text-slate-400 px-1">Selecione o Treino de Hoje</h2>
             <div id="container-divisoes-aluno" class="space-y-2.5">
                 <p class="text-xs text-slate-500 text-center py-8">Carregando divisões de treino...</p>
+            </div>
+
+            <!-- CALENDÁRIO DE FREQUÊNCIA DO ALUNO -->
+            <div id="sec-calendario-aluno" class="bg-af-card rounded-2xl p-4 space-y-3 shadow-lg pt-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="text-[10px] font-black text-af-orange uppercase tracking-wider">Frequência & Assiduidade</span>
+                        <h3 id="calendario-mes-titulo" class="text-sm font-black text-white capitalize">Mês</h3>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button type="button" onclick="mudarMesCalendario(-1)" class="bg-black/80 border border-slate-800 hover:border-af-orange text-slate-300 px-2.5 py-1 rounded-lg text-xs font-bold">‹</button>
+                        <button type="button" onclick="mudarMesCalendario(1)" class="bg-black/80 border border-slate-800 hover:border-af-orange text-slate-300 px-2.5 py-1 rounded-lg text-xs font-bold">›</button>
+                    </div>
+                </div>
+
+                <div id="calendario-resumo-cards" class="grid grid-cols-3 gap-2 text-center"></div>
+
+                <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-slate-500 uppercase pt-1">
+                    <div>Dom</div><div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
+                </div>
+                <div id="calendario-dias-grid" class="grid grid-cols-7 gap-1 text-center text-xs"></div>
+
+                <div class="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-800/70">
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-emerald-500/30 border border-emerald-500 inline-block"></span> Treinou</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-slate-900 border border-af-orange inline-block"></span> Hoje</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-black/50 border border-slate-800/60 inline-block"></span> Sem treino</span>
+                </div>
             </div>
         </div>
 
@@ -264,8 +291,101 @@
         let progressoExecucao = {};
         let cronometroInterval = null;
         let segundosRestantes = 0;
+        let alvoFimCronometroMs = 0;
+        let audioCtx = null;
+        let swRegistration = null;
         let layoutAluno = localStorage.getItem('af_layout_aluno') || 'detalhado';
         let alvoRpe = null;
+        let dataCalendarioRef = new Date();
+
+        // Registra Service Worker para notificações em segundo plano / tela bloqueada
+        (async function registrarServiceWorker() {
+            if (!('serviceWorker' in navigator)) return;
+            try {
+                swRegistration = await navigator.serviceWorker.register('./sw.js');
+            } catch (e) {}
+        })();
+
+        async function solicitarPermissaoNotificacoes(mostrarFeedback = false) {
+            if (!('Notification' in window)) {
+                if (mostrarFeedback) alert('Este navegador não suporta notificações do sistema.');
+                return false;
+            }
+            if (Notification.permission === 'granted') {
+                if (mostrarFeedback) alert('Notificações já estão ativadas!');
+                return true;
+            }
+            if (Notification.permission === 'denied') {
+                if (mostrarFeedback) alert('As notificações estão bloqueadas nas configurações do navegador/aparelho.');
+                return false;
+            }
+            const perm = await Notification.requestPermission();
+            if (perm === 'granted') {
+                if (mostrarFeedback) alert('Notificações ativadas! Você será avisado quando o descanso terminar.');
+                return true;
+            }
+            if (mostrarFeedback) alert('Permissão de notificação não concedida.');
+            return false;
+        }
+
+        function prepararAudioContext() {
+            try {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContextClass) return;
+                if (!audioCtx) audioCtx = new AudioContextClass();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+            } catch (e) {}
+        }
+
+        function tocarSomDescansoConcluido() {
+            prepararAudioContext();
+            try {
+                if (audioCtx) {
+                    const agora = audioCtx.currentTime;
+                    const notas = [880, 1174.66, 880];
+                    notas.forEach((freq, idx) => {
+                        const inicio = agora + idx * 0.22;
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(freq, inicio);
+                        gain.gain.setValueAtTime(0.001, inicio);
+                        gain.gain.exponentialRampToValueAtTime(0.28, inicio + 0.02);
+                        gain.gain.exponentialRampToValueAtTime(0.001, inicio + 0.19);
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.start(inicio);
+                        osc.stop(inicio + 0.2);
+                    });
+                }
+            } catch (e) {}
+        }
+
+        async function dispararNotificacaoTelaBloqueada() {
+            if (!('Notification' in window) || Notification.permission !== 'granted') return;
+            const titulo = '⏱️ Descanso concluído!';
+            const opcoes = {
+                body: 'Seu tempo de descanso acabou. Bora para a próxima série!',
+                icon: 'apple-touch-icon.png',
+                badge: 'favicon-32.png',
+                vibrate: [300, 150, 300, 150, 500],
+                tag: 'afpro-descanso',
+                renotify: true,
+                requireInteraction: true
+            };
+
+            try {
+                const reg = swRegistration || (navigator.serviceWorker && await navigator.serviceWorker.ready);
+                if (reg && typeof reg.showNotification === 'function') {
+                    await reg.showNotification(titulo, opcoes);
+                    return;
+                }
+            } catch (e) {}
+
+            try {
+                new Notification(titulo, opcoes);
+            } catch (e) {}
+        }
 
         function extrairTokenLimpo(valor) {
             const bruto = String(valor || '').trim();
@@ -328,6 +448,7 @@
         }
 
         async function confirmarTokenManual() {
+            prepararAudioContext();
             const input = document.getElementById('input-token-aluno');
             const btn = document.getElementById('btn-confirmar-token');
             const textoOriginalBtn = 'Salvar e Acessar Treinos →';
@@ -349,19 +470,6 @@
                 btn.disabled = false;
                 btn.innerText = textoOriginalBtn;
             }
-        }
-
-        function trocarTokenAluno() {
-            if (!confirm('Deseja informar outro token de aluno neste aparelho?')) return;
-            try { localStorage.removeItem(STORAGE_TOKEN_ALUNO_KEY); } catch (e) {}
-            try {
-                window.history.replaceState({}, document.title, window.location.pathname);
-            } catch (e) {}
-            alunoDados = null;
-            treinoAtivoExecucao = null;
-            progressoExecucao = {};
-            document.getElementById('input-token-aluno').value = '';
-            mostrarTelaPedirToken();
         }
 
         async function carregarDadosAluno(tokenForcado = '') {
@@ -387,10 +495,106 @@
                 document.getElementById('aluno-nome-topo').innerText = alunoDados.nome;
                 ocultarTelaPedirToken();
                 renderizarDivisoesAluno();
+                renderizarCalendarioFrequencia();
             } catch (err) {
                 try { localStorage.removeItem(STORAGE_TOKEN_ALUNO_KEY); } catch (e) {}
                 mostrarTelaPedirToken('Token não encontrado. Verifique se copiou corretamente e tente novamente.');
             }
+        }
+
+        function chaveDiaLocal(dataObj) {
+            const d = new Date(dataObj);
+            if (isNaN(d)) return '';
+            const ano = d.getFullYear();
+            const mes = String(d.getMonth() + 1).padStart(2, '0');
+            const dia = String(d.getDate()).padStart(2, '0');
+            return `${ano}-${mes}-${dia}`;
+        }
+
+        function mudarMesCalendario(delta) {
+            dataCalendarioRef = new Date(dataCalendarioRef.getFullYear(), dataCalendarioRef.getMonth() + delta, 1);
+            renderizarCalendarioFrequencia();
+        }
+
+        function renderizarCalendarioFrequencia() {
+            const tituloEl = document.getElementById('calendario-mes-titulo');
+            const resumoEl = document.getElementById('calendario-resumo-cards');
+            const gridEl = document.getElementById('calendario-dias-grid');
+            if (!tituloEl || !resumoEl || !gridEl) return;
+
+            const ano = dataCalendarioRef.getFullYear();
+            const mes = dataCalendarioRef.getMonth();
+            const nomeMes = dataCalendarioRef.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+            tituloEl.innerText = nomeMes;
+
+            const historico = Array.isArray(alunoDados?.historico) ? alunoDados.historico : [];
+            const diasTreinadosSet = new Set();
+            historico.forEach(item => {
+                const k = chaveDiaLocal(item?.data);
+                if (k) diasTreinadosSet.add(k);
+            });
+
+            const hoje = new Date();
+            const hojeChave = chaveDiaLocal(hoje);
+            const primeiroDiaSemana = new Date(ano, mes, 1).getDay();
+            const totalDiasMes = new Date(ano, mes + 1, 0).getDate();
+
+            const ehMesAtual = ano === hoje.getFullYear() && mes === hoje.getMonth();
+            const ehMesPassado = (ano < hoje.getFullYear()) || (ano === hoje.getFullYear() && mes < hoje.getMonth());
+            const ultimoDiaAvaliado = ehMesAtual ? hoje.getDate() : (ehMesPassado ? totalDiasMes : 0);
+
+            let diasTreinadosNoMes = 0;
+            let diasSemTreinoAvaliados = 0;
+
+            for (let dia = 1; dia <= totalDiasMes; dia++) {
+                const chave = `${ano}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+                const treinou = diasTreinadosSet.has(chave);
+                if (treinou) diasTreinadosNoMes++;
+                if (dia <= ultimoDiaAvaliado && !treinou) diasSemTreinoAvaliados++;
+            }
+
+            const taxaFrequencia = ultimoDiaAvaliado > 0
+                ? Math.round((diasTreinadosNoMes / ultimoDiaAvaliado) * 100)
+                : 0;
+
+            resumoEl.innerHTML = `
+                <div class="bg-black/65 border border-emerald-500/30 rounded-xl p-2">
+                    <div class="text-base font-black text-emerald-400">${diasTreinadosNoMes}</div>
+                    <div class="text-[9px] uppercase font-bold text-slate-400">Treinou</div>
+                </div>
+                <div class="bg-black/65 border border-slate-800 rounded-xl p-2">
+                    <div class="text-base font-black text-rose-400">${diasSemTreinoAvaliados}</div>
+                    <div class="text-[9px] uppercase font-bold text-slate-400">Sem treino</div>
+                </div>
+                <div class="bg-black/65 border border-slate-800 rounded-xl p-2">
+                    <div class="text-base font-black text-af-orange">${taxaFrequencia}%</div>
+                    <div class="text-[9px] uppercase font-bold text-slate-400">Frequência</div>
+                </div>
+            `;
+
+            let htmlDias = '';
+            for (let vazio = 0; vazio < primeiroDiaSemana; vazio++) {
+                htmlDias += `<div class="h-8"></div>`;
+            }
+
+            for (let dia = 1; dia <= totalDiasMes; dia++) {
+                const chave = `${ano}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+                const treinou = diasTreinadosSet.has(chave);
+                const ehHoje = chave === hojeChave;
+
+                let classes = 'h-8 rounded-lg flex items-center justify-center font-bold text-xs border ';
+                if (treinou) {
+                    classes += 'bg-emerald-500/25 border-emerald-500 text-emerald-300';
+                } else if (ehHoje) {
+                    classes += 'bg-slate-900 border-af-orange text-af-orange';
+                } else {
+                    classes += 'bg-black/45 border-slate-800/60 text-slate-400';
+                }
+
+                htmlDias += `<div class="${classes}" title="${treinou ? 'Treino registrado' : 'Sem treino registrado'}">${dia}</div>`;
+            }
+
+            gridEl.innerHTML = htmlDias;
         }
 
         function renderizarDivisoesAluno() {
@@ -412,6 +616,8 @@
         }
 
         function iniciarTreino(treinoId) {
+            prepararAudioContext();
+            solicitarPermissaoNotificacoes(false);
             treinoAtivoExecucao = alunoDados.treinos.find(t => t.id === treinoId);
             if (!treinoAtivoExecucao) return;
             progressoExecucao = {};
@@ -429,6 +635,7 @@
             document.getElementById('sec-execucao-treino').classList.add('hidden');
             document.getElementById('sec-resumo-treino').classList.add('hidden');
             document.getElementById('sec-lista-treinos').classList.remove('hidden');
+            renderizarCalendarioFrequencia();
         }
 
         function fecharResumoTreino() {
@@ -655,6 +862,7 @@
         }
 
         function concluirSerie(exIdx, sIdx, segundosDescanso, exigeRpe = true) {
+            prepararAudioContext();
             const p = garantirEstadoSerie(exIdx, sIdx);
 
             if (p.concluida) {
@@ -682,36 +890,46 @@
             renderizarExerciciosExecucao();
 
             if (segundosDescanso > 0) {
+                solicitarPermissaoNotificacoes(false);
                 iniciarCronometro(segundosDescanso);
             }
         }
 
         function iniciarCronometro(segundos) {
-            segundosRestantes = segundos;
+            segundosRestantes = Math.max(0, Math.round(segundos));
+            alvoFimCronometroMs = Date.now() + segundosRestantes * 1000;
             const card = document.getElementById('card-cronometro');
             card.classList.remove('hidden');
             atualizarDisplayCronometro();
 
             if (cronometroInterval) clearInterval(cronometroInterval);
             cronometroInterval = setInterval(() => {
-                segundosRestantes--;
+                segundosRestantes = Math.max(0, Math.ceil((alvoFimCronometroMs - Date.now()) / 1000));
                 if (segundosRestantes <= 0) {
                     clearInterval(cronometroInterval);
+                    cronometroInterval = null;
                     dispararAlarmeConclusao();
                     card.classList.add('hidden');
                 } else {
                     atualizarDisplayCronometro();
                 }
-            }, 1000);
+            }, 250);
         }
 
         function pararCronometro() {
-            if (cronometroInterval) clearInterval(cronometroInterval);
+            if (cronometroInterval) {
+                clearInterval(cronometroInterval);
+                cronometroInterval = null;
+            }
+            alvoFimCronometroMs = 0;
+            segundosRestantes = 0;
             document.getElementById('card-cronometro').classList.add('hidden');
         }
 
         function ajustarTempoCronometro(delta) {
-            segundosRestantes = Math.max(0, segundosRestantes + delta);
+            if (!alvoFimCronometroMs) return;
+            alvoFimCronometroMs = Math.max(Date.now(), alvoFimCronometroMs + delta * 1000);
+            segundosRestantes = Math.max(0, Math.ceil((alvoFimCronometroMs - Date.now()) / 1000));
             atualizarDisplayCronometro();
         }
 
@@ -725,18 +943,8 @@
             if ('vibrate' in navigator) {
                 try { navigator.vibrate([300, 150, 300, 150, 500]); } catch (e) {}
             }
-            try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(880, ctx.currentTime);
-                gain.gain.setValueAtTime(0.2, ctx.currentTime);
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start();
-                osc.stop(ctx.currentTime + 0.8);
-            } catch (e) {}
+            tocarSomDescansoConcluido();
+            dispararNotificacaoTelaBloqueada();
         }
 
         function abrirModalLayout() { document.getElementById('modal-layout-aluno').classList.remove('hidden'); }
