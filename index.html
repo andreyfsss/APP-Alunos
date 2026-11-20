@@ -908,6 +908,18 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6aWZ6aWtkZW9qYXp5c3dqZ3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MTg3NjgsImV4cCI6MjEwODk5NDc2OH0.Y3rycAN_O1IL99OdMJsC_TRMrSEKJp4vQJho2P4D_W0';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        // Redireciona automaticamente para o aluno.html se o aparelho tiver token de aluno salvo
+        (function redirecionarAlunoSeExistirToken() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                if (params.get('admin') === '1') return;
+                const tokenSalvo = (localStorage.getItem('af_aluno_token_salvo') || '').trim();
+                if (tokenSalvo) {
+                    window.location.replace(`aluno.html?token=${encodeURIComponent(tokenSalvo)}`);
+                }
+            } catch (e) {}
+        })();
+
         let alunoSelecionado = null;
         let treinoAtivoId = null;
         let indiceExercicioEditando = null;
@@ -2293,4 +2305,3 @@
     </script>
 </body>
 </html>
-```[cite: 5]

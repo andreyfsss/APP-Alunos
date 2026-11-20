@@ -4,15 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AF Pro - Treino do Aluno</title>
-    <link rel="manifest" href="manifest.webmanifest.json">
+    <link rel="manifest" href="manifest-aluno.webmanifest.json">
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
     <meta name="theme-color" content="#050505">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="AF Pro">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
+    <script src="[https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2](https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2)"></script>
     <style>
         body { background-color: #050505; -webkit-text-size-adjust: 100%; }
         .bg-af-card { background: rgba(255,255,255,.035); backdrop-filter: blur(14px); border: 1px solid rgba(255,106,0,.17); }
@@ -211,7 +211,7 @@
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://dzifzikdeojazyswjguw.supabase.co';
+        const SUPABASE_URL = '[https://dzifzikdeojazyswjguw.supabase.co](https://dzifzikdeojazyswjguw.supabase.co)';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6aWZ6aWtkZW9qYXp5c3dqZ3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MTg3NjgsImV4cCI6MjEwODk5NDc2OH0.Y3rycAN_O1IL99OdMJsC_TRMrSEKJp4vQJho2P4D_W0';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -279,7 +279,7 @@
             // Caso o aluno cole o link inteiro em vez de só o código do token
             if (bruto.includes('token=')) {
                 try {
-                    const urlObj = new URL(bruto.startsWith('http') ? bruto : `https://exemplo.com/?${bruto.split('?').pop()}`);
+                    const urlObj = new URL(bruto.startsWith('http') ? bruto : `[https://exemplo.com/?$](https://exemplo.com/?$){bruto.split('?').pop()}`);
                     const extraido = (urlObj.searchParams.get('token') || '').trim();
                     if (extraido) return extraido;
                 } catch (e) {}
@@ -298,7 +298,12 @@
 
             try {
                 const tokenSalvo = extrairTokenLimpo(localStorage.getItem(STORAGE_TOKEN_ALUNO_KEY) || '');
-                if (tokenSalvo) return tokenSalvo;
+                if (tokenSalvo) {
+                    try {
+                        window.history.replaceState({}, document.title, `${window.location.pathname}?token=${encodeURIComponent(tokenSalvo)}`);
+                    } catch (e) {}
+                    return tokenSalvo;
+                }
             } catch (e) {}
 
             return '';
@@ -378,6 +383,13 @@
                 if (error || !data) throw new Error('Token inválido ou aluno não encontrado');
 
                 try { localStorage.setItem(STORAGE_TOKEN_ALUNO_KEY, token); } catch (e) {}
+                try {
+                    const paramsAtual = new URLSearchParams(window.location.search);
+                    if (paramsAtual.get('token') !== token) {
+                        window.history.replaceState({}, document.title, `${window.location.pathname}?token=${encodeURIComponent(token)}`);
+                    }
+                } catch (e) {}
+
                 alunoDados = data;
                 document.getElementById('aluno-nome-topo').innerText = alunoDados.nome;
                 ocultarTelaPedirToken();
