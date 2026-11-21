@@ -760,9 +760,9 @@
                 <div class="flex flex-wrap justify-between items-center gap-2">
                     <div>
                         <h2 class="font-bold text-xs text-af-orange uppercase tracking-wider">📈 Central de Desempenho & Volume</h2>
-                        <p id="des-subtitulo-periodo" class="text-[10px] text-slate-400">Acompanhe carga total, séries e distribuição muscular • Últimos 7 dias</p>
+                        <p class="text-[10px] text-slate-400">Acompanhe carga total, séries e distribuição muscular</p>
                     </div>
-                    <button type="button" onclick="carregarAlunos().then(renderizarDashboardDesempenho)" class="bg-black/80 border border-slate-800 hover:border-af-orange text-slate-300 text-xs px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer">🔄 Atualizar</button>
+                    <button onclick="carregarAlunos().then(renderizarDashboardDesempenho)" class="bg-black/80 border border-slate-800 hover:border-af-orange text-slate-300 text-xs px-3 py-1.5 rounded-xl font-bold transition-all">🔄 Atualizar</button>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5 pt-1">
@@ -775,16 +775,16 @@
                     <div class="md:col-span-5">
                         <label class="block text-[9px] text-slate-400 uppercase font-bold mb-1">Período de Análise</label>
                         <div class="flex gap-1 bg-black border border-slate-800 p-1 rounded-xl text-xs font-bold text-center">
-                            <button type="button" onclick="mudarPeriodoDesempenho('semanal')" id="des-btn-semanal" class="flex-1 py-1.5 rounded-lg bg-af-orange text-black shadow-md transition-all cursor-pointer">7 dias</button>
-                            <button type="button" onclick="mudarPeriodoDesempenho('mensal')" id="des-btn-mensal" class="flex-1 py-1.5 rounded-lg text-slate-400 hover:text-white transition-all cursor-pointer">30 dias</button>
-                            <button type="button" onclick="mudarPeriodoDesempenho('trimestral')" id="des-btn-trimestral" class="flex-1 py-1.5 rounded-lg text-slate-400 hover:text-white transition-all cursor-pointer">90 dias</button>
+                            <button onclick="mudarPeriodoDesempenho('semanal')" id="des-btn-semanal" class="flex-1 py-1.5 rounded-lg bg-af-orange text-black shadow-md transition-all">7 dias</button>
+                            <button onclick="mudarPeriodoDesempenho('mensal')" id="des-btn-mensal" class="flex-1 py-1.5 rounded-lg text-slate-400 hover:text-white transition-all">30 dias</button>
+                            <button onclick="mudarPeriodoDesempenho('trimestral')" id="des-btn-trimestral" class="flex-1 py-1.5 rounded-lg text-slate-400 hover:text-white transition-all">90 dias</button>
                         </div>
                     </div>
                 </div>
 
                 <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
                     <div id="des-pills-alunos" class="flex gap-1.5 overflow-x-auto pb-1 pt-0.5 flex-1"></div>
-                    <button type="button" onclick="mudarFiltroAlunosParadosDesempenho()" id="des-btn-filtro-parados" class="shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-bold border border-slate-800 bg-black/70 text-slate-300 hover:border-af-orange/50 transition-all cursor-pointer">⚠️ Alunos Parados (3d+)</button>
+                    <button onclick="mudarFiltroAlunosParadosDesempenho()" id="des-btn-filtro-parados" class="shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-bold border border-slate-800 bg-black/70 text-slate-300 hover:border-af-orange/50 transition-all">⚠️ Alunos Parados (3d+)</button>
                 </div>
             </div>
 
@@ -799,11 +799,11 @@
                 <div class="flex flex-wrap justify-between items-center gap-2 border-b border-slate-800 pb-2.5">
                     <div>
                         <h3 class="font-bold text-xs text-af-orange uppercase tracking-wider">🎯 Volume por Grupamento Muscular</h3>
-                        <p id="des-sub-grupamentos" class="text-[10px] text-slate-400">Séries executadas por grupamento • Últimos 7 dias</p>
+                        <p id="des-sub-grupamentos" class="text-[10px] text-slate-400">Séries executadas e tonelagem acumulada</p>
                     </div>
                     <div class="flex gap-1 bg-black border border-slate-800 p-1 rounded-xl text-[10px] font-bold">
-                        <button type="button" onclick="mudarModoGrupoDesempenho('series')" id="des-btn-grupo-series" class="px-2.5 py-1 rounded-lg bg-af-orange text-black cursor-pointer">Por Séries</button>
-                        <button type="button" onclick="mudarModoGrupoDesempenho('kg')" id="des-btn-grupo-kg" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white cursor-pointer">Por Quilos (kg)</button>
+                        <button onclick="mudarModoGrupoDesempenho('series')" id="des-btn-grupo-series" class="px-2.5 py-1 rounded-lg bg-af-orange text-black">Por Séries</button>
+                        <button onclick="mudarModoGrupoDesempenho('kg')" id="des-btn-grupo-kg" class="px-2.5 py-1 rounded-lg text-slate-400">Por Quilos (kg)</button>
                     </div>
                 </div>
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
@@ -2241,305 +2241,48 @@
         let desModoGrupo = 'series';
         let desFiltroApenasParados = false;
 
-        function obterDiasPeriodoDesempenho(periodo) {
-            if (periodo === 'mensal') return 30;
-            if (periodo === 'trimestral') return 90;
-            return 7;
-        }
-
-        function obterLabelPeriodoDesempenho(periodo) {
-            if (periodo === 'mensal') return 'Últimos 30 dias';
-            if (periodo === 'trimestral') return 'Últimos 90 dias';
-            return 'Últimos 7 dias';
-        }
-
-        function atualizarVisualBotoesDesempenho() {
-            const mapaPeriodos = {
-                semanal: 'des-btn-semanal',
-                mensal: 'des-btn-mensal',
-                trimestral: 'des-btn-trimestral'
-            };
-            Object.entries(mapaPeriodos).forEach(([chave, idBtn]) => {
-                const btn = document.getElementById(idBtn);
-                if (!btn) return;
-                btn.className = (desPeriodo === chave)
-                    ? 'flex-1 py-1.5 rounded-lg bg-af-orange text-black font-bold shadow-md transition-all cursor-pointer'
-                    : 'flex-1 py-1.5 rounded-lg text-slate-400 hover:text-white font-bold transition-all cursor-pointer';
-            });
-
-            const btnSeries = document.getElementById('des-btn-grupo-series');
-            const btnKg = document.getElementById('des-btn-grupo-kg');
-            if (btnSeries) {
-                btnSeries.className = (desModoGrupo === 'series')
-                    ? 'px-2.5 py-1 rounded-lg bg-af-orange text-black font-bold cursor-pointer'
-                    : 'px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-bold cursor-pointer';
-            }
-            if (btnKg) {
-                btnKg.className = (desModoGrupo === 'kg')
-                    ? 'px-2.5 py-1 rounded-lg bg-af-orange text-black font-bold cursor-pointer'
-                    : 'px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-bold cursor-pointer';
-            }
-
-            const btnParados = document.getElementById('des-btn-filtro-parados');
-            if (btnParados) {
-                btnParados.className = desFiltroApenasParados
-                    ? 'shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-bold border border-af-orange bg-orange-950/60 text-af-orange transition-all cursor-pointer'
-                    : 'shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-bold border border-slate-800 bg-black/70 text-slate-300 hover:border-af-orange/50 transition-all cursor-pointer';
-            }
-
-            const subPer = document.getElementById('des-subtitulo-periodo');
-            if (subPer) {
-                subPer.innerText = `Acompanhe carga total, séries e distribuição muscular • ${obterLabelPeriodoDesempenho(desPeriodo)}`;
-            }
-
-            const subGrupo = document.getElementById('des-sub-grupamentos');
-            if (subGrupo) {
-                subGrupo.innerText = desModoGrupo === 'kg'
-                    ? `Carga acumulada (kg) por grupamento • ${obterLabelPeriodoDesempenho(desPeriodo)}`
-                    : `Séries executadas por grupamento • ${obterLabelPeriodoDesempenho(desPeriodo)}`;
-            }
-        }
-
-        function mudarFiltroAlunoDesempenho(id) {
-            desAlunoFiltro = id || 'TODOS';
-            if (desAlunoFiltro !== 'TODOS') desFiltroApenasParados = false;
-            renderizarDashboardDesempenho();
-        }
-
-        function mudarFiltroAlunosParadosDesempenho() {
-            desFiltroApenasParados = !desFiltroApenasParados;
-            if (desFiltroApenasParados) desAlunoFiltro = 'TODOS';
-            renderizarDashboardDesempenho();
-        }
-
-        function mudarPeriodoDesempenho(p) {
-            if (!['semanal', 'mensal', 'trimestral'].includes(p)) return;
-            desPeriodo = p;
-            renderizarDashboardDesempenho();
-        }
-
-        function mudarModoGrupoDesempenho(m) {
-            if (!['series', 'kg'].includes(m)) return;
-            desModoGrupo = m;
-            renderizarDashboardDesempenho();
-        }
-
-        function calcularKgExercicioSessao(ex) {
-            if (typeof ex.volume === 'number' && isFinite(ex.volume)) return ex.volume;
-            const seriesArr = Array.isArray(ex.series) ? ex.series : [];
-            return seriesArr.reduce((acc, s) => {
-                const carga = parseFloat(s.carga) || 0;
-                const reps = parseFloat(s.reps) || 0;
-                let totalSerie = carga * reps;
-                if (Array.isArray(s.drops)) {
-                    s.drops.forEach(d => {
-                        totalSerie += (parseFloat(d.carga) || 0) * (parseFloat(d.reps) || 0);
-                    });
-                }
-                return acc + totalSerie;
-            }, 0);
-        }
+        function mudarFiltroAlunoDesempenho(id) { desAlunoFiltro = id || 'TODOS'; renderizarDashboardDesempenho(); }
+        function mudarFiltroAlunosParadosDesempenho() { desFiltroApenasParados = !desFiltroApenasParados; desAlunoFiltro = 'TODOS'; renderizarDashboardDesempenho(); }
+        function mudarPeriodoDesempenho(p) { desPeriodo = p; renderizarDashboardDesempenho(); }
+        function mudarModoGrupoDesempenho(m) { desModoGrupo = m; renderizarDashboardDesempenho(); }
 
         function renderizarDashboardDesempenho() {
-            atualizarVisualBotoesDesempenho();
-
             const ativos = (alunosGlobais || []).filter(a => !a.arquivado);
             const kpisEl = document.getElementById('des-kpis');
             if (!kpisEl) return;
 
-            const agora = new Date();
-            const DIA_MS = 86400000;
-            const diasJanela = obterDiasPeriodoDesempenho(desPeriodo);
-            const limiteData = new Date(agora.getTime() - diasJanela * DIA_MS);
-
-            const infoAlunos = ativos.map(al => {
-                const treinosIds = new Set((al.treinos || []).map(t => t.id));
-                const historicoBruto = Array.isArray(al.historico) ? al.historico : [];
-                const sessoesValidas = historicoBruto
-                    .filter(h => h && h.data && !isNaN(new Date(h.data)) && (!h.treinoId || treinosIds.has(h.treinoId)))
-                    .map(h => ({ ...h, dt: new Date(h.data) }))
-                    .sort((a, b) => b.dt - a.dt);
-
-                const ultimaDt = sessoesValidas.length ? sessoesValidas[0].dt : null;
-                const diasSemTreino = ultimaDt ? Math.floor((agora - ultimaDt) / DIA_MS) : null;
-                const parado3d = (diasSemTreino === null) || (diasSemTreino >= 3);
-
-                const sessoesPeriodo = sessoesValidas.filter(s => s.dt >= limiteData && s.dt <= agora);
-                const volPeriodo = sessoesPeriodo.reduce((acc, s) => acc + (parseFloat(s.volume) || 0), 0);
-                const seriesPeriodo = sessoesPeriodo.reduce((acc, s) => acc + (parseInt(s.qtdSeriesValidadas, 10) || 0), 0);
-
-                return {
-                    aluno: al,
-                    sessoesPeriodo,
-                    volPeriodo,
-                    seriesPeriodo,
-                    diasSemTreino,
-                    parado3d
-                };
-            });
-
-            const selectEl = document.getElementById('des-select-aluno');
-            if (selectEl) {
-                if (desAlunoFiltro !== 'TODOS' && !ativos.some(a => String(a.id) === String(desAlunoFiltro))) {
-                    desAlunoFiltro = 'TODOS';
-                }
-                selectEl.innerHTML = `<option value="TODOS">👥 Todos os Alunos Ativos (${ativos.length})</option>` +
-                    ativos.map(a => `<option value="${escapeHtml(a.id)}" ${String(a.id) === String(desAlunoFiltro) ? 'selected' : ''}>${escapeHtml(a.nome)}</option>`).join('');
-            }
-
-            const pillsEl = document.getElementById('des-pills-alunos');
-            if (pillsEl) {
-                const listaPills = desFiltroApenasParados ? infoAlunos.filter(x => x.parado3d) : infoAlunos;
-                pillsEl.innerHTML =
-                    `<button type="button" onclick="mudarFiltroAlunoDesempenho('TODOS')" class="shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all cursor-pointer ${desAlunoFiltro === 'TODOS' ? 'bg-af-orange text-black border-af-orange shadow-md' : 'bg-black/60 text-slate-300 border-slate-800 hover:border-af-orange/50'}">Todos (${listaPills.length})</button>` +
-                    listaPills.map(item => {
-                        const ativo = String(item.aluno.id) === String(desAlunoFiltro);
-                        return `<button type="button" onclick="mudarFiltroAlunoDesempenho('${escapeHtml(item.aluno.id)}')" class="shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all cursor-pointer ${ativo ? 'bg-af-orange text-black border-af-orange shadow-md' : 'bg-black/60 text-slate-300 border-slate-800 hover:border-af-orange/50'}">${escapeHtml(item.aluno.nome)}</button>`;
-                    }).join('');
-            }
-
-            let baseSelecionada = infoAlunos;
-            if (desAlunoFiltro !== 'TODOS') {
-                baseSelecionada = infoAlunos.filter(x => String(x.aluno.id) === String(desAlunoFiltro));
-            } else if (desFiltroApenasParados) {
-                baseSelecionada = infoAlunos.filter(x => x.parado3d);
-            }
-
             let totalSessoes = 0;
             let volumeGeral = 0;
-            let totalSeries = 0;
-            const grupamentosSeries = {};
-            const grupamentosKg = {};
-            const porDia = {};
+            const grupamentosTotais = {};
 
-            baseSelecionada.forEach(item => {
-                const mapaMusculo = {};
-                (item.aluno.treinos || []).forEach(t => {
-                    (t.exercicios || []).forEach(ex => {
-                        if (ex.nome && ex.musculo) mapaMusculo[ex.nome.toLowerCase()] = ex.musculo;
-                    });
-                });
-
-                item.sessoesPeriodo.forEach(h => {
-                    totalSessoes += 1;
-                    const volSessao = parseFloat(h.volume) || 0;
-                    const serSessao = parseInt(h.qtdSeriesValidadas, 10) || 0;
-                    volumeGeral += volSessao;
-                    totalSeries += serSessao;
-                    NeonChart.somarDia(porDia, h);
-
+            ativos.forEach(al => {
+                const hist = Array.isArray(al.historico) ? al.historico : [];
+                totalSessoes += hist.length;
+                hist.forEach(h => {
+                    volumeGeral += h.volume || 0;
                     (h.exerciciosRealizados || []).forEach(ex => {
-                        const m = ex.musculo || mapaMusculo[(ex.nome || '').toLowerCase()] || 'Outros';
-                        const qtdSerEx = Array.isArray(ex.series) ? ex.series.length : 0;
-                        const kgEx = calcularKgExercicioSessao(ex);
-                        grupamentosSeries[m] = (grupamentosSeries[m] || 0) + qtdSerEx;
-                        grupamentosKg[m] = (grupamentosKg[m] || 0) + kgEx;
+                        const m = ex.musculo || 'Outros';
+                        grupamentosTotais[m] = (grupamentosTotais[m] || 0) + (ex.series ? ex.series.length : 0);
                     });
                 });
             });
 
-            const divisorMedia = desAlunoFiltro === 'TODOS' ? baseSelecionada.length : 1;
-            const mediaSessoes = divisorMedia > 0 ? (totalSessoes / divisorMedia).toFixed(1) : '0.0';
-
             kpisEl.innerHTML = `
-                <div class="kpi-card"><div class="text-[10px] text-slate-400 font-bold uppercase">${desAlunoFiltro === 'TODOS' ? (desFiltroApenasParados ? 'Alunos Parados (3d+)' : 'Alunos Ativos') : 'Aluno Selecionado'}</div><div class="text-xl font-black text-white truncate">${desAlunoFiltro === 'TODOS' ? baseSelecionada.length : escapeHtml(baseSelecionada[0]?.aluno?.nome || '-')}</div></div>
-                <div class="kpi-card"><div class="text-[10px] text-slate-400 font-bold uppercase">Sessões (${diasJanela}d)</div><div class="text-xl font-black text-af-orange">${totalSessoes}</div></div>
-                <div class="kpi-card"><div class="text-[10px] text-slate-400 font-bold uppercase">Volume Total (${diasJanela}d)</div><div class="text-xl font-black text-emerald-400">${NeonChart.fmt(volumeGeral)} kg</div></div>
-                <div class="kpi-card"><div class="text-[10px] text-slate-400 font-bold uppercase">${desAlunoFiltro === 'TODOS' ? 'Média Sessões / Aluno' : 'Séries Validadas (' + diasJanela + 'd)'}</div><div class="text-xl font-black text-white">${desAlunoFiltro === 'TODOS' ? mediaSessoes : totalSeries}</div></div>
+                <div class="kpi-card"><div class="text-[10px] text-slate-400 font-bold uppercase">Alunos Ativos</div><div class="text-xl font-black text-white">${ativos.length}</div></div>
+                <div class="kpi-card"><div class="text-[10px] text-slate-400 font-bold uppercase">Sessões Realizadas</div><div class="text-xl font-black text-af-orange">${totalSessoes}</div></div>
+                <div class="kpi-card"><div class="text-[10px] text-slate-400 font-bold uppercase">Volume Total (kg)</div><div class="text-xl font-black text-emerald-400">${NeonChart.fmt(volumeGeral)}</div></div>
+                <div class="kpi-card"><div class="text-[10px] text-slate-400 font-bold uppercase">Média / Aluno</div><div class="text-xl font-black text-white">${ativos.length ? (totalSessoes / ativos.length).toFixed(1) : 0}</div></div>
             `;
-
-            const graficoVolEl = document.getElementById('des-grafico-volume-kg');
-            if (graficoVolEl) {
-                graficoVolEl.innerHTML = NeonChart.bars(NeonChart.serieDias(porDia, 'vol'), {
-                    titulo: `Carga Total por Dia (${obterLabelPeriodoDesempenho(desPeriodo)})`,
-                    unit: 'kg',
-                    somar: true
-                });
-            }
-
-            const graficoSerEl = document.getElementById('des-grafico-series');
-            if (graficoSerEl) {
-                graficoSerEl.innerHTML = NeonChart.bars(NeonChart.serieDias(porDia, 'series'), {
-                    titulo: `Séries Validadas por Dia (${obterLabelPeriodoDesempenho(desPeriodo)})`,
-                    unit: 'séries',
-                    somar: true
-                });
-            }
-
-            const mapaValoresAtuais = desModoGrupo === 'kg' ? grupamentosKg : grupamentosSeries;
-            const unidadeGrupo = desModoGrupo === 'kg' ? 'kg' : 'séries';
 
             const mapaMuscularEl = document.getElementById('des-mapa-muscular');
             if (mapaMuscularEl) {
-                mapaMuscularEl.innerHTML = BodyMap.render({
-                    valores: mapaValoresAtuais,
-                    titulo: desModoGrupo === 'kg' ? 'Mapa Muscular (kg)' : 'Mapa Muscular (séries)'
-                });
+                mapaMuscularEl.innerHTML = BodyMap.render({ valores: grupamentosTotais, titulo: 'Mapa Muscular Geral' });
             }
 
             const barrasGrupos = document.getElementById('des-barras-grupos');
             if (barrasGrupos) {
-                const itens = Object.keys(mapaValoresAtuais)
-                    .map(k => ({ label: k, value: mapaValoresAtuais[k] }))
-                    .filter(i => i.value > 0)
-                    .sort((a, b) => b.value - a.value);
-
-                barrasGrupos.innerHTML = itens.length
-                    ? NeonChart.hbars(itens, {
-                        titulo: desModoGrupo === 'kg' ? 'Volume por Grupamento (Por Quilos)' : 'Volume por Grupamento (Por Séries)',
-                        unit: unidadeGrupo
-                    })
-                    : `<div class="bg-black/60 border border-slate-800 rounded-xl p-6 text-center text-xs text-slate-500">Sem registros de grupamentos para ${obterLabelPeriodoDesempenho(desPeriodo).toLowerCase()}.</div>`;
-            }
-
-            const detalheEl = document.getElementById('des-bloco-detalhe');
-            if (detalheEl) {
-                if (!baseSelecionada.length) {
-                    detalheEl.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">Nenhum aluno encontrado para o filtro selecionado.</p>`;
-                } else {
-                    const tituloBloco = desAlunoFiltro === 'TODOS'
-                        ? (desFiltroApenasParados ? `⚠️ Visão Geral — Alunos Parados há 3+ Dias (${baseSelecionada.length})` : `👥 Visão Geral por Aluno (${obterLabelPeriodoDesempenho(desPeriodo)})`)
-                        : `👤 Resumo Individual — ${escapeHtml(baseSelecionada[0].aluno.nome)}`;
-
-                    const cardsAlunos = baseSelecionada
-                        .slice()
-                        .sort((a, b) => b.volPeriodo - a.volPeriodo)
-                        .map(item => {
-                            const statusTreino = item.diasSemTreino === null
-                                ? '<span class="text-slate-400">Nunca treinou</span>'
-                                : item.diasSemTreino === 0
-                                    ? '<span class="text-emerald-400">Treinou hoje</span>'
-                                    : `<span class="${item.diasSemTreino >= 3 ? 'text-rose-400' : 'text-slate-300'}">${item.diasSemTreino}d sem treinar</span>`;
-
-                            return `
-                                <div onclick="abrirPainelPorId('${escapeHtml(item.aluno.id)}')" class="bg-black/60 border border-slate-800 hover:border-af-orange/60 rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3 cursor-pointer transition-all">
-                                    <div class="min-w-0">
-                                        <div class="font-bold text-sm text-white truncate">${escapeHtml(item.aluno.nome)}</div>
-                                        <div class="text-[11px] mt-0.5">${statusTreino} • <span class="text-slate-400">${item.sessoesPeriodo.length} sessão(ões) nos últimos ${diasJanela}d</span></div>
-                                    </div>
-                                    <div class="flex items-center gap-4 text-right shrink-0">
-                                        <div>
-                                            <div class="text-[9px] uppercase font-bold text-slate-500">Séries (${diasJanela}d)</div>
-                                            <div class="text-xs font-black text-slate-200">${item.seriesPeriodo}</div>
-                                        </div>
-                                        <div>
-                                            <div class="text-[9px] uppercase font-bold text-slate-500">Carga (${diasJanela}d)</div>
-                                            <div class="text-xs font-black text-af-orange">${NeonChart.fmt(item.volPeriodo)} kg</div>
-                                        </div>
-                                        <span class="text-xs text-slate-400 font-bold">→</span>
-                                    </div>
-                                </div>
-                            `;
-                        }).join('');
-
-                    detalheEl.innerHTML = `
-                        <div class="flex justify-between items-center border-b border-slate-800 pb-2">
-                            <h3 class="font-bold text-xs text-af-orange uppercase tracking-wider">${tituloBloco}</h3>
-                            <span class="text-[10px] text-slate-400">Toque para abrir a ficha</span>
-                        </div>
-                        <div class="space-y-2">${cardsAlunos}</div>
-                    `;
-                }
+                const itens = Object.keys(grupamentosTotais).map(k => ({ label: k, value: grupamentosTotais[k] }));
+                barrasGrupos.innerHTML = NeonChart.hbars(itens, { titulo: 'Séries por Grupamento Muscular', unit: 'séries' });
             }
         }
 
