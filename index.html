@@ -327,7 +327,8 @@
         #nav-lateral .nav-btn.ativo { background: rgba(255,106,0,.14); border-color: rgba(255,106,0,.45); box-shadow: 0 0 18px rgba(255,106,0,.18); }
         .kpi-card { background: rgba(21,21,21,.75); border: 1px solid rgba(255,106,0,.2); border-radius: 1rem; padding: .85rem; }
         .kpi-ico { width: 2.4rem; height: 2.4rem; border-radius: 999px; display:flex; align-items:center; justify-content:center; font-size:1.05rem; }
-        #sec-adm-inicio .grid-kpi { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:.6rem; }
+        #sec-adm-inicio .grid-kpi { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:.6rem; }
+        @media (max-width: 640px) { #sec-adm-inicio .grid-kpi { grid-template-columns: minmax(0,1fr); } }
         #sec-adm-inicio .grid-paineis { display:grid; grid-template-columns: minmax(0,1fr); gap:.75rem; }
         body { padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)); }
         #nav-inferior { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; padding-bottom: env(safe-area-inset-bottom, 0px); background: rgba(8,8,8,.92); backdrop-filter: blur(14px); border-top: 1px solid rgba(255,106,0,.25); }
@@ -1029,7 +1030,6 @@
             const kpi = (ico, cor, rot, val, sub) => `<div class="kpi-card flex items-center gap-3"><div class="kpi-ico" style="background:${cor}22;border:1px solid ${cor}66;box-shadow:0 0 14px ${cor}33">${ico}</div><div class="min-w-0"><div class="text-[10px] text-slate-400 font-bold uppercase">${rot}</div><div class="text-xl font-black text-white leading-tight">${val}</div><div class="text-[10px]">${sub}</div></div></div>`;
             document.getElementById('inicio-kpis').innerHTML =
                 kpi('👥', '#FF6A00', 'Alunos ativos', ativos.length, `<span class="text-slate-500">${alunosGlobais.length - ativos.length} arquivados</span>`) +
-                kpi('✅', '#34d399', 'Treinos feitos (7 dias)', sem7.length, inicioDelta(sem7.length, semAnt.length)) +
                 kpi('⏸️', '#fb7185', 'Alunos parados', atencao.length, '<span class="text-slate-500">3+ dias sem treinar</span>') +
                 kpi('📅', '#fbbf24', 'Aulas hoje', aulasHoje.length, `<span class="text-slate-500">${hojeStr} • ${Math.max(0, 17 - aulasHoje.length)} livres</span>`);
 
@@ -1889,6 +1889,7 @@
                 seriesConfig.push({ num, metodo, tipoMeta, descanso, repsSugeridas, qtdDrops, pausasRestPause, descansoIntra });
             });
 
+            const semCarga = ehExercicioSemCargaAdmin(musculo, equipamento);
             const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
             if (treino) {
                 if (!treino.exercicios) treino.exercicios = [];
@@ -1896,6 +1897,7 @@
                     nome,
                     musculo,
                     equipamento,
+                    semCarga,
                     conjugado: 'Nenhum',
                     qtdSeries,
                     metodoGeral,
@@ -1992,12 +1994,18 @@
             gerarCamposSeriesAdmin(qtd, lerSeriesAdminAtuais());
         }
 
+        function ehExercicioSemCargaAdmin(musculo, equipamento) {
+            return equipamento === 'Corporal' || musculo === 'Alongamentos' || musculo === 'Mobilidade';
+        }
+
         function verificarRegrasEquipamento() {
             const eq = document.getElementById('select-equipamento-ex').value;
             const musculo = document.getElementById('select-musculo-ex').value;
             if (eq === 'Corporal' || eq === 'Elástico' || musculo === 'Abdômen' || musculo === 'Alongamentos' || musculo === 'Mobilidade') {
                 document.getElementById('select-exige-rpe').value = 'nao';
             }
+            const qtd = parseInt(document.getElementById('input-qtd-series-ex').value) || 4;
+            gerarCamposSeriesAdmin(qtd, lerSeriesAdminAtuais());
         }
 
         function alternarVisibilidadeMetodoMacro(valor) {
@@ -2032,7 +2040,9 @@
             qtd = parseInt(qtd) || 0;
             const container = document.getElementById('container-config-series-admin');
             const musculo = document.getElementById('select-musculo-ex').value;
-            const escondeMetodo = MUSCULOS_SEM_CARGA.includes(musculo);
+            const equipamento = document.getElementById('select-equipamento-ex').value;
+            const semCargaAtivo = ehExercicioSemCargaAdmin(musculo, equipamento);
+            const escondeMetodo = MUSCULOS_SEM_CARGA.includes(musculo) || semCargaAtivo;
             const inputBase = 'w-full bg-black border border-slate-700 rounded-xl px-2.5 py-2 text-center text-white font-bold focus:border-af-orange focus:outline-none';
             const labelBase = 'block text-[9px] text-slate-500 uppercase font-bold mb-1 tracking-wider';
 
@@ -2094,8 +2104,8 @@
 
                         <div class="grid grid-cols-5 gap-2.5">
                             <div class="col-span-3">
-                                <label class="${labelBase}">Meta Reps / Carga desta série</label>
-                                <input type="text" value="${repsSel}" placeholder="Ex: 12 ou 10 a 12" class="input-reps-sugeridas ${inputBase}">
+                                <label class="${labelBase}">${semCargaAtivo ? 'Meta Reps / Tempo (s) — Sem Carga' : 'Meta Reps / Carga desta série'}</label>
+                                <input type="text" value="${repsSel}" placeholder="${semCargaAtivo ? 'Ex: 30s ou 15 reps' : 'Ex: 12 ou 10 a 12'}" class="input-reps-sugeridas ${inputBase}">
                             </div>
                             <div class="col-span-2">
                                 <label class="${labelBase}">Descanso (s)</label>

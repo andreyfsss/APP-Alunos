@@ -784,6 +784,209 @@
             `;
         }
 
+
+        let estrategiaProgressaoAtiva = localStorage.getItem('af_estrategia_progressao') || 'carga';
+
+        function ehExercicioSemCargaAluno(ex) {
+            if (!ex) return false;
+            if (ex.semCarga === true) return true;
+            const musculo = String(ex.musculo || '').trim();
+            const equipamento = String(ex.equipamento || '').trim();
+            return equipamento === 'Corporal' || musculo === 'Alongamentos' || musculo === 'Mobilidade';
+        }
+
+        function obterUltimaSessaoDetalhada(nomeExercicio) {
+            const hist = Array.isArray(alunoDados?.historico) ? alunoDados.historico : [];
+            const alvo = String(nomeExercicio || '').trim().toLowerCase();
+            for (let i = hist.length - 1; i >= 0; i--) {
+                const reg = hist[i];
+                const lista = Array.isArray(reg?.exerciciosRealizados) ? reg.exerciciosRealizados : [];
+                const achado = lista.find(e => String(e.nome || '').trim().toLowerCase() === alvo);
+                if (achado && Array.isArray(achado.series) && achado.series.length > 0) {
+                    const cargas = achado.series.map(s => parseFloat(s.carga) || 0);
+                    const repsArr = achado.series.map(s => parseInt(s.reps, 10) || 0);
+                    const rpesArr = achado.series.map(s => parseFloat(s.rpe)).filter(v => !isNaN(v) && v > 0);
+                    const cargaMax = cargas.length ? Math.max(...cargas) : 0;
+                    const cargaMedia = cargas.length ? +(cargas.reduce((a, b) => a + b, 0) / cargas.length).toFixed(1) : 0;
+                    const repsTotal = repsArr.reduce((a, b) => a + b, 0);
+                    const repsMedia = repsArr.length ? Math.round(repsTotal / repsArr.length) : 0;
+                    const rpeMedio = rpesArr.length ? +(rpesArr.reduce((a, b) => a + b, 0) / rpesArr.length).toFixed(1) : null;
+                    return {
+                        data: reg.data,
+                        qtdSeries: achado.series.length,
+                        repsArr,
+                        repsTotal,
+                        repsMedia,
+                        cargaMax,
+                        cargaMedia,
+                        rpeMedio
+                    };
+                }
+            }
+            return null;
+        }
+
+        function calcularEstrategiasProgressao(ex, ult) {
+            const semCarga = ehExercicioSemCargaAluno(ex);
+            if (!ult) {
+                if (semCarga) {
+                    return {
+                        semCarga: true,
+                        temBase: false,
+                        carga: {
+                            titulo: 'Foco em Ritmo e Tempo',
+                            resumo: 'Execução controlada e pausas estáveis',
+                            metaSerie: 'Meta prescrita',
+                            dica: 'Sem histórico prévio: foque em amplitude completa e respiração regular.'
+                        },
+                        reps: {
+                            titulo: 'Foco em Volume / Duração',
+                            resumo: 'Aumentar reps ou segundos gradualmente',
+                            metaSerie: '+2 reps ou +5–10s',
+                            dica: 'Se terminar com folga, adicione 2 repetições ou 5–10s mantendo o descanso.'
+                        }
+                    };
+                }
+                return {
+                    semCarga: false,
+                    temBase: false,
+                    carga: {
+                        titulo: 'Subir Carga',
+                        resumo: 'Base inicial — registre sua 1ª carga',
+                        metaSerie: 'Carga base',
+                        dica: 'Registre a carga e o RPE desta sessão para liberar o cálculo de progressão.'
+                    },
+                    reps: {
+                        titulo: 'Subir Repetições',
+                        resumo: 'Construir margem de reps na meta',
+                        metaSerie: 'Topo da faixa',
+                        dica: 'Busque o limite superior da faixa de repetições com técnica limpa.'
+                    }
+                };
+            }
+
+            if (semCarga) {
+                const baseReps = ult.repsMedia || 10;
+                const extraReps = (ult.rpeMedio !== null && ult.rpeMedio <= 7.5) ? 3 : 2;
+                return {
+                    semCarga: true,
+                    temBase: true,
+                    carga: {
+                        titulo: 'Manter Tempo / Controle',
+                        resumo: `Última: ${ult.qtdSeries}x ${ult.repsArr.join('/') || baseReps} • RPE ${ult.rpeMedio ?? '—'}`,
+                        metaSerie: `${baseReps + 1}–${baseReps + 2} reps/s`,
+                        dica: 'Mantenha a mesma pausa e acrescente 1 a 2 reps ou segundos com execução lenta.'
+                    },
+                    reps: {
+                        titulo: 'Subir Repetições',
+                        resumo: `Meta: ~${baseReps + extraReps} por série`,
+                        metaSerie: `${baseReps + extraReps} reps/s`,
+                        dica: `Aumente em +${extraReps} repetições (ou +10s) mantendo a qualidade do movimento.`
+                    }
+                };
+            }
+
+            const cargaRef = ult.cargaMax > 0 ? ult.cargaMax : ult.cargaMedia;
+            const rpeVal = ult.rpeMedio;
+            const incrementoCarga = cargaRef >= 40 ? 2.5 : (cargaRef > 0 ? 2 : 2);
+            const novaCarga = +(cargaRef + incrementoCarga).toFixed(1);
+            const repsAjustadas = Math.max(1, (ult.repsMedia || 10) - (rpeVal !== null && rpeVal >= 9 ? 1 : 0));
+
+            const repsBase = ult.repsMedia || 10;
+            const addReps = (rpeVal !== null && rpeVal <= 7.5) ? 2 : 1;
+            const novasReps = repsBase + addReps;
+
+            let dicaCarga = `Suba para ${novaCarga} kg mantendo a faixa de repetições.`;
+            if (rpeVal !== null && rpeVal >= 9.5) {
+                dicaCarga = `RPE anterior foi alto (${rpeVal}): suba para ${novaCarga} kg e aceite 1 rep a menos se precisar.`;
+            } else if (rpeVal !== null && rpeVal <= 7.5) {
+                dicaCarga = `RPE anterior teve margem (${rpeVal}): bom momento para subir para ${novaCarga} kg.`;
+            }
+
+            return {
+                semCarga: false,
+                temBase: true,
+                carga: {
+                    titulo: 'Subir Carga',
+                    resumo: `Ir para ${novaCarga} kg • ${repsAjustadas} reps`,
+                    metaSerie: `${novaCarga} kg • ${repsAjustadas} reps`,
+                    dica: dicaCarga
+                },
+                reps: {
+                    titulo: 'Subir Repetições',
+                    resumo: `Manter ${cargaRef} kg • ${novasReps} reps`,
+                    metaSerie: `${cargaRef} kg • ${novasReps} reps`,
+                    dica: `Mantenha ${cargaRef} kg e busque ${novasReps} reps por série antes de subir o peso.`
+                }
+            };
+        }
+
+        function selecionarEstrategiaProgressao(chave) {
+            if (chave === 'carga' || chave === 'reps') {
+                estrategiaProgressaoAtiva = chave;
+                try { localStorage.setItem('af_estrategia_progressao', chave); } catch (e) {}
+                renderizarExerciciosExecucao();
+            }
+        }
+
+        function renderizarBlocoHistoricoEProgressao(ex) {
+            const ult = obterUltimaSessaoDetalhada(ex.nome);
+            const prog = calcularEstrategiasProgressao(ex, ult);
+            const ativa = estrategiaProgressaoAtiva === 'reps' ? 'reps' : 'carga';
+            const metaAtivaObj = prog[ativa];
+
+            const dataFmt = ult?.data
+                ? new Date(ult.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+                : '';
+
+            const resumoHtml = ult ? `
+                <div class="bg-black/70 border border-slate-800/90 rounded-xl p-2.5 space-y-1">
+                    <div class="flex items-center justify-between text-[10px]">
+                        <span class="font-black uppercase tracking-wider text-slate-300">🕒 Última Sessão${dataFmt ? ` (${dataFmt})` : ''}</span>
+                        ${ult.rpeMedio !== null ? `<span class="font-black text-af-orange bg-orange-950/60 border border-orange-600/30 px-1.5 py-0.5 rounded">RPE ${ult.rpeMedio}</span>` : ''}
+                    </div>
+                    <div class="text-[11px] text-slate-200 font-semibold">
+                        ${ult.qtdSeries} série(s) • Reps: <span class="text-white font-black">${ult.repsArr.join(' / ')}</span>${!prog.semCarga ? ` • Carga máx: <span class="text-white font-black">${ult.cargaMax} kg</span>` : ''}
+                    </div>
+                </div>
+            ` : `
+                <div class="bg-black/50 border border-slate-800/70 rounded-xl p-2 text-[10px] text-slate-400">
+                    🕒 Sem sessão anterior registrada para este exercício.
+                </div>
+            `;
+
+            return `
+                <div class="space-y-2 pt-1">
+                    ${resumoHtml}
+                    <div class="space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[9px] font-black uppercase tracking-wider text-af-orange">🎯 Guia de Progressão (Toque para escolher)</span>
+                            <span class="text-[9px] font-bold text-slate-400">Ativa: ${escapeHtml(metaAtivaObj.titulo)}</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="button" onclick="selecionarEstrategiaProgressao('carga')" class="text-left p-2.5 rounded-xl border transition-all ${ativa === 'carga' ? 'bg-orange-950/45 border-af-orange shadow-md' : 'bg-black/65 border-slate-800 hover:border-slate-700'}">
+                                <div class="flex items-center justify-between gap-1">
+                                    <span class="text-[10px] font-black uppercase ${ativa === 'carga' ? 'text-af-orange' : 'text-slate-200'}">${escapeHtml(prog.carga.titulo)}</span>
+                                    ${ativa === 'carga' ? '<span class="text-[9px] bg-af-orange text-black font-black px-1.5 py-0.2 rounded">ATIVA</span>' : ''}
+                                </div>
+                                <div class="text-[10px] text-slate-300 font-semibold mt-1 leading-snug">${escapeHtml(prog.carga.resumo)}</div>
+                            </button>
+                            <button type="button" onclick="selecionarEstrategiaProgressao('reps')" class="text-left p-2.5 rounded-xl border transition-all ${ativa === 'reps' ? 'bg-orange-950/45 border-af-orange shadow-md' : 'bg-black/65 border-slate-800 hover:border-slate-700'}">
+                                <div class="flex items-center justify-between gap-1">
+                                    <span class="text-[10px] font-black uppercase ${ativa === 'reps' ? 'text-af-orange' : 'text-slate-200'}">${escapeHtml(prog.reps.titulo)}</span>
+                                    ${ativa === 'reps' ? '<span class="text-[9px] bg-af-orange text-black font-black px-1.5 py-0.2 rounded">ATIVA</span>' : ''}
+                                </div>
+                                <div class="text-[10px] text-slate-300 font-semibold mt-1 leading-snug">${escapeHtml(prog.reps.resumo)}</div>
+                            </button>
+                        </div>
+                        <div class="bg-orange-950/25 border border-af-orange/30 rounded-xl px-2.5 py-2 text-[10px] text-orange-100 leading-snug">
+                            <span class="font-black text-af-orange uppercase">Meta (${escapeHtml(metaAtivaObj.metaSerie)}):</span> ${escapeHtml(metaAtivaObj.dica)}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
         function renderizarExerciciosExecucao() {
             const container = document.getElementById('container-exercicios-execucao');
             const exercicios = treinoAtivoExecucao.exercicios || [];
@@ -792,29 +995,39 @@
                 return;
             }
 
+            const ativaProgKey = estrategiaProgressaoAtiva === 'reps' ? 'reps' : 'carga';
             container.innerHTML = exercicios.map((ex, exIdx) => {
                 const seriesConfig = ex.seriesConfig || Array.from({ length: ex.qtdSeries || 4 }, (_, i) => ({ num: i + 1, metodo: 'Série Normal', repsSugeridas: '10 a 12', descanso: ex.descanso || 90 }));
                 const exigeRpe = ex.exigeRpe !== false;
+                const semCarga = ehExercicioSemCargaAluno(ex);
                 const conj = ex.conjugado && ex.conjugado !== 'Nenhum' ? ex.conjugado : null;
+                const ultSessao = obterUltimaSessaoDetalhada(ex.nome);
+                const progEx = calcularEstrategiasProgressao(ex, ultSessao);
+                const metaGuiaAtiva = progEx[ativaProgKey]?.metaSerie || '';
 
                 let seriesHtml = seriesConfig.map((s, sIdx) => {
                     const p = garantirEstadoSerie(exIdx, sIdx);
                     const metaTexto = s.repsSugeridas || '10 a 12';
+                    const colsCount = (!semCarga ? 1 : 0) + 1 + (exigeRpe ? 1 : 0);
+                    const gridColsClass = colsCount === 3 ? 'grid-cols-3' : (colsCount === 2 ? 'grid-cols-2' : 'grid-cols-1');
 
                     return `
                         <div class="bg-black/60 border ${p.concluida ? 'border-emerald-500/60 bg-emerald-950/10' : 'border-slate-800'} rounded-xl p-3 space-y-2.5">
                             <div class="flex justify-between items-center text-xs gap-2">
                                 <span class="font-bold text-af-orange">Série ${s.num}</span>
+                                <span class="text-[10px] text-slate-400 font-semibold">Descanso: ${s.descanso || 90}s</span>
                             </div>
                             ${renderizarBadgeEExplicacaoMetodo(s, exIdx, sIdx)}
-                            <div class="grid ${exigeRpe ? 'grid-cols-3' : 'grid-cols-2'} gap-2">
+                            <div class="grid ${gridColsClass} gap-2">
+                                ${!semCarga ? `
                                 <div>
                                     <label class="block text-[9px] text-slate-400 uppercase font-bold mb-1">Carga (kg)</label>
                                     <input type="number" inputmode="decimal" value="${escapeHtml(p.carga)}" oninput="atualizarProgressoSerie(${exIdx}, ${sIdx}, 'carga', this.value)" placeholder="0" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-white text-center font-bold text-xs">
-                                </div>
+                                </div>` : ''}
                                 <div>
-                                    <label class="block text-[9px] text-slate-400 uppercase font-bold mb-1">REPS - META: ${escapeHtml(metaTexto)}</label>
+                                    <label class="block text-[9px] text-slate-400 uppercase font-bold mb-1">${semCarga ? 'REPS / TEMPO' : 'REPS'} - META: ${escapeHtml(metaTexto)}</label>
                                     <input type="number" inputmode="numeric" value="${escapeHtml(p.reps)}" oninput="atualizarProgressoSerie(${exIdx}, ${sIdx}, 'reps', this.value)" placeholder="0" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-white text-center font-bold text-xs">
+                                    ${metaGuiaAtiva ? `<div class="text-[9px] text-af-orange/90 font-bold mt-1 text-center truncate">Guia: ${escapeHtml(metaGuiaAtiva)}</div>` : ''}
                                 </div>
                                 ${exigeRpe ? `
                                 <div>
@@ -824,8 +1037,8 @@
                                     </button>
                                 </div>` : ''}
                             </div>
-                            ${renderizarBlocoInferiorDropSet(s, exIdx, sIdx)}
-                            <button onclick="concluirSerie(${exIdx}, ${sIdx}, ${s.descanso || 90}, ${exigeRpe})" class="w-full py-2 rounded-xl font-bold text-xs transition-all ${p.concluida ? 'bg-emerald-500 text-black shadow-md' : 'bg-slate-900 border border-slate-800 text-slate-300 hover:border-af-orange'}">
+                            ${!semCarga ? renderizarBlocoInferiorDropSet(s, exIdx, sIdx) : ''}
+                            <button onclick="concluirSerie(${exIdx}, ${sIdx}, ${s.descanso || 90}, ${exigeRpe}, ${semCarga})" class="w-full py-2 rounded-xl font-bold text-xs transition-all ${p.concluida ? 'bg-emerald-500 text-black shadow-md' : 'bg-slate-900 border border-slate-800 text-slate-300 hover:border-af-orange'}">
                                 ${p.concluida ? '✅ Série Concluída (Toque para refazer)' : 'Concluir Série ⏱️'}
                             </button>
                         </div>
@@ -836,11 +1049,12 @@
                     <div class="bg-af-card rounded-2xl p-4 space-y-3 shadow-lg">
                         <div class="flex justify-between items-center border-b border-slate-800 pb-2">
                             <div>
-                                <span class="text-[10px] text-af-orange font-bold uppercase">${escapeHtml(ex.musculo)} • ${escapeHtml(ex.equipamento)}</span>
+                                <span class="text-[10px] text-af-orange font-bold uppercase">${escapeHtml(ex.musculo)} • ${escapeHtml(ex.equipamento)}${semCarga ? ' • Sem Carga' : ''}</span>
                                 <h3 class="font-bold text-sm text-white">${exIdx + 1}. ${escapeHtml(ex.nome)}</h3>
                             </div>
                             ${conj ? `<span class="text-[10px] bg-amber-950 text-amber-400 border border-amber-800 px-2 py-0.5 rounded font-black">🔗 ${conj}</span>` : ''}
                         </div>
+                        ${renderizarBlocoHistoricoEProgressao(ex)}
                         <div class="space-y-2">${seriesHtml}</div>
                     </div>
                 `;
@@ -861,7 +1075,7 @@
             document.getElementById('modal-campos-obrigatorios').classList.add('hidden');
         }
 
-        function concluirSerie(exIdx, sIdx, segundosDescanso, exigeRpe = true) {
+        function concluirSerie(exIdx, sIdx, segundosDescanso, exigeRpe = true, semCarga = false) {
             prepararAudioContext();
             const p = garantirEstadoSerie(exIdx, sIdx);
 
@@ -871,14 +1085,14 @@
                 return;
             }
 
-            const temCarga = String(p.carga ?? '').trim() !== '';
+            const temCarga = semCarga || String(p.carga ?? '').trim() !== '';
             const repsNum = parseInt(p.reps, 10);
             const temReps = String(p.reps ?? '').trim() !== '' && !isNaN(repsNum) && repsNum > 0;
             const temRpe = !exigeRpe || (String(p.rpe ?? '').trim() !== '' && p.rpe !== null && p.rpe !== undefined);
 
             const faltando = [];
             if (!temCarga) faltando.push('Carga (kg)');
-            if (!temReps) faltando.push('Repetições');
+            if (!temReps) faltando.push(semCarga ? 'Repetições / Tempo' : 'Repetições');
             if (!temRpe) faltando.push('RPE');
 
             if (faltando.length > 0) {
@@ -992,10 +1206,11 @@
             exercicios.forEach((ex, exIdx) => {
                 const totalSeries = (ex.seriesConfig && ex.seriesConfig.length) ? ex.seriesConfig.length : (ex.qtdSeries || 4);
                 const exigeRpe = ex.exigeRpe !== false;
+                const semCarga = ehExercicioSemCargaAluno(ex);
                 for (let sIdx = 0; sIdx < totalSeries; sIdx++) {
                     const p = progressoExecucao[exIdx]?.[sIdx];
                     const repsNum = parseInt(p?.reps, 10) || 0;
-                    const temCarga = String(p?.carga ?? '').trim() !== '';
+                    const temCarga = semCarga || String(p?.carga ?? '').trim() !== '';
                     const temRpe = !exigeRpe || (String(p?.rpe ?? '').trim() !== '' && p?.rpe !== null && p?.rpe !== undefined);
                     if (!p || !p.concluida || repsNum <= 0 || !temCarga || !temRpe) {
                         pendentes++;
@@ -1198,7 +1413,8 @@
                 Object.keys(seriesProg).forEach(sIdx => {
                     const s = seriesProg[sIdx];
                     if (s && s.concluida) {
-                        const carga = parseFloat(s.carga) || 0;
+                        const semCargaEx = ehExercicioSemCargaAluno(ex);
+                        const carga = semCargaEx ? 0 : (parseFloat(s.carga) || 0);
                         const reps = parseInt(s.reps, 10) || 0;
                         const rpe = parseFloat(s.rpe) || null;
                         let volSerie = carga * reps;
