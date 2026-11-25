@@ -785,7 +785,15 @@
         }
 
 
-        let estrategiaProgressaoAtiva = localStorage.getItem('af_estrategia_progressao') || 'carga';
+
+        let estrategiasProgressaoPorExercicio = {};
+        try {
+            estrategiasProgressaoPorExercicio = JSON.parse(localStorage.getItem('af_estrategias_progressao_exercicios') || '{}') || {};
+        } catch (e) { estrategiasProgressaoPorExercicio = {}; }
+
+        function obterEstrategiaExercicio(ex) {
+            return estrategiasProgressaoPorExercicio[String(ex?.nome || '').trim().toLowerCase()] || 'carga';
+        }
 
         function ehExercicioSemCargaAluno(ex) {
             if (!ex) return false;
@@ -819,7 +827,12 @@
                         repsMedia,
                         cargaMax,
                         cargaMedia,
-                        rpeMedio
+                        rpeMedio,
+                        seriesDetalhadas: achado.series.map(s => ({
+                            carga: parseFloat(s.carga) || 0,
+                            reps: parseInt(s.reps, 10) || 0,
+                            rpe: (s.rpe !== null && s.rpe !== undefined && s.rpe !== '') ? (parseFloat(s.rpe) || null) : null
+                        }))
                     };
                 }
             }
@@ -921,33 +934,42 @@
             };
         }
 
-        function selecionarEstrategiaProgressao(chave) {
-            if (chave === 'carga' || chave === 'reps') {
-                estrategiaProgressaoAtiva = chave;
-                try { localStorage.setItem('af_estrategia_progressao', chave); } catch (e) {}
-                renderizarExerciciosExecucao();
-            }
+        function selecionarEstrategiaProgressao(chave, nomeExercicio) {
+            if (chave !== 'carga' && chave !== 'reps') return;
+            const idExercicio = String(nomeExercicio || '').trim().toLowerCase();
+            if (!idExercicio) return;
+            estrategiasProgressaoPorExercicio[idExercicio] = chave;
+            try { localStorage.setItem('af_estrategias_progressao_exercicios', JSON.stringify(estrategiasProgressaoPorExercicio)); } catch (e) {}
+            renderizarExerciciosExecucao();
         }
 
         function renderizarBlocoHistoricoEProgressao(ex) {
             const ult = obterUltimaSessaoDetalhada(ex.nome);
             const prog = calcularEstrategiasProgressao(ex, ult);
-            const ativa = estrategiaProgressaoAtiva === 'reps' ? 'reps' : 'carga';
+            const ativa = obterEstrategiaExercicio(ex);
             const metaAtivaObj = prog[ativa];
 
             const dataFmt = ult?.data
                 ? new Date(ult.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
                 : '';
 
+            const seriesUltimas = ult?.seriesDetalhadas || [];
             const resumoHtml = ult ? `
-                <div class="bg-black/70 border border-slate-800/90 rounded-xl p-2.5 space-y-1">
+                <div class="bg-black/70 border border-slate-800/90 rounded-xl p-2.5 space-y-2">
                     <div class="flex items-center justify-between text-[10px]">
-                        <span class="font-black uppercase tracking-wider text-slate-300">🕒 Última Sessão${dataFmt ? ` (${dataFmt})` : ''}</span>
-                        ${ult.rpeMedio !== null ? `<span class="font-black text-af-orange bg-orange-950/60 border border-orange-600/30 px-1.5 py-0.5 rounded">RPE ${ult.rpeMedio}</span>` : ''}
+                        <span class="font-black uppercase tracking-wider text-slate-300">🕒 Última sessão${dataFmt ? ` (${dataFmt})` : ''}</span>
+                        <span class="font-bold text-slate-400">${ult.qtdSeries} série(s)</span>
                     </div>
-                    <div class="text-[11px] text-slate-200 font-semibold">
-                        ${ult.qtdSeries} série(s) • Reps: <span class="text-white font-black">${ult.repsArr.join(' / ')}</span>${!prog.semCarga ? ` • Carga máx: <span class="text-white font-black">${ult.cargaMax} kg</span>` : ''}
+                    <div class="space-y-1">
+                        ${seriesUltimas.map((serie, idx) => `
+                            <div class="flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5 text-[10px] border-t border-slate-800/70 pt-1">
+                                <span class="font-black text-af-orange">S${idx + 1}</span>
+                                <span class="text-slate-200">${!prog.semCarga && serie.carga > 0 ? `<b class="text-white">${serie.carga} kg</b> × ` : ''}<b class="text-white">${serie.reps || '—'}</b> ${prog.semCarga ? 'reps/tempo' : 'reps'}</span>
+                                <span class="text-slate-400">RPE <b class="text-af-orange">${serie.rpe ?? '—'}</b></span>
+                            </div>
+                        `).join('')}
                     </div>
+                    <div class="text-[9px] text-slate-500">Carga, repetições/tempo e RPE registrados em cada série.</div>
                 </div>
             ` : `
                 <div class="bg-black/50 border border-slate-800/70 rounded-xl p-2 text-[10px] text-slate-400">
@@ -964,14 +986,14 @@
                             <span class="text-[9px] font-bold text-slate-400">Ativa: ${escapeHtml(metaAtivaObj.titulo)}</span>
                         </div>
                         <div class="grid grid-cols-2 gap-2">
-                            <button type="button" onclick="selecionarEstrategiaProgressao('carga')" class="text-left p-2.5 rounded-xl border transition-all ${ativa === 'carga' ? 'bg-orange-950/45 border-af-orange shadow-md' : 'bg-black/65 border-slate-800 hover:border-slate-700'}">
+                            <button type="button" onclick="selecionarEstrategiaProgressao('carga', '${escapeHtml(ex.nome)}')" class="text-left p-2.5 rounded-xl border transition-all ${ativa === 'carga' ? 'bg-orange-950/45 border-af-orange shadow-md' : 'bg-black/65 border-slate-800 hover:border-slate-700'}">
                                 <div class="flex items-center justify-between gap-1">
                                     <span class="text-[10px] font-black uppercase ${ativa === 'carga' ? 'text-af-orange' : 'text-slate-200'}">${escapeHtml(prog.carga.titulo)}</span>
                                     ${ativa === 'carga' ? '<span class="text-[9px] bg-af-orange text-black font-black px-1.5 py-0.2 rounded">ATIVA</span>' : ''}
                                 </div>
                                 <div class="text-[10px] text-slate-300 font-semibold mt-1 leading-snug">${escapeHtml(prog.carga.resumo)}</div>
                             </button>
-                            <button type="button" onclick="selecionarEstrategiaProgressao('reps')" class="text-left p-2.5 rounded-xl border transition-all ${ativa === 'reps' ? 'bg-orange-950/45 border-af-orange shadow-md' : 'bg-black/65 border-slate-800 hover:border-slate-700'}">
+                            <button type="button" onclick="selecionarEstrategiaProgressao('reps', '${escapeHtml(ex.nome)}')" class="text-left p-2.5 rounded-xl border transition-all ${ativa === 'reps' ? 'bg-orange-950/45 border-af-orange shadow-md' : 'bg-black/65 border-slate-800 hover:border-slate-700'}">
                                 <div class="flex items-center justify-between gap-1">
                                     <span class="text-[10px] font-black uppercase ${ativa === 'reps' ? 'text-af-orange' : 'text-slate-200'}">${escapeHtml(prog.reps.titulo)}</span>
                                     ${ativa === 'reps' ? '<span class="text-[9px] bg-af-orange text-black font-black px-1.5 py-0.2 rounded">ATIVA</span>' : ''}
@@ -995,7 +1017,6 @@
                 return;
             }
 
-            const ativaProgKey = estrategiaProgressaoAtiva === 'reps' ? 'reps' : 'carga';
             container.innerHTML = exercicios.map((ex, exIdx) => {
                 const seriesConfig = ex.seriesConfig || Array.from({ length: ex.qtdSeries || 4 }, (_, i) => ({ num: i + 1, metodo: 'Série Normal', repsSugeridas: '10 a 12', descanso: ex.descanso || 90 }));
                 const exigeRpe = ex.exigeRpe !== false;
@@ -1003,7 +1024,7 @@
                 const conj = ex.conjugado && ex.conjugado !== 'Nenhum' ? ex.conjugado : null;
                 const ultSessao = obterUltimaSessaoDetalhada(ex.nome);
                 const progEx = calcularEstrategiasProgressao(ex, ultSessao);
-                const metaGuiaAtiva = progEx[ativaProgKey]?.metaSerie || '';
+                const metaGuiaAtiva = progEx[obterEstrategiaExercicio(ex)]?.metaSerie || '';
 
                 let seriesHtml = seriesConfig.map((s, sIdx) => {
                     const p = garantirEstadoSerie(exIdx, sIdx);
