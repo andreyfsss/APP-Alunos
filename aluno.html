@@ -621,6 +621,7 @@
             treinoAtivoExecucao = alunoDados.treinos.find(t => t.id === treinoId);
             if (!treinoAtivoExecucao) return;
             progressoExecucao = {};
+            estrategiaProgressao = {};
             document.getElementById('titulo-treino-execucao').innerText = treinoAtivoExecucao.nome;
             document.getElementById('sec-lista-treinos').classList.add('hidden');
             document.getElementById('sec-resumo-treino').classList.add('hidden');
@@ -746,6 +747,7 @@
 
         function renderizarBlocoInferiorDropSet(s, exIdx, sIdx) {
             if (s.metodo !== 'Drop Set') return '';
+            const semCargaDrop = exercicioSemCargaAluno(treinoAtivoExecucao?.exercicios?.[exIdx]);
 
             const p = garantirEstadoSerie(exIdx, sIdx);
             const qtdDrops = s.qtdDrops || 1;
@@ -760,14 +762,14 @@
                 linhasDrops += `
                     <div class="bg-black/75 border border-orange-500/30 rounded-xl p-2.5 space-y-2">
                         <div class="flex items-center justify-between">
-                            <span class="text-[10px] font-black uppercase tracking-wider text-af-orange">↳ Sub-bloco Drop ${d} (Reduzir ~20%)</span>
-                            ${d === 1 && sugestao20 ? `<span class="text-[9px] text-amber-300 font-bold">Sugestão: ${sugestao20} kg</span>` : ''}
+                            <span class="text-[10px] font-black uppercase tracking-wider text-af-orange">↳ Sub-bloco Drop ${d}${semCargaDrop ? '' : ' (Reduzir ~20%)'}</span>
+                            ${d === 1 && sugestao20 && !semCargaDrop ? `<span class="text-[9px] text-amber-300 font-bold">Sugestão: ${sugestao20} kg</span>` : ''}
                         </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
+                        <div class="grid ${semCargaDrop ? 'grid-cols-1' : 'grid-cols-2'} gap-2">
+                            ${semCargaDrop ? '' : `<div>
                                 <label class="block text-[9px] text-slate-400 uppercase font-bold mb-1">Carga Drop ${d} (kg)</label>
                                 <input type="number" inputmode="decimal" value="${escapeHtml(dropVal.carga)}" oninput="atualizarDropSerie(${exIdx}, ${sIdx}, ${d}, 'carga', this.value)" placeholder="${placeholderCarga}" class="w-full bg-black border border-slate-800 rounded-xl p-2 text-white text-center font-bold text-xs">
-                            </div>
+                            </div>`}
                             <div>
                                 <label class="block text-[9px] text-slate-400 uppercase font-bold mb-1">Reps Drop ${d}</label>
                                 <input type="number" inputmode="numeric" value="${escapeHtml(dropVal.reps)}" oninput="atualizarDropSerie(${exIdx}, ${sIdx}, ${d}, 'reps', this.value)" placeholder="reps" class="w-full bg-black border border-slate-800 rounded-xl p-2 text-white text-center font-bold text-xs">
@@ -785,228 +787,202 @@
         }
 
 
-
-        let estrategiasProgressaoPorExercicio = {};
-        try {
-            estrategiasProgressaoPorExercicio = JSON.parse(localStorage.getItem('af_estrategias_progressao_exercicios') || '{}') || {};
-        } catch (e) { estrategiasProgressaoPorExercicio = {}; }
-
-        function obterEstrategiaExercicio(ex) {
-            return estrategiasProgressaoPorExercicio[String(ex?.nome || '').trim().toLowerCase()] || 'carga';
-        }
-
-        function ehExercicioSemCargaAluno(ex) {
+        // ===== Exercícios sem carga / meta em tempo =====
+        function exercicioSemCargaAluno(ex) {
             if (!ex) return false;
-            if (ex.semCarga === true) return true;
-            const musculo = String(ex.musculo || '').trim();
-            const equipamento = String(ex.equipamento || '').trim();
-            return equipamento === 'Corporal' || musculo === 'Alongamentos' || musculo === 'Mobilidade';
+            return ex.semCarga === true || ex.musculo === 'Alongamentos' || ex.musculo === 'Mobilidade' || ex.equipamento === 'Corporal';
+        }
+        function serieEhTempo(ex, sIdx) {
+            const cfg = (ex?.seriesConfig || [])[sIdx];
+            return exercicioSemCargaAluno(ex) && cfg?.tipoMeta === 'tempo';
+        }
+        function serieCompleta(ex, exIdx, sIdx) {
+            const p = progressoExecucao[exIdx]?.[sIdx];
+            if (!p) return { ok: false, faltando: [] };
+            const semCarga = exercicioSemCargaAluno(ex);
+            const tempo = serieEhTempo(ex, sIdx);
+            const exigeRpe = ex.exigeRpe !== false;
+            const faltando = [];
+            if (!semCarga && String(p.carga ?? '').trim() === '') faltando.push('Carga (kg)');
+            if (tempo) {
+                if (!(parseInt(p.reps, 10) > 0)) faltando.push('Tempo (s)');
+            } else if (!(parseInt(p.reps, 10) > 0)) faltando.push('Repetições');
+            if (exigeRpe && (String(p.rpe ?? '').trim() === '' || p.rpe === null || p.rpe === undefined)) faltando.push('RPE');
+            return { ok: faltando.length === 0, faltando };
         }
 
-        function obterUltimaSessaoDetalhada(nomeExercicio) {
+        // ===== Histórico da última sessão + Guia de progressão =====
+        let estrategiaProgressao = {};   // { [exIdx]: 'A' | 'B' } — escolha do aluno (sobrescreve a sugerida)
+        let cacheGuiaProgressao = {};    // recalculado a cada renderização
+
+        function fmtNum(n) { return Number.isInteger(n) ? String(n) : String(n).replace('.', ','); }
+        function arredondarMeioKg(v) { return Math.round(v * 2) / 2; }
+
+        function parseFaixaReps(txt, padraoMin = 10, padraoMax = 12) {
+            const nums = String(txt ?? '').match(/\d+([.,]\d+)?/g);
+            if (!nums || !nums.length) return { min: padraoMin, max: padraoMax };
+            const vals = nums.map(n => parseFloat(n.replace(',', '.')));
+            return { min: Math.min(...vals), max: Math.max(...vals) };
+        }
+
+        function diasDesde(iso) {
+            const d = new Date(iso);
+            if (isNaN(d)) return null;
+            const h0 = new Date(); h0.setHours(0, 0, 0, 0);
+            const d0 = new Date(d); d0.setHours(0, 0, 0, 0);
+            return Math.round((h0 - d0) / 86400000);
+        }
+        function rotuloQuando(iso) {
+            const dias = diasDesde(iso);
+            const dataTxt = new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+            if (dias === null) return '';
+            if (dias === 0) return `hoje (${dataTxt})`;
+            if (dias === 1) return `ontem (${dataTxt})`;
+            return `${dataTxt} • há ${dias} dias`;
+        }
+
+        // Última sessão registrada daquele exercício (qualquer treino), com a data
+        function buscarUltimaSessaoExercicio(nomeExercicio) {
             const hist = Array.isArray(alunoDados?.historico) ? alunoDados.historico : [];
             const alvo = String(nomeExercicio || '').trim().toLowerCase();
             for (let i = hist.length - 1; i >= 0; i--) {
-                const reg = hist[i];
-                const lista = Array.isArray(reg?.exerciciosRealizados) ? reg.exerciciosRealizados : [];
-                const achado = lista.find(e => String(e.nome || '').trim().toLowerCase() === alvo);
-                if (achado && Array.isArray(achado.series) && achado.series.length > 0) {
-                    const cargas = achado.series.map(s => parseFloat(s.carga) || 0);
-                    const repsArr = achado.series.map(s => parseInt(s.reps, 10) || 0);
-                    const rpesArr = achado.series.map(s => parseFloat(s.rpe)).filter(v => !isNaN(v) && v > 0);
-                    const cargaMax = cargas.length ? Math.max(...cargas) : 0;
-                    const cargaMedia = cargas.length ? +(cargas.reduce((a, b) => a + b, 0) / cargas.length).toFixed(1) : 0;
-                    const repsTotal = repsArr.reduce((a, b) => a + b, 0);
-                    const repsMedia = repsArr.length ? Math.round(repsTotal / repsArr.length) : 0;
-                    const rpeMedio = rpesArr.length ? +(rpesArr.reduce((a, b) => a + b, 0) / rpesArr.length).toFixed(1) : null;
-                    return {
-                        data: reg.data,
-                        qtdSeries: achado.series.length,
-                        repsArr,
-                        repsTotal,
-                        repsMedia,
-                        cargaMax,
-                        cargaMedia,
-                        rpeMedio,
-                        seriesDetalhadas: achado.series.map(s => ({
-                            carga: parseFloat(s.carga) || 0,
-                            reps: parseInt(s.reps, 10) || 0,
-                            rpe: (s.rpe !== null && s.rpe !== undefined && s.rpe !== '') ? (parseFloat(s.rpe) || null) : null
-                        }))
-                    };
-                }
+                const ex = (hist[i]?.exerciciosRealizados || []).find(e => String(e.nome || '').trim().toLowerCase() === alvo);
+                if (ex && Array.isArray(ex.series) && ex.series.length) return { data: hist[i].data, ex };
             }
             return null;
         }
 
-        function calcularEstrategiasProgressao(ex, ult) {
-            const semCarga = ehExercicioSemCargaAluno(ex);
-            if (!ult) {
-                if (semCarga) {
-                    return {
-                        semCarga: true,
-                        temBase: false,
-                        carga: {
-                            titulo: 'Foco em Ritmo e Tempo',
-                            resumo: 'Execução controlada e pausas estáveis',
-                            metaSerie: 'Meta prescrita',
-                            dica: 'Sem histórico prévio: foque em amplitude completa e respiração regular.'
-                        },
-                        reps: {
-                            titulo: 'Foco em Volume / Duração',
-                            resumo: 'Aumentar reps ou segundos gradualmente',
-                            metaSerie: '+2 reps ou +5–10s',
-                            dica: 'Se terminar com folga, adicione 2 repetições ou 5–10s mantendo o descanso.'
-                        }
-                    };
-                }
-                return {
-                    semCarga: false,
-                    temBase: false,
-                    carga: {
-                        titulo: 'Subir Carga',
-                        resumo: 'Base inicial — registre sua 1ª carga',
-                        metaSerie: 'Carga base',
-                        dica: 'Registre a carga e o RPE desta sessão para liberar o cálculo de progressão.'
-                    },
-                    reps: {
-                        titulo: 'Subir Repetições',
-                        resumo: 'Construir margem de reps na meta',
-                        metaSerie: 'Topo da faixa',
-                        dica: 'Busque o limite superior da faixa de repetições com técnica limpa.'
-                    }
-                };
-            }
-
-            if (semCarga) {
-                const baseReps = ult.repsMedia || 10;
-                const extraReps = (ult.rpeMedio !== null && ult.rpeMedio <= 7.5) ? 3 : 2;
-                return {
-                    semCarga: true,
-                    temBase: true,
-                    carga: {
-                        titulo: 'Manter Tempo / Controle',
-                        resumo: `Última: ${ult.qtdSeries}x ${ult.repsArr.join('/') || baseReps} • RPE ${ult.rpeMedio ?? '—'}`,
-                        metaSerie: `${baseReps + 1}–${baseReps + 2} reps/s`,
-                        dica: 'Mantenha a mesma pausa e acrescente 1 a 2 reps ou segundos com execução lenta.'
-                    },
-                    reps: {
-                        titulo: 'Subir Repetições',
-                        resumo: `Meta: ~${baseReps + extraReps} por série`,
-                        metaSerie: `${baseReps + extraReps} reps/s`,
-                        dica: `Aumente em +${extraReps} repetições (ou +10s) mantendo a qualidade do movimento.`
-                    }
-                };
-            }
-
-            const cargaRef = ult.cargaMax > 0 ? ult.cargaMax : ult.cargaMedia;
-            const rpeVal = ult.rpeMedio;
-            const incrementoCarga = cargaRef >= 40 ? 2.5 : (cargaRef > 0 ? 2 : 2);
-            const novaCarga = +(cargaRef + incrementoCarga).toFixed(1);
-            const repsAjustadas = Math.max(1, (ult.repsMedia || 10) - (rpeVal !== null && rpeVal >= 9 ? 1 : 0));
-
-            const repsBase = ult.repsMedia || 10;
-            const addReps = (rpeVal !== null && rpeVal <= 7.5) ? 2 : 1;
-            const novasReps = repsBase + addReps;
-
-            let dicaCarga = `Suba para ${novaCarga} kg mantendo a faixa de repetições.`;
-            if (rpeVal !== null && rpeVal >= 9.5) {
-                dicaCarga = `RPE anterior foi alto (${rpeVal}): suba para ${novaCarga} kg e aceite 1 rep a menos se precisar.`;
-            } else if (rpeVal !== null && rpeVal <= 7.5) {
-                dicaCarga = `RPE anterior teve margem (${rpeVal}): bom momento para subir para ${novaCarga} kg.`;
-            }
-
-            return {
-                semCarga: false,
-                temBase: true,
-                carga: {
-                    titulo: 'Subir Carga',
-                    resumo: `Ir para ${novaCarga} kg • ${repsAjustadas} reps`,
-                    metaSerie: `${novaCarga} kg • ${repsAjustadas} reps`,
-                    dica: dicaCarga
-                },
-                reps: {
-                    titulo: 'Subir Repetições',
-                    resumo: `Manter ${cargaRef} kg • ${novasReps} reps`,
-                    metaSerie: `${cargaRef} kg • ${novasReps} reps`,
-                    dica: `Mantenha ${cargaRef} kg e busque ${novasReps} reps por série antes de subir o peso.`
-                }
-            };
+        function textoSerieAnterior(sr, semCarga, tempo) {
+            const quant = tempo ? `${sr.tempoSeg || 0} s` : `${sr.reps || 0} reps`;
+            const carga = semCarga ? '' : ` × ${fmtNum(parseFloat(sr.carga) || 0)} kg`;
+            const rpe = sr.rpe ? ` • RPE ${fmtNum(parseFloat(sr.rpe))}` : '';
+            return `${quant}${carga}${rpe}`;
         }
 
-        function selecionarEstrategiaProgressao(chave, nomeExercicio) {
-            if (chave !== 'carga' && chave !== 'reps') return;
-            const idExercicio = String(nomeExercicio || '').trim().toLowerCase();
-            if (!idExercicio) return;
-            estrategiasProgressaoPorExercicio[idExercicio] = chave;
-            try { localStorage.setItem('af_estrategias_progressao_exercicios', JSON.stringify(estrategiasProgressaoPorExercicio)); } catch (e) {}
+        // Calcula as duas opções a partir do que foi feito + RPE. Retorna null se não há histórico.
+        function calcularGuiaProgressao(ex) {
+            const ult = buscarUltimaSessaoExercicio(ex.nome);
+            if (!ult) return null;
+
+            const semCarga = exercicioSemCargaAluno(ex);
+            const cfgSeries = ex.seriesConfig || [];
+            const tempo = cfgSeries.some((c, i) => serieEhTempo(ex, i));
+            const prev = ult.ex.series;
+
+            const valor = sr => tempo ? (parseFloat(sr.tempoSeg) || 0) : (parseInt(sr.reps, 10) || 0);
+            const rpesPrev = prev.map(sr => parseFloat(sr.rpe)).filter(v => !isNaN(v) && v > 0);
+            const rpeMedio = rpesPrev.length ? rpesPrev.reduce((a, b) => a + b, 0) / rpesPrev.length : null;
+            const mediaVal = prev.reduce((a, sr) => a + valor(sr), 0) / prev.length;
+            const faixa = parseFaixaReps(cfgSeries[0]?.repsSugeridas, tempo ? 30 : 10, tempo ? 45 : 12);
+
+            // % de aumento de carga conforme a folga (RPE). RPE >= 9: sem folga, não sobe carga.
+            const pctPorRpe = rpe => rpe === null ? 0.025 : rpe <= 7 ? 0.05 : rpe < 9 ? 0.025 : 0;
+            // passo de repetições (ou segundos) conforme a folga
+            const passoPorRpe = rpe => {
+                const base = (rpe !== null && rpe <= 7) ? 2 : 1;
+                return tempo ? base * 5 : base;
+            };
+
+            const topoFaixa = mediaVal >= faixa.max;
+            let recomendada;
+            if (rpeMedio !== null && rpeMedio >= 9) recomendada = 'B';
+            else if (topoFaixa) recomendada = 'A';
+            else if (rpeMedio !== null && rpeMedio <= 7) recomendada = 'A';
+            else recomendada = 'B';
+
+            // alvo por série (usa a série de mesmo índice da sessão anterior; se não houver, a última)
+            const total = cfgSeries.length || ex.qtdSeries || prev.length;
+            const alvos = [];
+            for (let i = 0; i < total; i++) {
+                const sr = prev[i] || prev[prev.length - 1];
+                const rpe = parseFloat(sr.rpe) > 0 ? parseFloat(sr.rpe) : rpeMedio;
+                const v = valor(sr);
+                const cargaAnt = parseFloat(sr.carga) || 0;
+                const passo = passoPorRpe(rpe);
+
+                let A, B;
+                if (semCarga) {
+                    // sem carga: A = mais repetições/tempo (mesmo descanso) | B = mesma meta com menos descanso
+                    const descAtual = parseInt(cfgSeries[i]?.descanso, 10) || 90;
+                    const novoV = Math.max(v + passo, faixa.min);
+                    A = { carga: null, alvoMin: novoV, alvoMax: Math.max(novoV, faixa.max), descanso: descAtual };
+                    B = { carga: null, alvoMin: Math.max(v, faixa.min), alvoMax: Math.max(v, faixa.min), descanso: Math.max(descAtual - 10, 15) };
+                } else {
+                    const pct = pctPorRpe(rpe);
+                    const novaCarga = pct > 0 && cargaAnt > 0 ? Math.max(arredondarMeioKg(cargaAnt * (1 + pct)), cargaAnt + 0.5) : cargaAnt;
+                    // ao subir a carga, espera-se perder ~1–2 reps: mira na base da faixa
+                    const perda = pct >= 0.05 ? 2 : pct > 0 ? 1 : 0;
+                    const repsA = Math.max(Math.round(v) - perda, faixa.min);
+                    A = { carga: novaCarga, alvoMin: repsA, alvoMax: Math.max(repsA, Math.min(Math.round(v), faixa.max)) };
+                    const repsB = Math.min(Math.round(v) + passo, Math.max(faixa.max, Math.round(v)));
+                    B = { carga: cargaAnt, alvoMin: repsB, alvoMax: repsB };
+                }
+                alvos.push({ A, B, rpeAlvo: rpe });
+            }
+
+            return { ult, semCarga, tempo, rpeMedio, faixa, topoFaixa, recomendada, alvos, prev };
+        }
+
+        function textoMetaOpcao(op, guia) {
+            const un = guia.tempo ? 's' : ' reps';
+            const faixa = op.alvoMin === op.alvoMax ? `${fmtNum(op.alvoMin)}${un}` : `${fmtNum(op.alvoMin)}–${fmtNum(op.alvoMax)}${un}`;
+            return guia.semCarga ? faixa : `${fmtNum(op.carga)} kg × ${faixa}`;
+        }
+
+        function definirEstrategiaProgressao(exIdx, opcao) {
+            estrategiaProgressao[exIdx] = opcao;
             renderizarExerciciosExecucao();
         }
 
-        function renderizarBlocoHistoricoEProgressao(ex) {
-            const ult = obterUltimaSessaoDetalhada(ex.nome);
-            const prog = calcularEstrategiasProgressao(ex, ult);
-            const ativa = obterEstrategiaExercicio(ex);
-            const metaAtivaObj = prog[ativa];
+        function descricaoOpcao(letra, guia) {
+            const rpeTxt = guia.rpeMedio !== null ? `RPE médio ${fmtNum(Math.round(guia.rpeMedio * 10) / 10)}` : 'sem RPE registrado';
+            const a0 = guia.alvos[0];
+            if (guia.semCarga) {
+                const un = guia.tempo ? 'segundos' : 'repetições';
+                if (letra === 'A') return { titulo: guia.tempo ? 'Segurar mais tempo' : 'Mais repetições', resumo: textoMetaOpcao(a0.A, guia),
+                    texto: `Mantém o descanso e aumenta ${un}. Base: ${rpeTxt} na última sessão.` };
+                return { titulo: 'Menos descanso', resumo: `descanso ${a0.B.descanso}s`,
+                    texto: `Repete a mesma meta (${textoMetaOpcao(a0.B, guia)}) e reduz o descanso em ~10 s. Base: ${rpeTxt}.` };
+            }
+            if (letra === 'A') {
+                const semAumento = a0.A.carga === (parseFloat(guia.prev[0].carga) || 0);
+                return { titulo: 'Subir carga', resumo: textoMetaOpcao(a0.A, guia),
+                    texto: semAumento
+                        ? `Sua última sessão foi no limite (${rpeTxt}), então a carga se mantém. Só suba se a execução estiver limpa.`
+                        : `Aumenta a carga conforme a folga que você teve (${rpeTxt}) e aceita perder 1–2 reps. Mire em ${textoMetaOpcao(a0.A, guia)}.` };
+            }
+            return { titulo: 'Subir repetições', resumo: textoMetaOpcao(a0.B, guia),
+                texto: guia.topoFaixa
+                    ? `Você já está no topo da faixa (${guia.faixa.min}–${guia.faixa.max} reps). Mantém a carga e busca o mesmo número de reps com RPE menor.`
+                    : `Mantém a carga e soma repetições dentro da faixa ${guia.faixa.min}–${guia.faixa.max}. Base: ${rpeTxt}.` };
+        }
 
-            const dataFmt = ult?.data
-                ? new Date(ult.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
-                : '';
-
-            const seriesUltimas = ult?.seriesDetalhadas || [];
-            const resumoHtml = ult ? `
-                <div class="bg-black/70 border border-slate-800/90 rounded-xl p-2.5 space-y-2">
-                    <div class="flex items-center justify-between text-[10px]">
-                        <span class="font-black uppercase tracking-wider text-slate-300">🕒 Última sessão${dataFmt ? ` (${dataFmt})` : ''}</span>
-                        <span class="font-bold text-slate-400">${ult.qtdSeries} série(s)</span>
+        function renderizarPainelProgressao(ex, exIdx, guia) {
+            if (!guia) {
+                return `<div class="bg-black/50 border border-slate-800 rounded-xl p-2.5 text-[11px] text-slate-400">📊 Primeira vez registrando este exercício — faça com boa execução para criar sua base de comparação.</div>`;
+            }
+            const ativa = estrategiaProgressao[exIdx] || guia.recomendada;
+            const chips = guia.prev.map((sr, i) => `<span class="inline-block bg-black border border-slate-800 rounded-lg px-2 py-1 text-[10px] text-slate-200"><b class="text-af-orange">S${i + 1}</b> ${escapeHtml(textoSerieAnterior(sr, guia.semCarga, guia.tempo))}</span>`).join('');
+            const dA = descricaoOpcao('A', guia), dB = descricaoOpcao('B', guia);
+            const btn = (letra, d) => {
+                const on = ativa === letra;
+                return `<button type="button" onclick="definirEstrategiaProgressao(${exIdx}, '${letra}')" class="text-left rounded-xl p-2.5 border transition-all ${on ? 'border-af-orange bg-orange-950/40 shadow-md' : 'border-slate-800 bg-black/60 hover:border-af-orange/50'}">
+                    <div class="flex items-center justify-between gap-1">
+                        <span class="text-[10px] font-black uppercase ${on ? 'text-af-orange' : 'text-slate-300'}">${d.titulo}</span>
+                        ${guia.recomendada === letra ? '<span class="text-[8px] font-black bg-emerald-950 text-emerald-400 border border-emerald-700/60 px-1 rounded">SUGERIDA</span>' : ''}
                     </div>
-                    <div class="space-y-1">
-                        ${seriesUltimas.map((serie, idx) => `
-                            <div class="flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5 text-[10px] border-t border-slate-800/70 pt-1">
-                                <span class="font-black text-af-orange">S${idx + 1}</span>
-                                <span class="text-slate-200">${!prog.semCarga && serie.carga > 0 ? `<b class="text-white">${serie.carga} kg</b> × ` : ''}<b class="text-white">${serie.reps || '—'}</b> ${prog.semCarga ? 'reps/tempo' : 'reps'}</span>
-                                <span class="text-slate-400">RPE <b class="text-af-orange">${serie.rpe ?? '—'}</b></span>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <div class="text-[9px] text-slate-500">Carga, repetições/tempo e RPE registrados em cada série.</div>
-                </div>
-            ` : `
-                <div class="bg-black/50 border border-slate-800/70 rounded-xl p-2 text-[10px] text-slate-400">
-                    🕒 Sem sessão anterior registrada para este exercício.
-                </div>
-            `;
-
+                    <div class="text-[11px] font-bold ${on ? 'text-white' : 'text-slate-400'} mt-0.5">${escapeHtml(d.resumo)}</div>
+                </button>`;
+            };
+            const dAtiva = ativa === 'A' ? dA : dB;
             return `
-                <div class="space-y-2 pt-1">
-                    ${resumoHtml}
-                    <div class="space-y-1.5">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[9px] font-black uppercase tracking-wider text-af-orange">🎯 Guia de Progressão (Toque para escolher)</span>
-                            <span class="text-[9px] font-bold text-slate-400">Ativa: ${escapeHtml(metaAtivaObj.titulo)}</span>
-                        </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <button type="button" onclick="selecionarEstrategiaProgressao('carga', '${escapeHtml(ex.nome)}')" class="text-left p-2.5 rounded-xl border transition-all ${ativa === 'carga' ? 'bg-orange-950/45 border-af-orange shadow-md' : 'bg-black/65 border-slate-800 hover:border-slate-700'}">
-                                <div class="flex items-center justify-between gap-1">
-                                    <span class="text-[10px] font-black uppercase ${ativa === 'carga' ? 'text-af-orange' : 'text-slate-200'}">${escapeHtml(prog.carga.titulo)}</span>
-                                    ${ativa === 'carga' ? '<span class="text-[9px] bg-af-orange text-black font-black px-1.5 py-0.2 rounded">ATIVA</span>' : ''}
-                                </div>
-                                <div class="text-[10px] text-slate-300 font-semibold mt-1 leading-snug">${escapeHtml(prog.carga.resumo)}</div>
-                            </button>
-                            <button type="button" onclick="selecionarEstrategiaProgressao('reps', '${escapeHtml(ex.nome)}')" class="text-left p-2.5 rounded-xl border transition-all ${ativa === 'reps' ? 'bg-orange-950/45 border-af-orange shadow-md' : 'bg-black/65 border-slate-800 hover:border-slate-700'}">
-                                <div class="flex items-center justify-between gap-1">
-                                    <span class="text-[10px] font-black uppercase ${ativa === 'reps' ? 'text-af-orange' : 'text-slate-200'}">${escapeHtml(prog.reps.titulo)}</span>
-                                    ${ativa === 'reps' ? '<span class="text-[9px] bg-af-orange text-black font-black px-1.5 py-0.2 rounded">ATIVA</span>' : ''}
-                                </div>
-                                <div class="text-[10px] text-slate-300 font-semibold mt-1 leading-snug">${escapeHtml(prog.reps.resumo)}</div>
-                            </button>
-                        </div>
-                        <div class="bg-orange-950/25 border border-af-orange/30 rounded-xl px-2.5 py-2 text-[10px] text-orange-100 leading-snug">
-                            <span class="font-black text-af-orange uppercase">Meta (${escapeHtml(metaAtivaObj.metaSerie)}):</span> ${escapeHtml(metaAtivaObj.dica)}
-                        </div>
-                    </div>
-                </div>
-            `;
+                <div class="bg-black/50 border border-slate-800 rounded-xl p-2.5 space-y-2">
+                    <div class="text-[10px] font-black uppercase tracking-wider text-slate-400">📊 Última sessão • ${rotuloQuando(guia.ult.data)}</div>
+                    <div class="flex flex-wrap gap-1">${chips}</div>
+                    <div class="text-[10px] font-black uppercase tracking-wider text-slate-400 pt-1">🎯 Estratégia de hoje (toque para trocar)</div>
+                    <div class="grid grid-cols-2 gap-2">${btn('A', dA)}${btn('B', dB)}</div>
+                    <p class="text-[11px] text-orange-100 leading-snug"><b class="text-af-orange">${dAtiva.titulo}:</b> ${escapeHtml(dAtiva.texto)}</p>
+                </div>`;
         }
 
         function renderizarExerciciosExecucao() {
@@ -1020,35 +996,34 @@
             container.innerHTML = exercicios.map((ex, exIdx) => {
                 const seriesConfig = ex.seriesConfig || Array.from({ length: ex.qtdSeries || 4 }, (_, i) => ({ num: i + 1, metodo: 'Série Normal', repsSugeridas: '10 a 12', descanso: ex.descanso || 90 }));
                 const exigeRpe = ex.exigeRpe !== false;
-                const semCarga = ehExercicioSemCargaAluno(ex);
                 const conj = ex.conjugado && ex.conjugado !== 'Nenhum' ? ex.conjugado : null;
-                const ultSessao = obterUltimaSessaoDetalhada(ex.nome);
-                const progEx = calcularEstrategiasProgressao(ex, ultSessao);
-                const metaGuiaAtiva = progEx[obterEstrategiaExercicio(ex)]?.metaSerie || '';
+                const semCarga = exercicioSemCargaAluno(ex);
+                const guia = calcularGuiaProgressao(ex);
+                const opcaoAtiva = guia ? (estrategiaProgressao[exIdx] || guia.recomendada) : null;
 
                 let seriesHtml = seriesConfig.map((s, sIdx) => {
                     const p = garantirEstadoSerie(exIdx, sIdx);
                     const metaTexto = s.repsSugeridas || '10 a 12';
-                    const colsCount = (!semCarga ? 1 : 0) + 1 + (exigeRpe ? 1 : 0);
-                    const gridColsClass = colsCount === 3 ? 'grid-cols-3' : (colsCount === 2 ? 'grid-cols-2' : 'grid-cols-1');
+                    const tempo = serieEhTempo(ex, sIdx);
+                    const alvo = guia && guia.alvos[sIdx] ? guia.alvos[sIdx][opcaoAtiva] : null;
+                    const colunas = (semCarga ? 0 : 1) + 1 + (exigeRpe ? 1 : 0);
+                    const metaAtivaHtml = alvo ? `<div class="text-[10px] bg-orange-950/30 border border-af-orange/30 rounded-lg px-2 py-1 text-orange-100">🎯 Meta (${opcaoAtiva === 'A' ? descricaoOpcao('A', guia).titulo : descricaoOpcao('B', guia).titulo}): <b class="text-af-orange">${escapeHtml(textoMetaOpcao(alvo, guia))}</b>${guia.semCarga && alvo.descanso ? ` • descanso ${alvo.descanso}s` : ''}</div>` : '';
 
                     return `
                         <div class="bg-black/60 border ${p.concluida ? 'border-emerald-500/60 bg-emerald-950/10' : 'border-slate-800'} rounded-xl p-3 space-y-2.5">
                             <div class="flex justify-between items-center text-xs gap-2">
                                 <span class="font-bold text-af-orange">Série ${s.num}</span>
-                                <span class="text-[10px] text-slate-400 font-semibold">Descanso: ${s.descanso || 90}s</span>
                             </div>
                             ${renderizarBadgeEExplicacaoMetodo(s, exIdx, sIdx)}
-                            <div class="grid ${gridColsClass} gap-2">
-                                ${!semCarga ? `
-                                <div>
+                            ${metaAtivaHtml}
+                            <div class="grid ${colunas === 3 ? 'grid-cols-3' : colunas === 2 ? 'grid-cols-2' : 'grid-cols-1'} gap-2">
+                                ${semCarga ? '' : `<div>
                                     <label class="block text-[9px] text-slate-400 uppercase font-bold mb-1">Carga (kg)</label>
-                                    <input type="number" inputmode="decimal" value="${escapeHtml(p.carga)}" oninput="atualizarProgressoSerie(${exIdx}, ${sIdx}, 'carga', this.value)" placeholder="0" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-white text-center font-bold text-xs">
-                                </div>` : ''}
+                                    <input type="number" inputmode="decimal" value="${escapeHtml(p.carga)}" oninput="atualizarProgressoSerie(${exIdx}, ${sIdx}, 'carga', this.value)" placeholder="${alvo && alvo.carga ? fmtNum(alvo.carga) : '0'}" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-white text-center font-bold text-xs">
+                                </div>`}
                                 <div>
-                                    <label class="block text-[9px] text-slate-400 uppercase font-bold mb-1">${semCarga ? 'REPS / TEMPO' : 'REPS'} - META: ${escapeHtml(metaTexto)}</label>
-                                    <input type="number" inputmode="numeric" value="${escapeHtml(p.reps)}" oninput="atualizarProgressoSerie(${exIdx}, ${sIdx}, 'reps', this.value)" placeholder="0" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-white text-center font-bold text-xs">
-                                    ${metaGuiaAtiva ? `<div class="text-[9px] text-af-orange/90 font-bold mt-1 text-center truncate">Guia: ${escapeHtml(metaGuiaAtiva)}</div>` : ''}
+                                    <label class="block text-[9px] text-slate-400 uppercase font-bold mb-1">${tempo ? 'TEMPO (s)' : 'REPS'} - META: ${escapeHtml(metaTexto)}</label>
+                                    <input type="number" inputmode="numeric" value="${escapeHtml(p.reps)}" oninput="atualizarProgressoSerie(${exIdx}, ${sIdx}, 'reps', this.value)" placeholder="${alvo ? fmtNum(alvo.alvoMin) : '0'}" class="w-full bg-black border border-slate-800 rounded-xl p-2.5 text-white text-center font-bold text-xs">
                                 </div>
                                 ${exigeRpe ? `
                                 <div>
@@ -1058,8 +1033,8 @@
                                     </button>
                                 </div>` : ''}
                             </div>
-                            ${!semCarga ? renderizarBlocoInferiorDropSet(s, exIdx, sIdx) : ''}
-                            <button onclick="concluirSerie(${exIdx}, ${sIdx}, ${s.descanso || 90}, ${exigeRpe}, ${semCarga})" class="w-full py-2 rounded-xl font-bold text-xs transition-all ${p.concluida ? 'bg-emerald-500 text-black shadow-md' : 'bg-slate-900 border border-slate-800 text-slate-300 hover:border-af-orange'}">
+                            ${renderizarBlocoInferiorDropSet(s, exIdx, sIdx)}
+                            <button onclick="concluirSerie(${exIdx}, ${sIdx}, ${s.descanso || 90}, ${exigeRpe})" class="w-full py-2 rounded-xl font-bold text-xs transition-all ${p.concluida ? 'bg-emerald-500 text-black shadow-md' : 'bg-slate-900 border border-slate-800 text-slate-300 hover:border-af-orange'}">
                                 ${p.concluida ? '✅ Série Concluída (Toque para refazer)' : 'Concluir Série ⏱️'}
                             </button>
                         </div>
@@ -1070,12 +1045,12 @@
                     <div class="bg-af-card rounded-2xl p-4 space-y-3 shadow-lg">
                         <div class="flex justify-between items-center border-b border-slate-800 pb-2">
                             <div>
-                                <span class="text-[10px] text-af-orange font-bold uppercase">${escapeHtml(ex.musculo)} • ${escapeHtml(ex.equipamento)}${semCarga ? ' • Sem Carga' : ''}</span>
+                                <span class="text-[10px] text-af-orange font-bold uppercase">${escapeHtml(ex.musculo)} • ${escapeHtml(ex.equipamento)}</span>
                                 <h3 class="font-bold text-sm text-white">${exIdx + 1}. ${escapeHtml(ex.nome)}</h3>
                             </div>
                             ${conj ? `<span class="text-[10px] bg-amber-950 text-amber-400 border border-amber-800 px-2 py-0.5 rounded font-black">🔗 ${conj}</span>` : ''}
                         </div>
-                        ${renderizarBlocoHistoricoEProgressao(ex)}
+                        ${renderizarPainelProgressao(ex, exIdx, guia)}
                         <div class="space-y-2">${seriesHtml}</div>
                     </div>
                 `;
@@ -1096,7 +1071,7 @@
             document.getElementById('modal-campos-obrigatorios').classList.add('hidden');
         }
 
-        function concluirSerie(exIdx, sIdx, segundosDescanso, exigeRpe = true, semCarga = false) {
+        function concluirSerie(exIdx, sIdx, segundosDescanso, exigeRpe = true) {
             prepararAudioContext();
             const p = garantirEstadoSerie(exIdx, sIdx);
 
@@ -1106,15 +1081,8 @@
                 return;
             }
 
-            const temCarga = semCarga || String(p.carga ?? '').trim() !== '';
-            const repsNum = parseInt(p.reps, 10);
-            const temReps = String(p.reps ?? '').trim() !== '' && !isNaN(repsNum) && repsNum > 0;
-            const temRpe = !exigeRpe || (String(p.rpe ?? '').trim() !== '' && p.rpe !== null && p.rpe !== undefined);
-
-            const faltando = [];
-            if (!temCarga) faltando.push('Carga (kg)');
-            if (!temReps) faltando.push(semCarga ? 'Repetições / Tempo' : 'Repetições');
-            if (!temRpe) faltando.push('RPE');
+            const exAtual = treinoAtivoExecucao.exercicios[exIdx];
+            const faltando = serieCompleta({ ...exAtual, exigeRpe }, exIdx, sIdx).faltando;
 
             if (faltando.length > 0) {
                 mostrarAvisoCamposObrigatorios(`Para concluir a série, preencha: ${faltando.join(', ')}.`);
@@ -1226,21 +1194,16 @@
 
             exercicios.forEach((ex, exIdx) => {
                 const totalSeries = (ex.seriesConfig && ex.seriesConfig.length) ? ex.seriesConfig.length : (ex.qtdSeries || 4);
-                const exigeRpe = ex.exigeRpe !== false;
-                const semCarga = ehExercicioSemCargaAluno(ex);
                 for (let sIdx = 0; sIdx < totalSeries; sIdx++) {
                     const p = progressoExecucao[exIdx]?.[sIdx];
-                    const repsNum = parseInt(p?.reps, 10) || 0;
-                    const temCarga = semCarga || String(p?.carga ?? '').trim() !== '';
-                    const temRpe = !exigeRpe || (String(p?.rpe ?? '').trim() !== '' && p?.rpe !== null && p?.rpe !== undefined);
-                    if (!p || !p.concluida || repsNum <= 0 || !temCarga || !temRpe) {
+                    if (!p || !p.concluida || !serieCompleta(ex, exIdx, sIdx).ok) {
                         pendentes++;
                     }
                 }
             });
 
             if (pendentes > 0) {
-                document.getElementById('texto-pendencias-treino').innerText = `Você ainda tem ${pendentes} série(s) sem concluir ou sem carga, repetições e RPE preenchidos. Conclua cada série para poder finalizar.`;
+                document.getElementById('texto-pendencias-treino').innerText = `Você ainda tem ${pendentes} série(s) sem concluir ou com campos obrigatórios em branco (carga, repetições/tempo e RPE, conforme o exercício). Conclua cada série para poder finalizar.`;
                 document.getElementById('modal-pendencias-treino').classList.remove('hidden');
                 return;
             }
@@ -1277,8 +1240,10 @@
             let cargaMax = 0;
             let repsTotais = 0;
             let volumeTotal = 0;
+            let tempoTotal = 0;
 
             series.forEach(s => {
+                tempoTotal += parseInt(s.tempoSeg, 10) || 0;
                 const c = parseFloat(s.carga) || 0;
                 const r = parseInt(s.reps, 10) || 0;
                 if (c > cargaMax) cargaMax = c;
@@ -1302,6 +1267,7 @@
             return {
                 cargaMax,
                 repsTotais,
+                tempoTotal,
                 volumeTotal: Math.round(volumeTotal),
                 qtdSeries: series.length,
                 densidadePorSerie
@@ -1360,7 +1326,7 @@
                     const diffCarga = statsAtual.cargaMax - statsAnt.cargaMax;
                     const diffReps = statsAtual.repsTotais - statsAnt.repsTotais;
 
-                    if (diffCarga > 0) {
+                    if (!exAtual.semCarga && diffCarga > 0) {
                         badgesStatus.push(`<span class="inline-block text-[9px] bg-emerald-950 text-emerald-400 border border-emerald-700/60 px-1.5 py-0.5 rounded font-black">📈 +${diffCarga} kg</span>`);
                         diffCargaTxt = `<div class="text-[9px] text-emerald-400 font-bold">+${diffCarga} kg</div>`;
                         destaques.push(`💪 <b>${escapeHtml(exAtual.nome)}</b>: aumentou a carga máxima de <b>${statsAnt.cargaMax} kg</b> para <b>${statsAtual.cargaMax} kg</b>!`);
@@ -1376,8 +1342,8 @@
                         diffRepsTxt = `<div class="text-[9px] text-slate-500">${diffReps} reps</div>`;
                     }
 
-                    if (diffCarga === 0 && diffReps === 0) {
-                        badgesStatus.push('<span class="inline-block text-[9px] bg-sky-950/70 text-sky-300 px-1.5 py-0.5 rounded font-bold">⚖️ Manteve carga e reps</span>');
+                    if ((exAtual.semCarga || diffCarga === 0) && diffReps === 0) {
+                        badgesStatus.push('<span class="inline-block text-[9px] bg-sky-950/70 text-sky-300 px-1.5 py-0.5 rounded font-bold">⚖️ Manteve o desempenho</span>');
                     }
                 }
 
@@ -1389,16 +1355,16 @@
                             <div class="flex flex-wrap gap-1">${badgesStatus.join('')}</div>
                         </td>
                         <td class="p-2.5 text-center align-top font-black text-white">
-                            ${statsAtual.cargaMax} kg
-                            ${diffCargaTxt}
+                            ${exAtual.semCarga ? '—' : `${statsAtual.cargaMax} kg
+                            ${diffCargaTxt}`}
                         </td>
                         <td class="p-2.5 text-center align-top font-bold text-slate-200">
-                            ${statsAtual.repsTotais}
-                            ${diffRepsTxt}
+                            ${statsAtual.tempoTotal > 0 && statsAtual.repsTotais === 0 ? `${statsAtual.tempoTotal} s` : `${statsAtual.repsTotais}
+                            ${diffRepsTxt}`}
                         </td>
                         <td class="p-2.5 text-right align-top">
-                            <div class="font-black text-af-orange">${statsAtual.volumeTotal.toLocaleString('pt-BR')} kg</div>
-                            <div class="text-[9px] text-slate-400">${statsAtual.densidadePorSerie} kg/série</div>
+                            ${exAtual.semCarga ? '<div class="font-black text-slate-500">—</div>' : `<div class="font-black text-af-orange">${statsAtual.volumeTotal.toLocaleString('pt-BR')} kg</div>
+                            <div class="text-[9px] text-slate-400">${statsAtual.densidadePorSerie} kg/série</div>`}
                         </td>
                     </tr>
                 `;
@@ -1434,9 +1400,12 @@
                 Object.keys(seriesProg).forEach(sIdx => {
                     const s = seriesProg[sIdx];
                     if (s && s.concluida) {
-                        const semCargaEx = ehExercicioSemCargaAluno(ex);
+                        const semCargaEx = exercicioSemCargaAluno(ex);
+                        const ehTempo = serieEhTempo(ex, Number(sIdx));
                         const carga = semCargaEx ? 0 : (parseFloat(s.carga) || 0);
-                        const reps = parseInt(s.reps, 10) || 0;
+                        const valorInformado = parseInt(s.reps, 10) || 0;
+                        const reps = ehTempo ? 0 : valorInformado;
+                        const tempoSeg = ehTempo ? valorInformado : null;
                         const rpe = parseFloat(s.rpe) || null;
                         let volSerie = carga * reps;
 
@@ -1455,7 +1424,9 @@
 
                         volEx += volSerie;
                         seriesValidadas++;
-                        seriesRealizadas.push({ carga, reps, rpe, drops: dropsArr });
+                        const registroSerie = { carga, reps, rpe, drops: dropsArr };
+                        if (ehTempo) registroSerie.tempoSeg = tempoSeg;
+                        seriesRealizadas.push(registroSerie);
                     }
                 });
 
@@ -1463,6 +1434,7 @@
                 exerciciosRealizados.push({
                     nome: ex.nome,
                     musculo: ex.musculo,
+                    semCarga: exercicioSemCargaAluno(ex),
                     volume: volEx,
                     series: seriesRealizadas
                 });

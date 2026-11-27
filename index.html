@@ -327,8 +327,8 @@
         #nav-lateral .nav-btn.ativo { background: rgba(255,106,0,.14); border-color: rgba(255,106,0,.45); box-shadow: 0 0 18px rgba(255,106,0,.18); }
         .kpi-card { background: rgba(21,21,21,.75); border: 1px solid rgba(255,106,0,.2); border-radius: 1rem; padding: .85rem; }
         .kpi-ico { width: 2.4rem; height: 2.4rem; border-radius: 999px; display:flex; align-items:center; justify-content:center; font-size:1.05rem; }
-        #sec-adm-inicio .grid-kpi { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:.6rem; }
-        @media (max-width: 640px) { #sec-adm-inicio .grid-kpi { grid-template-columns: minmax(0,1fr); } }
+        #sec-adm-inicio .grid-kpi { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:.6rem; }
+        #sec-adm-inicio .grid-kpi > .kpi-card:last-child:nth-child(odd) { grid-column: 1 / -1; }
         #sec-adm-inicio .grid-paineis { display:grid; grid-template-columns: minmax(0,1fr); gap:.75rem; }
         body { padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)); }
         #nav-inferior { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; padding-bottom: env(safe-area-inset-bottom, 0px); background: rgba(8,8,8,.92); backdrop-filter: blur(14px); border-top: 1px solid rgba(255,106,0,.25); }
@@ -342,7 +342,8 @@
             #sec-adm-desempenho .grid-kpi-des { grid-template-columns: repeat(4, minmax(0,1fr)); }
             #sec-adm-desempenho .grid-graficos-des { grid-template-columns: repeat(2, minmax(0,1fr)); }
             #container-alunos, #container-alunos-arquivados { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: .6rem; }
-            #sec-adm-inicio .grid-kpi { grid-template-columns: repeat(4, minmax(0,1fr)); }
+            #sec-adm-inicio .grid-kpi { grid-template-columns: repeat(3, minmax(0,1fr)); }
+            #sec-adm-inicio .grid-kpi > .kpi-card:last-child:nth-child(odd) { grid-column: auto; }
             #sec-adm-inicio .grid-paineis { grid-template-columns: repeat(2, minmax(0,1fr)); gap:1rem; }
             #sec-adm-inicio .col-cheio { grid-column: 1 / -1; }
         }
@@ -938,6 +939,10 @@
         let resumoAdminMinimizado = false;
 
         const MUSCULOS_SEM_CARGA = ['Abdômen', 'Alongamentos', 'Mobilidade'];
+        // Exercícios sem uso de carga: Alongamentos, Mobilidade ou equipamento "Peso Corporal / Sem Peso"
+        function exercicioSemCarga(musculo, equipamento) {
+            return musculo === 'Alongamentos' || musculo === 'Mobilidade' || equipamento === 'Corporal';
+        }
 
         function atualizarHoraSincronizacao() {
             const agora = new Date();
@@ -1010,8 +1015,6 @@
 
             const sessoes = inicioSessoes();
             const ativos = alunosGlobais.filter(a => !a.arquivado);
-            const sem7 = sessoes.filter(s => agora - s.t < 7 * DIA && s.t <= agora);
-            const semAnt = sessoes.filter(s => agora - s.t >= 7 * DIA && agora - s.t < 14 * DIA);
 
             const dias = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
             const hojeStr = dias[agora.getDay()];
@@ -1871,6 +1874,7 @@
             const qtdSeries = parseInt(document.getElementById('input-qtd-series-ex').value) || 4;
             const metodoGeral = (musculo === 'Abdômen' || musculo === 'Alongamentos' || musculo === 'Mobilidade') ? 'Nulo' : document.getElementById('select-metodo-geral-ex').value;
             const exigeRpe = (equipamento === 'Corporal' || equipamento === 'Elástico' || musculo === 'Abdômen' || musculo === 'Alongamentos' || musculo === 'Mobilidade') ? false : (document.getElementById('select-exige-rpe').value === 'sim');
+            const semCarga = exercicioSemCarga(musculo, equipamento);
 
             if (!nome) { alert('Digite o nome do exercício!'); return; }
             if (!baseExerciciosGlobais.includes(nome)) baseExerciciosGlobais.push(nome);
@@ -1879,7 +1883,7 @@
             document.querySelectorAll('#container-config-series-admin .serie-config-item').forEach(item => {
                 const num = parseInt(item.getAttribute('data-serie'));
                 const metodo = item.querySelector('.select-metodo-serie')?.value || 'Série Normal';
-                const tipoMeta = item.querySelector('.input-tipo-meta').value === 'tempo' ? 'tempo' : 'reps';
+                const tipoMeta = (semCarga && item.querySelector('.input-tipo-meta').value === 'tempo') ? 'tempo' : 'reps';
                 const descanso = parseInt(item.querySelector('.input-descanso-serie').value) || 90;
                 const qtdDrops = parseInt(item.querySelector('.input-qtd-drops')?.value) || 1;
                 const pausasRestPause = Array.from(item.querySelectorAll('.input-pausa-restpause')).map(inp => parseInt(inp.value) || 15);
@@ -1889,7 +1893,6 @@
                 seriesConfig.push({ num, metodo, tipoMeta, descanso, repsSugeridas, qtdDrops, pausasRestPause, descansoIntra });
             });
 
-            const semCarga = ehExercicioSemCargaAdmin(musculo, equipamento);
             const treino = treinosDoAluno.find(t => t.id === treinoAtivoId);
             if (treino) {
                 if (!treino.exercicios) treino.exercicios = [];
@@ -1897,11 +1900,11 @@
                     nome,
                     musculo,
                     equipamento,
-                    semCarga,
                     conjugado: 'Nenhum',
                     qtdSeries,
                     metodoGeral,
                     exigeRpe,
+                    semCarga,
                     seriesConfig
                 };
                 if (indiceExercicioEditando !== null) {
@@ -1994,10 +1997,6 @@
             gerarCamposSeriesAdmin(qtd, lerSeriesAdminAtuais());
         }
 
-        function ehExercicioSemCargaAdmin(musculo, equipamento) {
-            return equipamento === 'Corporal' || musculo === 'Alongamentos' || musculo === 'Mobilidade';
-        }
-
         function verificarRegrasEquipamento() {
             const eq = document.getElementById('select-equipamento-ex').value;
             const musculo = document.getElementById('select-musculo-ex').value;
@@ -2040,9 +2039,8 @@
             qtd = parseInt(qtd) || 0;
             const container = document.getElementById('container-config-series-admin');
             const musculo = document.getElementById('select-musculo-ex').value;
-            const equipamento = document.getElementById('select-equipamento-ex').value;
-            const semCargaAtivo = ehExercicioSemCargaAdmin(musculo, equipamento);
-            const escondeMetodo = MUSCULOS_SEM_CARGA.includes(musculo) || semCargaAtivo;
+            const escondeMetodo = MUSCULOS_SEM_CARGA.includes(musculo);
+            const semCarga = exercicioSemCarga(musculo, document.getElementById('select-equipamento-ex').value);
             const inputBase = 'w-full bg-black border border-slate-700 rounded-xl px-2.5 py-2 text-center text-white font-bold focus:border-af-orange focus:outline-none';
             const labelBase = 'block text-[9px] text-slate-500 uppercase font-bold mb-1 tracking-wider';
 
@@ -2050,8 +2048,8 @@
             for (let i = 1; i <= qtd; i++) {
                 const sData = valoresExistentes[i - 1] || {};
                 const metodoSel = sData.metodo || 'Série Normal';
-                const tipoMetaSel = sData.tipoMeta === 'tempo' ? 'tempo' : 'reps';
-                const repsSel = sData.repsSugeridas || '10 a 12';
+                const tipoMetaSel = (semCarga && sData.tipoMeta === 'tempo') ? 'tempo' : 'reps';
+                const repsSel = sData.repsSugeridas || (tipoMetaSel === 'tempo' ? '30' : '10 a 12');
                 const descansoSel = sData.descanso || 90;
                 const qtdDropsSel = sData.qtdDrops || 1;
                 const pausasList = Array.isArray(sData.pausasRestPause) && sData.pausasRestPause.length
@@ -2081,7 +2079,6 @@
                                 <option value="Pirâmide Decrescente" ${metodoSel==='Pirâmide Decrescente'?'selected':''}>Pirâmide Decrescente</option>
                                 <option value="FST-7" ${metodoSel==='FST-7'?'selected':''}>FST-7</option>
                             </select>`}
-                            <input type="hidden" class="input-tipo-meta" value="${tipoMetaSel}">
                         </div>
 
                         <div class="bloco-parametros-metodo ${metodoSel === 'Série Normal' || escondeMetodo ? 'hidden' : ''} bg-black/70 border border-af-orange/30 rounded-xl p-2.5 space-y-2.5">
@@ -2102,20 +2099,52 @@
                             </div>
                         </div>
 
+                        ${semCarga ? `
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <div>
+                                <label class="${labelBase}">Meta em</label>
+                                <select onchange="atualizarTipoMetaSerieAdmin(this)" class="input-tipo-meta ${inputBase}">
+                                    <option value="reps" ${tipoMetaSel==='reps'?'selected':''}>Repetições</option>
+                                    <option value="tempo" ${tipoMetaSel==='tempo'?'selected':''}>Tempo (s)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="${labelBase}">Descanso (s)</label>
+                                <input type="number" inputmode="numeric" value="${descansoSel}" oninput="validarApenasNumeros(this)" class="input-descanso-serie ${inputBase} !text-af-orange">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="label-meta-serie ${labelBase}">${tipoMetaSel === 'tempo' ? 'Meta de tempo (segundos)' : 'Meta de repetições'}</label>
+                            <input type="text" value="${repsSel}" placeholder="${tipoMetaSel === 'tempo' ? 'Ex: 30 ou 30 a 45' : 'Ex: 12 ou 10 a 12'}" class="input-reps-sugeridas ${inputBase}">
+                        </div>
+                        ` : `
+                        <input type="hidden" class="input-tipo-meta" value="reps">
                         <div class="grid grid-cols-5 gap-2.5">
                             <div class="col-span-3">
-                                <label class="${labelBase}">${semCargaAtivo ? 'Meta Reps / Tempo (s) — Sem Carga' : 'Meta Reps / Carga desta série'}</label>
-                                <input type="text" value="${repsSel}" placeholder="${semCargaAtivo ? 'Ex: 30s ou 15 reps' : 'Ex: 12 ou 10 a 12'}" class="input-reps-sugeridas ${inputBase}">
+                                <label class="${labelBase}">Meta Reps / Carga desta série</label>
+                                <input type="text" value="${repsSel}" placeholder="Ex: 12 ou 10 a 12" class="input-reps-sugeridas ${inputBase}">
                             </div>
                             <div class="col-span-2">
                                 <label class="${labelBase}">Descanso (s)</label>
                                 <input type="number" inputmode="numeric" value="${descansoSel}" oninput="validarApenasNumeros(this)" class="input-descanso-serie ${inputBase} !text-af-orange">
                             </div>
                         </div>
+                        `}
                     </div>
                 `;
             }
             container.innerHTML = html;
+        }
+
+        function atualizarTipoMetaSerieAdmin(sel) {
+            const item = sel.closest('.serie-config-item');
+            const tempo = sel.value === 'tempo';
+            const inp = item.querySelector('.input-reps-sugeridas');
+            item.querySelector('.label-meta-serie').textContent = tempo ? 'Meta de tempo (segundos)' : 'Meta de repetições';
+            inp.placeholder = tempo ? 'Ex: 30 ou 30 a 45' : 'Ex: 12 ou 10 a 12';
+            const v = inp.value.trim();
+            if (tempo && v === '10 a 12') inp.value = '30';
+            if (!tempo && v === '30') inp.value = '10 a 12';
         }
 
         function adicionarPausaRestPause(btn) {
